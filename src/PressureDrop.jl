@@ -1,6 +1,7 @@
+#TODO: avoid duplicating calculations for no reason
 #TODO: Finish profiling using @time, @code_warntype, Traceur, ProfileView
 #TODO: @inbounds master loop
-#TODO: add test suite per Takacs results, or per a reference result from IHS
+#TODO: add test/runtests.jl per Takacs results, or per a reference result from IHS, and run on every new build once you have a main loop in place
 
 """
 Develop pressure traverse from wellhead down to datum.

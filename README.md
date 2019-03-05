@@ -1,6 +1,8 @@
 # PressureDrop.jl
 Package for computing pressure profiles for gas lift optimization of oil &amp; gas wells.
 
+**Note that all calculations are currently in U.S. field units.**
+
 # Example usage
 
 TODO
