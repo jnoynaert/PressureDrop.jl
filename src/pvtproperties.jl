@@ -1,7 +1,9 @@
 # Helper functions for pvt properties.
 
+#%% Gas
+
 """
-Gas viscosity in centipoise.
+Gas viscosity (μ_g) in centipoise.
 
 Takes gas specific gravity, psia, °F, Z (deviation factor).
 
@@ -14,11 +16,11 @@ function LeeGasViscosity(specificGravity, psiAbs, tempF, Z)
   molecularWeight = 28.967 * specificGravity
   density = (psiAbs * molecularWeight * 0.00149406) / (Z*tempR)
 
-  K1 = ( (0.00094 + 2.0* 10^-6.0 *molecularWeight) * tempR^1.5 ) / (200.0 + 19.0*molecularWeight + tempR)
+  K = ((0.00094 + 2.0* 10^-6.0 *molecularWeight) * tempR^1.5 ) / (200.0 + 19.0*molecularWeight + tempR)
   X = 3.5 + (986.0/tempR) + 0.01*molecularWeight
   Y = 2.4 - 0.2*X
 
-  return K1 * exp( X * density^Y ); #in centipoise
+  return K * exp(X * density^Y ); #in centipoise
 end
 
 
@@ -63,87 +65,154 @@ function HankinsonWithWichertPseudoCriticalPressure(specificGravity, molFracCO2,
 end
 
 
-## <-- resume work here
 """
+Natural gas deviation factor (Z).
+
+Take pseudocritical pressure (psia), pseudocritical temperature (°R), pressure (psia), temperature (°F).
+
+Papay. Takacs p19.
 """
-double PapayZFactor (double pressurePseudoCritical, double tempPseudoCriticalRankine, double psiAbs, double tempF) {
+function PapayZFactor(pressurePseudoCritical, tempPseudoCriticalRankine, psiAbs, tempF)
 
-  double pressurePseudoCriticalReduced = psiAbs/pressurePseudoCritical;
+  pressurePseudoCriticalReduced = psiAbs/pressurePseudoCritical
 
-  double tempPseudoCriticalReduced = (tempF + 459.67)/tempPseudoCriticalRankine;
+  tempPseudoCriticalReduced = (tempF + 459.67)/tempPseudoCriticalRankine
 
-  #Papay Z-factor correlation. Useful because it does not require solving iteratively
-  return 1 - (3.52*pressurePseudoCriticalReduced)/(std::pow(10, 0.9813*tempPseudoCriticalReduced)) +
-    (0.274*pressurePseudoCriticalReduced*pressurePseudoCriticalReduced)/std::pow(10, 0.8157*tempPseudoCriticalReduced);
-}
-
-# [[Rcpp::export]]
-double GasVolumeFactor (double pressureAbs, double Z, double tempF) {
-  return 0.0283 * (Z*(tempF+459.67)/pressureAbs);
-}
-
-#  Rcout << "pressurePseudoCritical: " << pressurePseudoCritical << "\n" ;
+  return 1 - (3.52*pressurePseudoCriticalReduced)/(10^ (0.9813*tempPseudoCriticalReduced)) +
+  (0.274*pressurePseudoCriticalReduced*pressurePseudoCriticalReduced)/(10^(0.8157*tempPseudoCriticalReduced))
+end
 
 
-#**Oil PVT functions
-#alternative: Hanafy et al http:#fekete.com/SAN/TheoryAndEquations/WellTestTheoryEquations/Hanafy.htm
+"""
+Corrected gas volume factor (B_g).
+
+Takes absolute pressure (psia), Z-factor, temp in °F.
+"""
+function gasVolumeFactor(pressureAbs, Z, tempF)
+
+  return 0.0283 * (Z*(tempF+459.67)/pressureAbs)
+end
 
 
-double StandingSolutionGOR (double APIoil, double specificGravityGas, double psiAbs, double tempF) {  #only use
 
-  double y = 0.00091*tempF - 0.0125*APIoil;
-  return specificGravityGas * std::pow( psiAbs / (18 * std::pow(10, y)), 1.205); #results in scf/bbl
-}
+#%% Oil
+#TODO: add Hanafy et al from http://fekete.com/SAN/TheoryAndEquations/WellTestTheoryEquations/Hanafy.htm
+#TODO: add Vasquez-Beggs
 
-#volume factor
+"""
+Solution GOR (Rₛ) in scf/bbl.
 
-double StandingOilVolumeFactor (double APIoil, double specificGravityGas, double solutionGOR, double psiAbs, double tempF) {
+Takes oil gravity (°API), gas specific gravity, pressure (psia), temp (°F).
 
-  double fFactor = solutionGOR * std::sqrt(specificGravityGas/(141.5/(APIoil + 131.5))) + 1.25*tempF;
+Standing. Takacs p13.
+"""
+function StandingSolutionGOR(APIoil, specificGravityGas, psiAbs, tempF)
 
-  return 0.972 + (0.000147)*std::pow(fFactor, 1.175);
-}
+  y = 0.00091*tempF - 0.0125*APIoil
 
-#Oil density
-double oilDensity (double APIoil, double specificGravityGas, double solutionGOR, double oilVolumeFactor) {
-
-  return (141.5/(APIoil + 131.5)*62.42796 + 0.0136*specificGravityGas*solutionGOR)/oilVolumeFactor; #mass-pounds over cubic feet
-}
-
-#dead oil viscosity
-double BeggsAndRobinsonDeadOilViscosity (double APIoil, double tempF) { #careful! this overstates viscosity at 100 to 150 F
-
-  double specificGravity = 141.5/(APIoil + 131.5);
-  double x = std::pow(tempF, -1.163) * std::exp(13.108 - (6.591/specificGravity));
-
-  return std::pow(10, x) - 1;
-}
-
-double GlasoDeadOilViscosity (double APIoil, double tempF) {
-
-  return ((3.141* std::pow(10.0,10.0)) / std::pow(tempF, 3.444)) * std::pow( std::log10(APIoil), 10.313*std::log10(tempF) - 36.447);
-
-}
+  return specificGravityGas * (psiAbs / (18 * 10^y) )^1.205 #scf/bbl
+end
 
 
-double ChewAndConnallySaturatedOilViscosity (double deadOilViscosity, double solutionGOR) {
+"""
+Standing oil volume factor (Bₒ).
 
-  double A = 0.2 + 0.8/std::pow(10.0, 0.00081*solutionGOR);
-  double B = 0.43 + 0.57/std::pow(10.0, 0.00072*solutionGOR);
+Takes oil gravity (°API), gas specific gravity, solution GOR (scf/bbl), absolute pressure (psia), temp (°F).
 
-  return A*std::pow(deadOilViscosity, B);
-}
+Standing. Takacs p13.
+"""
+function StandingOilVolumeFactor(APIoil, specificGravityGas, solutionGOR, psiAbs, tempF)
+
+  fFactor = solutionGOR * sqrt(specificGravityGas/(141.5/(APIoil + 131.5))) + 1.25*tempF
+
+  return 0.972 + (0.000147) * fFactor^1.175
+end
 
 
-#**Water PVT functions
-double waterDensity (double waterGravity) {
-  return waterGravity * 62.4; #lb per ft^3
-}
+"""
+Oil density (ρₒ) in mass-lbs per ft³.
+
+Takes oil gravity (°API), gas specific gravity, solution GOR (scf/bbl), oil volume factor.
+"""
+function oilDensity_insitu(APIoil,  specificGravityGas,  solutionGOR,  oilVolumeFactor)
+
+  return (141.5/(APIoil + 131.5)*62.42796 + 0.0136*specificGravityGas*solutionGOR)/oilVolumeFactor #mass-lbs per ft³
+end
 
 
-double GouldWaterVolumeFactor (double pressureAbs, double tempF) {
+"""
+Dead oil viscosity (μ_oD) in centipoise.
 
-  return 1.0 + 1.21*std::pow(10, -4)*(tempF-60) + std::pow(10, -6)*std::pow(tempF-60, 2) - 3.33*pressureAbs*std::pow(10,-6);
-}
+Takes oil gravity (°API), temp (°F).
 
-CONST assumedWaterViscosity = 1.0 #centipoise
+Use with caution at 100-150° F: viscosity can be significantly overstated.
+
+Beggs and Robinson.
+"""
+function BeggsAndRobinsonDeadOilViscosity(APIoil,  tempF)
+
+  if 100 <= tempF <= 155
+    print("Warning: using Beggs and Robinson for dead oil viscosity at $tempF--consider using another correlation.")
+  end
+
+  y = 10^(3.0324 - 0.02023*APIoil)
+  x = y*tempF^-1.163
+
+  return 10^x - 1
+end
+
+
+"""
+Dead oil viscosity (μ_oD) in centipoise.
+
+Takes oil gravity (°API), temp (°F).
+
+Glaso. https://petrowiki.org/Calculating_PVT_properties#Dead_oil_viscosity
+"""
+function GlasoDeadOilViscosity(APIoil,  tempF)
+
+  return ((3.141* 10^10) / tempF^3.444) * log10(APIoil)^(10.313*log10(tempF) - 36.447)
+end
+
+
+"""
+Saturated oil viscosity (μₒ) in centipoise.
+
+Takes dead oil viscosity (cp), solution GOR (scf/bbl).
+
+Chew and Connally method. Takacs p15.
+"""
+function ChewAndConnallySaturatedOilViscosity(deadOilViscosity,  solutionGOR)
+
+   A = 0.2 + 0.8 / 10.0^(0.00081*solutionGOR)
+   b = 0.43 + 0.57 / 10.0^(0.00072*solutionGOR)
+
+  return A * deadOilViscosity^b
+end
+
+
+#%% Water
+
+"""
+Water density in lb per ft³.
+
+Takes gravity.
+"""
+function waterDensity_stb(waterGravity)
+  return waterGravity * 62.4 #lb per ft^3
+end
+
+
+"""
+Water volume factor (B_w).
+
+Takes absolute pressure (psia), temp (°F).
+
+Gould. Takacs p12.
+"""
+function GouldWaterVolumeFactor(pressureAbs,  tempF)
+
+  return 1.0 + 1.21 * 10^-4 * (tempF-60)  + 10^-6 * (tempF-60)^2 - 3.33 * pressureAbs * 10^-6
+end
+
+const assumedWaterViscosity = 1.0 #centipoise

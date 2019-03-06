@@ -3,6 +3,10 @@
 #TODO: @inbounds master loop
 #TODO: add test/runtests.jl per Takacs results, or per a reference result from IHS, and run on every new build once you have a main loop in place
 
+include(pvtproperties.jl)
+include(pressurecorrelations.jl)
+include(tempcorrelations.jl)
+
 """
 Develop pressure traverse from wellhead down to datum.
 

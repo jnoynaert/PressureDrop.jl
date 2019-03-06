@@ -5,11 +5,15 @@ Package for computing pressure profiles for gas lift optimization of oil &amp; g
 
 # Example usage
 
-TODO
+TODO. Add as a notebook
 
 # Supported correlations
 
 TODO
+
+# Notes
+
+Note about applicable range of pvt correlations available
 
 # Performance
 
