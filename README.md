@@ -3,6 +3,11 @@ Package for computing pressure profiles for gas lift optimization of oil &amp; g
 
 **Note that all calculations are currently in U.S. field units.**
 
+# Installation
+
+TODO: register package
+TODO: publish minimalist DockerHub container with just Julia, this package, and dependencies
+
 # Example usage
 
 TODO. Add as a notebook

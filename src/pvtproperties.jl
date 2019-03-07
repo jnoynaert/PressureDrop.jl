@@ -152,7 +152,7 @@ Beggs and Robinson.
 function BeggsAndRobinsonDeadOilViscosity(APIoil,  tempF)
 
   if 100 <= tempF <= 155
-    print("Warning: using Beggs and Robinson for dead oil viscosity at $tempF--consider using another correlation.")
+    @info "Warning: using Beggs and Robinson for dead oil viscosity at $tempF--consider using another correlation."
   end
 
   y = 10^(3.0324 - 0.02023*APIoil)

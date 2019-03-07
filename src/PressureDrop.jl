@@ -1,3 +1,5 @@
+# Calculate pressure and temperature profiles for oil & gas wells.
+
 #TODO: avoid duplicating calculations for no reason
 #TODO: Finish profiling using @time, @code_warntype, Traceur, ProfileView
 #TODO: @inbounds master loop
@@ -20,7 +22,7 @@ Returns: pressure profile, temperature profile as two separate Array{Float64, 1}
 
 Automatically meshes the deviation profile without resizing etc -- keep that separate as a utility.
 """
-function traverse_topdown()
+function traverse_topdown(;pressurecorrelation = BeggsAndBrill)
     # Takacs 113 figure 2-41
     # Make sure this is from wellhead down
     # TODO: calculate BHT?
@@ -39,7 +41,7 @@ function traverse_topdown()
 
     calculate pvt properties at p_avg, t_avg
 
-    calculate dp/dh
+    calculate dp/dh #use pressurecorrelation() directly instead of pattern matching
 
     dp_calc = dh*(dp/dh)
 
