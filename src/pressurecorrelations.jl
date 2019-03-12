@@ -24,7 +24,7 @@ function BeggsAndBrillFlowMap(λ_l, N_Fr) #graphical test bypassed in test suite
     end
 end
 #TODO: see flow pattern definitions at https://wiki.pengtools.com/index.php?title=Beggs_and_Brill_correlation#cite_note-BB1991-2, which
-# appear more robust. Refer back to original citations to compare actual findings
+# appear to be more robust.
 
 
 """
@@ -127,11 +127,14 @@ Returns a ΔP in psi.
 http://www.fekete.com/san/webhelp/feketeharmony/harmony_webhelp/content/html_files/reference_material/Calculations_and_Correlations/Pressure_Loss_Calculations.htm
 for additional ref
 """
-function BeggsAndBrill(md, tvd, inclination, uphill_flow = true, PayneCorrection = false)
+function BeggsAndBrill( md, tvd, inclination, id,
+                        v_sl, v_sg, v_m, ρ_l, ρ_g, σ_l, μ_l, μ_g,
+                        roughness, pressure_est,
+                        uphill_flow = true, PayneCorrection = true )
 
     α = (90 - inclination) * π / 180 #inclination in rad measured from horizontal
 
-    # flow pattern and holdup:
+    #%% flow pattern and holdup:
     λ_l = v_sl / v_m #no-slip liquid holdup
     N_Fr = 0.373 * v_m^2 / id #mixture Froude number #id is pipe diameter in inches
     N_lv = 1.938 * v_sl * (ρ_l / σ_l)^0.25 #liquid velocity number
@@ -147,7 +150,7 @@ function BeggsAndBrill(md, tvd, inclination, uphill_flow = true, PayneCorrection
         ε_l_adj = BeggsAndBrillAdjustedLiquidHoldup(flowpattern, λ_l, N_Fr, N_lv, α, inclination, uphill_flow, PayneCorrection)
     end
 
-    # friction factor:
+    #%% friction factor:
     y = λ_l / ε_l_adj^2
     if 1.0 < y < 1.2
         s = ln(2.2y - 1.2) #handle the discontinuity
@@ -158,14 +161,14 @@ function BeggsAndBrill(md, tvd, inclination, uphill_flow = true, PayneCorrection
 
     fbyfn = ℯ^s #f/fₙ
 
-    ρ_ns = ρ_l * λ_l + ρ_g * (1-λ_l)
-    μ_ns = μ_l * λ_l + μ_g * (1-λ_l) #noslip friction in centipoise
+    ρ_ns = ρ_l * λ_l + ρ_g * (1-λ_l) #no-slip density
+    μ_ns = μ_l * λ_l + μ_g * (1-λ_l) #no-slip friction in centipoise
     N_Re = 124 * ρ_ns * v_m * id / μ_ns #Reynolds number
     f_n = ChenFrictionFactor(N_Re, id, roughness)
     fric = f_n * fbyfn #friction factor
 
 
-    # core calculation:
+    #%% core calculation:
     ρ_m = ρ_l * ε_l_adj + ρ_g * (1 - ε_l_adj) #mixture density in lb/ft³
 
     dpdl_el = (1/144.0) * ρ_m * sin(α) #elevation component
@@ -176,4 +179,4 @@ function BeggsAndBrill(md, tvd, inclination, uphill_flow = true, PayneCorrection
     dp_dl = (dpdl_el * tvd + dpdl_f * md) / (1 - friction_effect*E_k) #assumes friction and kinetic effects both increase pressure in the same 1D direction
 
     return dp_dl
-end
+end #TODO: add tests
