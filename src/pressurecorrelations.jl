@@ -157,7 +157,7 @@ function BeggsAndBrillAdjustedLiquidHoldup(flowpattern, λ_l, N_Fr, N_lv, α, in
             g = BB_coefficients["downhill"][:g]
             h = BB_coefficients["downhill"][:h]
 
-            C = max( (1 + λ_l) * log(e * λ_l^f * N_vl^g * N_Fr^h), 0)
+            C = max( (1 - λ_l) * log(e * λ_l^f * N_vl^g * N_Fr^h), 0)
 
             if inclination ≈ 0 #vertical flow
                 ψ = 1 + 0.3 * C
