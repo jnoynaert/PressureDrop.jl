@@ -3,6 +3,76 @@
 #TODO: ensure appropriate kwarg handling so that all correlations utilize a common interface.
 
 
+#%% Helper functions
+
+"""
+takacs 52
+
+Note that this does not account for slip between liquid phases.
+"""
+function liquidvelocity_superficial(q_o, q_w, id, B_o, B_w)
+    A = π * (id/2.0)^2
+
+    if q_o > 0
+        WOR = q_w / q_o
+        return 6e-5 * (q_o + q_w) / A * (B_o/(1 + WOR) + B_w * WOR / (1 + WOR))
+    else #100% WC
+        return q_w * B_w / A
+    end
+end
+
+
+"""
+takacs 52
+
+"""
+function gasvelocity_superficial(q_o, q_w, GLR, R_s, id, B_g)
+    A = π * (id/2.0)^2
+
+    if q_o > 0
+        WOR = q_w / q_o
+        return 1.16e-5 * (q_o + q_w) / A * (GLR - R_s /(1 + WOR)) * B_g
+    else #100% WC
+        return 1.16e-5 * q_w * (GLR - R_s) * B_g / A
+    end
+end
+
+# mixture velocity: just v_sg + v_sl
+
+
+"""
+Weighted average for mixture properties.
+
+Does not account for oil slip, mixing effects, fluid expansion, Non-Newtonian behavior of emulsions, etc.
+"""
+function mixture_properties_simple(q_o, q_w, p_o, p_w)
+
+    return (q_o * p_o + q_w * p_w) / (q_o + q_w)
+end
+
+
+"""
+k is epsilon/d, where epsilon = 0.0006ish for new and 0.009ish for used
+and epsilon is the absolute roughness in inches
+and k is the pipe ID in inches.
+
+may only apply for turbulent flow? otherwise will overpredict the loss
+
+Takacs p30
+"""
+function ChenFrictionFactor(N_Re, id, roughness = 0.01) #TODO: verify this and set up a test
+
+    k = roughness/id
+
+    A = k^1.1098 / 2.8257 + (7.149 / N_Re)^0.8981
+    x = -2 * log10(k / 3.7065 - 5.0452 / N_Re * log10(A))
+
+    return 1/x^2
+end
+#TODO: handle laminar flow
+
+
+#%% Beggs and Brill
 
 """
 Beggs and Brill flow pattern as a string ∈ {"segregated", "transition", "distributed", "intermittent"}.
@@ -25,6 +95,7 @@ function BeggsAndBrillFlowMap(λ_l, N_Fr) #graphical test bypassed in test suite
 end
 #TODO: see flow pattern definitions at https://wiki.pengtools.com/index.php?title=Beggs_and_Brill_correlation#cite_note-BB1991-2, which
 # appear to be more robust.
+
 
 
 """
@@ -60,60 +131,47 @@ function BeggsAndBrillAdjustedLiquidHoldup(flowpattern, λ_l, N_Fr, N_lv, α, in
 
     #TODO: add verification (compare horizontal to noslip, see steps on Takacs 90)
 
-    if uphill_flow
-        if flowpattern == "distributed"
-            ψ = 1.0
-        else
-            e = BB_coefficients[flowpattern][:e]
-            f = BB_coefficients[flowpattern][:f]
-            g = BB_coefficients[flowpattern][:g]
-            h = BB_coefficients[flowpattern][:h]
+    if α ≈ 0 #horizontal flow
+        return ε_l_horizontal
+    else #inclined or vertical flow
+        if uphill_flow
+            if flowpattern == "distributed"
+                ψ = 1.0
+            else
+                e = BB_coefficients[flowpattern][:e]
+                f = BB_coefficients[flowpattern][:f]
+                g = BB_coefficients[flowpattern][:g]
+                h = BB_coefficients[flowpattern][:h]
 
-            C = max( (1 - λ_l) * log(e * λ_l^f * N_lv^g * N_Fr^h), 0)
+                C = max( (1 - λ_l) * log(e * λ_l^f * N_lv^g * N_Fr^h), 0)
 
-            if inclination ≈ 90.0
+                if inclination ≈ 0 #vertical flow
+                    ψ = 1 + 0.3 * C
+                else
+                    ψ = 1 + C * (sin(1.8*α) - (1/3) * sin(1.8*α)^3)
+                end
+            end
+        else #downhill flow
+            e = BB_coefficients["downhill"][:e]
+            f = BB_coefficients["downhill"][:f]
+            g = BB_coefficients["downhill"][:g]
+            h = BB_coefficients["downhill"][:h]
+
+            C = max( (1 + λ_l) * log(e * λ_l^f * N_vl^g * N_Fr^h), 0)
+
+            if inclination ≈ 0 #vertical flow
                 ψ = 1 + 0.3 * C
             else
                 ψ = 1 + C * (sin(1.8*α) - (1/3) * sin(1.8*α)^3)
             end
         end
-    else #downhill flow
-        e = BB_coefficients["downhill"][:e]
-        f = BB_coefficients["downhill"][:f]
-        g = BB_coefficients["downhill"][:g]
-        h = BB_coefficients["downhill"][:h]
 
-        C = max( (1 + λ_l) * log(e * λ_l^f * N_vl^g * N_Fr^h), 0)
-
-        if inclination ≈ 90.0
-            ψ = 1 + 0.3 * C
-        else
-            ψ = 1 + C * (sin(1.8*α) - (1/3) * sin(1.8*α)^3)
-        end
+        return ε_l_horizontal * ψ * correctionfactor
     end
 
-    return ε_l_horizontal * ψ * correctionfactor
 end
 
-"""
-k is epsilon/d, where epsilon = 0.0006ish for new and 0.009ish for used
-and epsilon is the absolute roughness in inches
-and k is the pipe ID in inches.
 
-may only apply for turbulent flow? otherwise will overpredict the loss
-
-Takacs p30
-"""
-function ChenFrictionFactor(N_Re, id, roughness = 0.01) #TODO: verify this and set up a test
-
-    k = roughness/id
-
-    A = k^1.1098 / 2.8257 + (7.149 / N_Re)^0.8981
-    x = -2 * log10(k / 3.7065 - 5.0452 / N_Re * log10(A))
-
-    return 1/x^2
-end
-#TODO: handle laminar flow
 
 """
 Documentation here.
@@ -128,16 +186,17 @@ http://www.fekete.com/san/webhelp/feketeharmony/harmony_webhelp/content/html_fil
 for additional ref
 """
 function BeggsAndBrill( md, tvd, inclination, id,
-                        v_sl, v_sg, v_m, ρ_l, ρ_g, σ_l, μ_l, μ_g,
+                        v_sl, v_sg, ρ_l, ρ_g, σ_l, μ_l, μ_g,
                         roughness, pressure_est,
                         uphill_flow = true, PayneCorrection = true )
 
     α = (90 - inclination) * π / 180 #inclination in rad measured from horizontal
 
     #%% flow pattern and holdup:
+    v_m = v_sl + v_sg
     λ_l = v_sl / v_m #no-slip liquid holdup
     N_Fr = 0.373 * v_m^2 / id #mixture Froude number #id is pipe diameter in inches
-    N_lv = 1.938 * v_sl * (ρ_l / σ_l)^0.25 #liquid velocity number
+    N_lv = 1.938 * v_sl * (ρ_l / σ_l)^0.25 #liquid velocity number per Duns & Ros
 
     flowpattern = BeggsAndBrillFlowMap(λ_l, N_Fr)
 

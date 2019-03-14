@@ -1,3 +1,5 @@
+module PressureDrop
+
 # Calculate pressure and temperature profiles for oil & gas wells.
 
 #TODO: avoid duplicating calculations for no reason
@@ -5,9 +7,15 @@
 #TODO: @inbounds master loop
 #TODO: add test/runtests.jl per Takacs results, or per a reference result from IHS, and run on every new build once you have a main loop in place
 
-include(pvtproperties.jl)
-include(pressurecorrelations.jl)
-include(tempcorrelations.jl)
+#using
+#import
+
+
+include("pvtproperties.jl")
+include("pressurecorrelations.jl")
+include("tempcorrelations.jl")
+
+
 
 """
 Develop pressure traverse from wellhead down to datum.
@@ -55,3 +63,5 @@ function traverse_topdown(;pressurecorrelation = BeggsAndBrill)
     if h_initial_new >= td_well:
         proportionally estimate pwf based on dp_calc/dh
 end
+
+end #module PressureDrop

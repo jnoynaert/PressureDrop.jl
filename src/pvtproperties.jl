@@ -86,11 +86,24 @@ end
 """
 Corrected gas volume factor (B_g).
 
-Takes absolute pressure (psia), Z-factor, temp in °F.
+Takes absolute pressure (psia), Z-factor, temp (°F).
 """
 function gasVolumeFactor(pressureAbs, Z, tempF)
 
   return 0.0283 * (Z*(tempF+459.67)/pressureAbs)
+end
+
+
+"""
+In-situ gas density in lb/ft³ (ρ_g).
+
+Takes gas s.g., Z-factor, absolute pressure (psia), temperature (°F).
+"""
+function gasDensity_insitu(specificGravityGas, Z_factor, abspressure, tempF)
+
+  tempR = tempF + 459.67
+
+  return 2.7 * specificGravityGas * abspressure / (Z_factor * tempR)
 end
 
 
@@ -132,11 +145,13 @@ end
 """
 Oil density (ρₒ) in mass-lbs per ft³.
 
-Takes oil gravity (°API), gas specific gravity, solution GOR (scf/bbl), oil volume factor.
+Takes oil gravity (°API), gas specific gravity, solution GOR (R_s, scf/bbl), oil volume factor.
+
+Takacs 50.
 """
 function oilDensity_insitu(APIoil,  specificGravityGas,  solutionGOR,  oilVolumeFactor)
 
-  return (141.5/(APIoil + 131.5)*62.42796 + 0.0136*specificGravityGas*solutionGOR)/oilVolumeFactor #mass-lbs per ft³
+  return (141.5/(APIoil + 131.5)*350.4 + 0.0764*specificGravityGas*solutionGOR)/(5.61 * oilVolumeFactor) #mass-lbs per ft³
 end
 
 
@@ -204,6 +219,16 @@ end
 
 
 """
+Water density in lb per ft³.
+
+Takes gravity, B_w.
+"""
+function waterDensity_insitu(waterGravity, B_w)
+  return waterGravity * 62.4 / B_w #lb per ft^3
+end
+
+
+"""
 Water volume factor (B_w).
 
 Takes absolute pressure (psia), temp (°F).
@@ -216,3 +241,42 @@ function GouldWaterVolumeFactor(pressureAbs,  tempF)
 end
 
 const assumedWaterViscosity = 1.0 #centipoise
+
+
+#%% Interfacial tension
+
+"""
+Baker and Swerdloff? see https://www.ihsenergy.ca/support/documentation_ca/Harmony/content/html_files/reference_material/calculations_and_correlations/pressure_loss_calculations.htm
+"""
+function gas_oil_interfacialtension(APIoil, pressureAbsolute, tempF)
+
+  if tempF <= 68.0
+    σ_dead = 39 - 0.2571 * APIoil
+  elseif tempF >= 100.0
+    σ_dead = 37.5 - 0.2571 * APIoil
+  else
+    σ_68 = 39 - 0.2571 * APIoil
+    σ_100 = 37.5 - 0.2571 * APIoil
+    σ_dead = σ_68 + (tempF - 68.0) * (σ_100 - σ_68) / (100.0 - 68.0) # interpolate
+  end
+
+  C = 1.0 - 0.024 * pressureAbsolute^0.45
+  return C * σ_dead
+end
+
+
+"""
+Baker and Swerdloff? see https://www.ihsenergy.ca/support/documentation_ca/Harmony/content/html_files/reference_material/calculations_and_correlations/pressure_loss_calculations.htm
+"""
+function gas_water_interfacialtension(pressureAbsolute, tempF)
+
+  if tempF <= 74
+    return 75 - 1.018 * pressureAbsolute^0.349
+  elseif tempF >= 280
+    return 53 - 0.1048 * pressureAbsolute^0.637
+  else
+    σ_74 = 75 - 1.018 * pressureAbsolute^0.349
+    σ_280 = 53 - 0.1048 * pressureAbsolute^0.637
+    return σ_74 + (tempF - 74.0) * (σ_280 - σ_74) / (280.0 - 74.0) #interpolate
+  end
+end
