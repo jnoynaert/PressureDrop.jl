@@ -45,9 +45,9 @@ Weighted average for mixture properties.
 
 Does not account for oil slip, mixing effects, fluid expansion, Non-Newtonian behavior of emulsions, etc.
 """
-function mixture_properties_simple(q_o, q_w, p_o, p_w)
+function mixture_properties_simple(q_o, q_w, property_o, property_w)
 
-    return (q_o * p_o + q_w * p_w) / (q_o + q_w)
+    return (q_o * property_o + q_w * property_w) / (q_o + q_w)
 end
 
 
@@ -56,20 +56,23 @@ k is epsilon/d, where epsilon = 0.0006ish for new and 0.009ish for used
 and epsilon is the absolute roughness in inches
 and k is the pipe ID in inches.
 
-may only apply for turbulent flow? otherwise will overpredict the loss
+Directly uses Moody for laminar flow; uses Chen 1979 correlation for turbulent flow.
 
 Takacs p30
 """
-function ChenFrictionFactor(N_Re, id, roughness = 0.01) #TODO: verify this and set up a test
+function ChenFrictionFactor(N_Re, id, roughness = 0.01)
 
-    k = roughness/id
+    if N_Re <= 2200 #laminar flow boundary ~2000-2300
+        return 64 / N_Re
+    else #turbulent flow
+        k = roughness/id
 
-    A = k^1.1098 / 2.8257 + (7.149 / N_Re)^0.8981
-    x = -2 * log10(k / 3.7065 - 5.0452 / N_Re * log10(A))
+        A = k^1.1098 / 2.8257 + (7.149 / N_Re)^0.8981
+        x = -2 * log10(k / 3.7065 - 5.0452 / N_Re * log10(A))
 
-    return 1/x^2
+        return 1/x^2
+    end
 end
-#TODO: handle laminar flow
 
 
 #%% Beggs and Brill

@@ -2,7 +2,13 @@ using Test
 
 include("pressurecorrelations.jl")
 
+#%% helper functions
+
+#TODO: @test chen friction factor
+#TODO: @test other helper fns
+
 #%% Beggs and Brill flowmap
+
 @test BeggsAndBrillFlowMap(x, y) == "segregated"
 @test BeggsAndBrillFlowMap(x, y) == "transition"
 @test BeggsAndBrillFlowMap(x, y) == "intermittent"
