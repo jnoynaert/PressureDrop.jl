@@ -22,6 +22,8 @@ Note about applicable range of pvt correlations available
 
 # Performance
 
-Notes on using indirectly via main() etc depending on how you decide to handle argument typing
+The pressure drop calculations converge quickly enough in most cases that special performance considerations do not need to be taken into account during interactive use.
 
-Add type annotations to your source as needed before completing this section.
+For bulk calculations, note that as always with Julia code, the best performance will be achieved by wrapping any calculations in a function, e.g. a `main()` block, to enable proper type inference by the compiler.
+
+The majority of startup and runtime delays are driven by the `Gadfly` dependency, which while excellent, incurs a significant precompilation penalty.

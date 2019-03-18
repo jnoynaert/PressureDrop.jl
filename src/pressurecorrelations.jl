@@ -131,8 +131,7 @@ function BeggsAndBrillAdjustedLiquidHoldup(flowpattern, λ_l, N_Fr, N_lv, α, in
     c = BB_coefficients[flowpattern][:c]
 
     ε_l_horizontal = a * λ_l^b / N_Fr^c #liquid holdup assuming horizontal (α = 0 rad)
-
-    #TODO: add verification (compare horizontal to noslip, see steps on Takacs 90)
+    ε_l_horizontal = max(ε_l_horizontal, λ_l)
 
     if α ≈ 0 #horizontal flow
         return ε_l_horizontal
@@ -160,7 +159,7 @@ function BeggsAndBrillAdjustedLiquidHoldup(flowpattern, λ_l, N_Fr, N_lv, α, in
             g = BB_coefficients["downhill"][:g]
             h = BB_coefficients["downhill"][:h]
 
-            C = max( (1 - λ_l) * log(e * λ_l^f * N_vl^g * N_Fr^h), 0)
+            C = max( (1 - λ_l) * log(e * λ_l^f * N_lv^g * N_Fr^h), 0)
 
             if inclination ≈ 0 #vertical flow
                 ψ = 1 + 0.3 * C

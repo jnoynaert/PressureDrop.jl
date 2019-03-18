@@ -15,25 +15,26 @@ module PressureDrop
 include("src/pvtproperties.jl")
 include("src/pressurecorrelations.jl")
 include("src/tempcorrelations.jl")
+include("src/utilities.jl")
 
 
-
+#TODO: pretty printing for Wellbore
 struct Wellbore
     md::Array{Float64, 1}
-    tvd::Array{Float64, 1}
     inc::Array{Float64, 1}
+    tvd::Array{Float64, 1}
     id::Array{Float64, 1}
 
-    function Wellbore(md, tvd, inc, id::Array{Float64, 1})
-        lens = length.([md, tvd, inc, id])
+    function Wellbore(md, inc, tvd, id::Array{Float64, 1})
+        lens = length.([md, inc, tvd, id])
 
         return count(x -> x == lens[1], lens) == length(lens) ?
-            new(md, tvd, inc, id) :
+            new(md, inc, tvd, id) :
             throw(DimensionMismatch("Mismatched number of wellbore elements used in wellbore constructor."))
     end
 end
 
-Wellbore(md, tvd, inc, id::Float64) = wellbore(md, tvd, inc, repeat([id], inner = length(md))) #convenience constructor for uniform tubulars
+Wellbore(md, inc, tvd, id::Float64) = Wellbore(md, inc, tvd, repeat([id], inner = length(md))) #convenience constructor for uniform tubulars
 
 
 
@@ -99,7 +100,7 @@ function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_init
                                         uphill_flow)
     end
 
-    return max(dp_calc, 0) #constrain top-down drop for producers in the initial version
+    return dp_calc #allows negatives...
 end
 
 
@@ -119,9 +120,12 @@ which pressure drop correlation to use as the function name
 
 Returns: pressure profile, temperature profile as two separate Array{Float64, 1}s.
 """
-function traverse_topdown(;wellbore::Wellbore, pressurecorrelation = BeggsAndBrill, dp_est = bestguessforpressurestep, args...)
-    # TODO: use GOR to initialize model?, since GLR is ambiguous term for gas lift opt, but GOR is understand to be reservoir #s
-    # TODO: make sure to utilize named arguments
+function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Array{Float64, 1}, pressurecorrelation::Function = BeggsAndBrill, outlet_pressure, dp_est, error_tolerance = 0.1,
+                            q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
+                            pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp,
+                            Z_correlation::Function = PapayZFactor, gas_viscosity_correlation::Function = LeeGasViscosity, solutionGORcorrelation::Function = StandingSolutionGOR,
+                            oilVolumeFactor_correlation::Function = StandingOilVolumeFactor, waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor,
+                            dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity)
 
     nsegments = length(wellbore.md)
 
@@ -131,11 +135,13 @@ function traverse_topdown(;wellbore::Wellbore, pressurecorrelation = BeggsAndBri
     pressure_initial = pressures[1] = outlet_pressure
 
     for i in 2:nsegments
-        #TODO: be very, very sure the arguments match here--you want to use positional for performance but could easily get a nigh-untrackable error
-        #TODO: go back and validate where you are returning absolute pressures vs ΔPs, and where you are picking avg or point pressure/temp spots
         dp_calc = calculate_pressuresegment_topdown(pressurecorrelation, pressure_initial, dp_est, temperatureprofile[i],
                                                             wellbore.md[i-1], wellbore.md[i], wellbore.tvd[i-1], wellbore.tvd[i], (wellbore.inc[i] + wellbore.inc[i-1])/2,
-                                                            wellbore.id[i], args...)
+                                                            wellbore.id[i], roughness,
+                                                            q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
+                                                            pseudocrit_pressure_correlation, pseudocrit_temp_correlation, Z_correlation,
+                                                            gas_viscosity_correlation, solutionGORcorrelation, oilVolumeFactor_correlation, waterVolumeFactor_correlation,
+                                                            dead_oil_viscosity_correlation, live_oil_viscosity_correlation, error_tolerance)
 
         pressure_initial += dp_calc
         pressures[i] = pressure_initial
@@ -143,5 +149,6 @@ function traverse_topdown(;wellbore::Wellbore, pressurecorrelation = BeggsAndBri
 
     return pressures
 end
+
 
 end #module PressureDrop
