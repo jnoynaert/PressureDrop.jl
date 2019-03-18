@@ -11,13 +11,13 @@ takacs 52
 Note that this does not account for slip between liquid phases.
 """
 function liquidvelocity_superficial(q_o, q_w, id, B_o, B_w)
-    A = π * (id/2.0)^2
+    A = π * (id/24.0)^2 #convert id in inches to ft
 
     if q_o > 0
         WOR = q_w / q_o
-        return 6e-5 * (q_o + q_w) / A * (B_o/(1 + WOR) + B_w * WOR / (1 + WOR))
+        return 6.5e-5 * (q_o + q_w) / A * (B_o/(1 + WOR) + B_w * WOR / (1 + WOR))
     else #100% WC
-        return q_w * B_w / A
+        return 6.5e-5 * q_w * B_w / A
     end
 end
 
@@ -27,7 +27,7 @@ takacs 52
 
 """
 function gasvelocity_superficial(q_o, q_w, GLR, R_s, id, B_g)
-    A = π * (id/2.0)^2
+    A = π * (id/24.0)^2 #convert id in inches to ft
 
     if q_o > 0
         WOR = q_w / q_o

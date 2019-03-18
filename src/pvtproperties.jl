@@ -164,7 +164,7 @@ Use with caution at 100-150° F: viscosity can be significantly overstated.
 
 Beggs and Robinson.
 """
-function BeggsAndRobinsonDeadOilViscosity(APIoil,  tempF)
+function BeggsAndRobinsonDeadOilViscosity(APIoil, tempF)
 
   if 100 <= tempF <= 155
     @info "Warning: using Beggs and Robinson for dead oil viscosity at $tempF--consider using another correlation."
@@ -184,7 +184,7 @@ Takes oil gravity (°API), temp (°F).
 
 Glaso. https://petrowiki.org/Calculating_PVT_properties#Dead_oil_viscosity
 """
-function GlasoDeadOilViscosity(APIoil,  tempF)
+function GlasoDeadOilViscosity(APIoil, tempF)
 
   return ((3.141* 10^10) / tempF^3.444) * log10(APIoil)^(10.313*log10(tempF) - 36.447)
 end

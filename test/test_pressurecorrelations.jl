@@ -5,7 +5,10 @@ include("pressurecorrelations.jl")
 #%% helper functions
 
 #TODO: @test chen friction factor
-#TODO: @test other helper fns
+
+#%% superficial velocities
+@test liquidvelocity_superficial(375, 0, 2.441, 1.05, 0) ≈ 0.79 atol = 0.01
+@test gasvelocity_superficial(375, 0, 480, 109.7, 2.441, 0.0389) ≈ 1.93 atol = 0.01
 
 #%% Beggs and Brill flowmap
 
