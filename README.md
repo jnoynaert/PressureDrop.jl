@@ -2,6 +2,10 @@
 Package for computing pressure profiles for gas lift optimization of oil &amp; gas wells.
 
 **Note that all calculations are currently in U.S. field units.**
+TODO: show example units for inputs.
+
+Does not solve coupled temperature gradients.
+
 
 # Installation
 
@@ -26,4 +30,4 @@ The pressure drop calculations converge quickly enough in most cases that specia
 
 For bulk calculations, note that as always with Julia code, the best performance will be achieved by wrapping any calculations in a function, e.g. a `main()` block, to enable proper type inference by the compiler.
 
-The majority of startup and runtime delays are driven by the `Gadfly` dependency, which while excellent, incurs a significant precompilation penalty.
+The majority of startup and runtime delays are driven by the `Gadfly` plotting dependency, which while excellent, can incur a significant precompilation penalty.

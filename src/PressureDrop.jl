@@ -3,7 +3,7 @@ module PressureDrop
 # Calculate pressure and temperature profiles for oil & gas wells.
 
 #TODO: avoid duplicating calculations
-#TODO: add bubblepoint logic to prevent multiphase calculations in invalid states
+#TODO: add bubblepoint logic w/ appropriate multiphase calculation & undersaturated oil properties
 #TODO: Finish profiling using @time, @code_warntype, Traceur, ProfileView
 #TODO: @inbounds master loop
 #TODO: add test/runtests.jl per Takacs results, or per a reference result from IHS, and run on every new build once you have a main loop in place

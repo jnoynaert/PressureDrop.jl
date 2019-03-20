@@ -43,21 +43,38 @@ error_tolerance = 1.0 #psi
 #TODO: extensive segment and integration testing for each correlation; minor errors may be propogating but not detected!
 
 
-#%% Visual end to end test
+#%% end to end test
 
 testpath = "C:/pressuredrop.git/test/testdata/Test survey - Cleveland 6.csv"
 
-testwell = read_survey(path = testpath, id_included = false, maxdepth = 7000, id = 2.441);
+testwell = read_survey(path = testpath, id_included = false, maxdepth = 10000, id = 2.441);
 test_temp = collect(range(85, 160, length = length(testwell.md)));
-
 
 pressure_values = traverse_topdown(wellbore = testwell, roughness = 0.0006, temperatureprofile = test_temp,
                                     pressurecorrelation = BeggsAndBrill, dp_est = 10, error_tolerance = 0.1,
                                     q_o = 400, q_w = 500, GLR = 2000, APIoil = 36, sg_water = 1.05, sg_gas = 0.75,
                                     outlet_pressure = 150);
 
+ihs_data = "C:/pressuredrop.git/test/testdata/Perform results - Cleveland 6 long.csv"
+ihs_pressures = [parse.(Float64, split(line, ',', keepempty = false)) for line in readlines(ihs_data)[2:end]] |>
+                        x -> hcat(x...)' ;
+
+@test ihs_pressures[end, 2] ≈ pressure_values[end] atol = 25
+
+#= view results
+ihs_temps = "C:/pressuredrop.git/test/testdata/Perform temps - Cleveland 6 long.csv"
+ihs_temps = [parse.(Float64, split(line, ',', keepempty = false)) for line in readlines(ihs_temps)[2:end]] |>
+                        x -> hcat(x...)' ;
+
 using Gadfly
+set_default_plot_size(8.5inch, 11inch)
 
 plot(   layer(x = pressure_values, y = testwell.md, Geom.line),
         layer(x = test_temp, y = testwell.md, Geom.line, Theme(default_color = "red")),
-        Coord.cartesian(yflip = true))
+        layer(x = ihs_pressures[:,2], y = ihs_pressures[:,1], Geom.line, Theme(default_color = "green")),
+        layer(x = ihs_temps[:,2], y = ihs_temps[:,1], Geom.line, Theme(default_color = "orange")),
+        Coord.cartesian(yflip = true)) #matches
+
+
+[pressure_values[i] - pressure_values[i-1] for i in 2:length(pressure_values)] #negative drops only occur where inclination is negative
+=#
