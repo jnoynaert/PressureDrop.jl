@@ -123,7 +123,7 @@ Returns: pressure profile, temperature profile as two separate Array{Float64, 1}
 function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Array{Float64, 1}, pressurecorrelation::Function = BeggsAndBrill, outlet_pressure, dp_est, error_tolerance = 0.1,
                             q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
                             pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp,
-                            Z_correlation::Function = PapayZFactor, gas_viscosity_correlation::Function = LeeGasViscosity, solutionGORcorrelation::Function = StandingSolutionGOR,
+                            Z_correlation::Function = KareemEtAlZFactor, gas_viscosity_correlation::Function = LeeGasViscosity, solutionGORcorrelation::Function = StandingSolutionGOR,
                             oilVolumeFactor_correlation::Function = StandingOilVolumeFactor, waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor,
                             dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity)
 

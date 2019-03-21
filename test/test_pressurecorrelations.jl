@@ -19,7 +19,7 @@ include("pressurecorrelations.jl")
 
 #= B&B flowmap graphical test, to make sure the correct mapping is generated: passed 3/7/2019.
 # Re-run after any modifications to B&B flowmap function.
-# Note that this test does not check for stability at the region boundaries.
+# Note that this does not establish stability at the region boundaries.
 
 λ_l = 10 .^ collect(-4:0.1:0);
 N_Fr = 10 .^ collect(-1:0.1:3);

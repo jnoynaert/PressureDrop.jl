@@ -66,7 +66,7 @@ end
 
 
 """
-Natural gas deviation factor (Z).
+Natural gas compressibility deviation factor (Z).
 
 Take pseudocritical pressure (psia), pseudocritical temperature (°R), pressure (psia), temperature (°F).
 
@@ -80,6 +80,102 @@ function PapayZFactor(pressurePseudoCritical, tempPseudoCriticalRankine, psiAbs,
 
   return 1 - (3.52*pressurePseudoCriticalReduced)/(10^ (0.9813*tempPseudoCriticalReduced)) +
   (0.274*pressurePseudoCriticalReduced*pressurePseudoCriticalReduced)/(10^(0.8157*tempPseudoCriticalReduced))
+end
+
+
+"""
+Natural gas compressibility deviation factor (Z).
+
+Take pseudocritical pressure (psia), pseudocritical temperature (°R), pressure (psia), temperature (°F).
+
+Can use gauge pressures so long as unit basis matches.
+
+Direct correlation continuous over 0.2 ≤ P_pr ≤ 15.
+
+Kareem, Iwalewa, Al-Marhoun, 2016.
+"""
+function KareemEtAlZFactor(pressurePseudoCritical, tempPseudoCriticalRankine, psiAbs, tempF)
+
+  P_pr = psiAbs/pressurePseudoCritical
+
+  T_pr = (tempF + 459.67)/tempPseudoCriticalRankine
+
+  if !(0.2 ≤ P_pr ≤ 15) | !(1.15 ≤ T_pr ≤ 3)
+    @info "Using Kareem et al Z-factor correlation with values outside of 0.2 ≤ P_pr ≤ 15, 1.15 ≤ T_pr ≤ 3."
+  end
+
+  a1 = 0.317842
+  a2 = 0.382216
+  a3 = -7.768354
+  a4 = 14.290531
+  a5 = 0.000002
+  a6 = -0.004693
+  a7 = 0.096254
+  a8 = 0.16672
+  a9 = 0.96691
+  a10 = 0.063069
+  a11 = -1.966847
+  a12 = 21.0581
+  a13 = -27.0246
+  a14 = 16.23
+  a15 = 207.783
+  a16 = -488.161
+  a17 = 176.29
+  a18 = 1.88453
+  a19 = 3.05921
+
+  t = 1 / T_pr
+  A = a1 * t * exp(a2 * (1-t)^2) * P_pr
+  B = a3 * t + a4 * t^2 + a5 * t^6 * P_pr^6
+  C = a9 + a8 * t * P_pr + a7 * t^2 * P_pr^2 + a6 * t^3 * P_pr^3
+  D = a10 * t * exp(a11 * (1-t)^2)
+  E = a12 * t + a13 * t^2 + a14 * t^3
+  F = a15 * t + a16 * t^2 + a17 * t^3
+  G = a18 + a19 * t
+
+  y = D * P_pr / ((1 + A^2) / C - (A^2 * B) / C^3)
+  z = D * P_pr * (1 + y + y^2 - y^3) / (D * P_pr + E * y^2 - F * y^G) / (1 - y)^3
+
+  return z
+end
+
+
+"""
+Natural gas compressibility deviation factor (Z).
+
+Take pseudocritical pressure (psia), pseudocritical temperature (°R), pressure (psia), temperature (°F).
+
+Linearized form from Kareem, Iwalewa, Al-Marhoun, 2016.
+"""
+function KareemEtAlZFactor_simplified(pressurePseudoCritical, tempPseudoCriticalRankine, psiAbs, tempF)
+
+  P_pr = psiAbs/pressurePseudoCritical
+
+  T_pr = (tempF + 459.67)/tempPseudoCriticalRankine
+
+  if !(0.2 ≤ P_pr ≤ 15) | !(1.15 ≤ T_pr ≤ 3)
+    @info "Using Kareem et al Z-factor correlation with values outside of 0.2 ≤ P_pr ≤ 15, 1.15 ≤ T_pr ≤ 3."
+  end
+
+  a1 = 0.317842
+  a2 = 0.382216
+  a3 = -7.768354
+  a4 = 14.290531
+  a5 = 0.000002
+  a6 = -0.004693
+  a7 = 0.096254
+  a8 = 0.16672
+  a9 = 0.96691
+
+
+  t = 1 / T_pr
+  A = a1 * t * exp(a2 * (1-t)^2) * P_pr
+  B = a3 * t + a4 * t^2 + a5 * t^6 * P_pr^6
+  C = a9 + a8 * t * P_pr + a7 * t^2 * P_pr^2 + a6 * t^3 * P_pr^3
+
+  z = (1+ A^2)/C - A^2 * B / C^3
+
+  return z
 end
 
 

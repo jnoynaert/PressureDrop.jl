@@ -9,6 +9,8 @@ include("pvptproperties.jl")
     @test HankinsonWithWichertPseudoCriticalTemp(0.65, 0.05, 0.08) .- (370.2, 351.4, 18.09) |> x -> all(abs.(x) .<= 1)
     @test HankinsonWithWichertPseudoCriticalPressure(0.65, 0.05, 0.08) ≈ 634.0 atol = 2
     @test PapayZFactor(634, 351.4, 600.0, 100.0) ≈ 0.921 atol = 0.01
+    @test KareemEtAlZFactor(663.29, 377.59, 2000, 150) ≈ 0.8242 atol = 0.05
+    @test KareemEtAlZFactor_simplified(663.29, 377.59, 2000, 150) ≈ 0.8242 atol = 0.15
     @test gasVolumeFactor(1200, 0.85, 200) ≈ 0.013 atol = 0.001
     @test gasDensity_insitu(0.916, 0.883, 346.6, 80.3) ≈ 1.79 atol = 0.01
 
