@@ -1,6 +1,4 @@
-using Test
-
-include("pvptproperties.jl")
+include("../src/pvtproperties.jl")
 
 
 @testset "Gas PVT" begin

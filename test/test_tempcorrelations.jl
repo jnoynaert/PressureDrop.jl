@@ -1,9 +1,7 @@
-using Test
+include("../src/pressurecorrelations.jl")
+include("../src/tempcorrelations.jl")
 
-include("src/pressurecorrelations.jl")
-include("src/tempcorrelations.jl")
-
-#%% Ramey, Shiu
+@testset "Temperature correlations" begin
 
 q_o = 2219
 q_w = 11
@@ -34,3 +32,5 @@ using Gadfly
 
 plot(y = depths_plot, x = test_temps, Geom.line, Coord.cartesian(yflip = true))
 =#
+
+end #Temperature correlations

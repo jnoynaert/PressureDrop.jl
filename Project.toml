@@ -1,0 +1,16 @@
+name = "PressureDrop"
+uuid = "b7afff70-4bfb-11e9-240b-a35f420ae9bd"
+author = ["jmnoynaert@gmail.com"]
+version = "0.9.0"
+
+[deps]
+Gadfly = "c91e804a-d5a3-530f-b6f0-dfbca275c004"
+
+[compat]
+julia = "1.0"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

@@ -1,4 +1,4 @@
-#%% test segment calculation - B&B vertical
+@testset "Takacs B&B vertical single large segment" begin
 
 pressurecorrelation = BeggsAndBrill
 p_initial = 346.6
@@ -30,7 +30,7 @@ dead_oil_viscosity_correlation = GlasoDeadOilViscosity
 live_oil_viscosity_correlation = ChewAndConnallySaturatedOilViscosity
 error_tolerance = 1.0 #psi
 
-ΔP_est = calculate_pressuresegment_topdown(pressurecorrelation, p_initial, dp_est, t_avg,
+ΔP_est = PressureDrop.calculate_pressuresegment_topdown(pressurecorrelation, p_initial, dp_est, t_avg,
                                 md_initial, md_end, tvd_initial, tvd_end, inclination, id, roughness,
                                 q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
                                 pseudocrit_pressure_correlation, pseudocrit_temp_correlation, Z_correlation,
@@ -39,30 +39,34 @@ error_tolerance = 1.0 #psi
 
 @test ΔP_est ≈ 3770 * (0.170 + 0.312) / 2 atol = 100 #order of magnitude test based on average between example points in Takacs (50).
 
+end #testset Takacs B&B vertical
 
-#TODO: extensive segment and integration testing for each correlation; minor errors may be propogating but not detected!
 
+
+@testset "IHS Cleveland 6 - B&B full wellbore" begin
 
 #%% end to end test
 
-testpath = "C:/pressuredrop.git/test/testdata/Test survey - Cleveland 6.csv"
+testpath = "../test/testdata/Cleveland 6/Test survey - Cleveland 6.csv"
 
-testwell = read_survey(path = testpath, id_included = false, maxdepth = 10000, id = 2.441);
-test_temp = collect(range(85, 160, length = length(testwell.md)));
+testwell = read_survey(path = testpath, id_included = false, maxdepth = 10000, id = 2.441)
+test_temp = collect(range(85, 160, length = length(testwell.md)))
 
 pressure_values = traverse_topdown(wellbore = testwell, roughness = 0.0006, temperatureprofile = test_temp,
                                     pressurecorrelation = BeggsAndBrill, dp_est = 10, error_tolerance = 0.1,
                                     q_o = 400, q_w = 500, GLR = 2000, APIoil = 36, sg_water = 1.05, sg_gas = 0.75,
-                                    outlet_pressure = 150);
+                                    outlet_pressure = 150)
 
-ihs_data = "C:/pressuredrop.git/test/testdata/Perform results - Cleveland 6 long.csv"
+ihs_data = "../test/testdata/Cleveland 6/Perform results - Cleveland 6 long.csv"
 ihs_pressures = [parse.(Float64, split(line, ',', keepempty = false)) for line in readlines(ihs_data)[2:end]] |>
-                        x -> hcat(x...)' ;
+                        x -> hcat(x...)'
+
 
 @test ihs_pressures[end, 2] ≈ pressure_values[end] atol = 25
 
+
 #= view results
-ihs_temps = "C:/pressuredrop.git/test/testdata/Perform temps - Cleveland 6 long.csv"
+ihs_temps = "C:/pressuredrop.git/test/testdata/Cleveland 6/Perform temps - Cleveland 6 long.csv"
 ihs_temps = [parse.(Float64, split(line, ',', keepempty = false)) for line in readlines(ihs_temps)[2:end]] |>
                         x -> hcat(x...)' ;
 
@@ -78,3 +82,5 @@ plot(   layer(x = pressure_values, y = testwell.md, Geom.line),
 
 [pressure_values[i] - pressure_values[i-1] for i in 2:length(pressure_values)] #negative drops only occur where inclination is negative
 =#
+
+end #testset IHS Cleveland 6 - B&B

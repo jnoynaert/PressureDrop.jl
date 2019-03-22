@@ -1,6 +1,6 @@
 module PressureDrop
 
-# Calculate pressure and temperature profiles for oil & gas wells.
+push!(LOAD_PATH, @__DIR__) #enable separate loading of PressurePlots.jl
 
 #TODO: avoid duplicating calculations
 #TODO: add bubblepoint logic w/ appropriate multiphase calculation & undersaturated oil properties
@@ -8,14 +8,27 @@ module PressureDrop
 #TODO: @inbounds master loop
 #TODO: add test/runtests.jl per Takacs results, or per a reference result from IHS, and run on every new build once you have a main loop in place
 
-#using
-#import
+export  traverse_topdown, read_survey,
+        BeggsAndBrill,
+        Ramey_wellboretemp, Shiu_Beggs_relaxationfactor,
+        LeeGasViscosity,
+        HankinsonWithWichertPseudoCriticalTemp,
+        HankinsonWithWichertPseudoCriticalPressure,
+        PapayZFactor,
+        KareemEtAlZFactor,
+        KareemEtAlZFactor_simplified,
+        StandingSolutionGOR,
+        StandingOilVolumeFactor,
+        BeggsAndRobinsonDeadOilViscosity,
+        GlasoDeadOilViscosity,
+        ChewAndConnallySaturatedOilViscosity,
+        GouldWaterVolumeFactor
 
 
-include("src/pvtproperties.jl")
-include("src/pressurecorrelations.jl")
-include("src/tempcorrelations.jl")
-include("src/utilities.jl")
+include("pvtproperties.jl")
+include("pressurecorrelations.jl")
+include("tempcorrelations.jl")
+include("utilities.jl")
 
 
 #TODO: pretty printing for Wellbore
@@ -136,12 +149,12 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
 
     for i in 2:nsegments
         dp_calc = calculate_pressuresegment_topdown(pressurecorrelation, pressure_initial, dp_est, temperatureprofile[i],
-                                                            wellbore.md[i-1], wellbore.md[i], wellbore.tvd[i-1], wellbore.tvd[i], (wellbore.inc[i] + wellbore.inc[i-1])/2,
-                                                            wellbore.id[i], roughness,
-                                                            q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
-                                                            pseudocrit_pressure_correlation, pseudocrit_temp_correlation, Z_correlation,
-                                                            gas_viscosity_correlation, solutionGORcorrelation, oilVolumeFactor_correlation, waterVolumeFactor_correlation,
-                                                            dead_oil_viscosity_correlation, live_oil_viscosity_correlation, error_tolerance)
+                                                    wellbore.md[i-1], wellbore.md[i], wellbore.tvd[i-1], wellbore.tvd[i], (wellbore.inc[i] + wellbore.inc[i-1])/2,
+                                                    wellbore.id[i], roughness,
+                                                    q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
+                                                    pseudocrit_pressure_correlation, pseudocrit_temp_correlation, Z_correlation,
+                                                    gas_viscosity_correlation, solutionGORcorrelation, oilVolumeFactor_correlation, waterVolumeFactor_correlation,
+                                                    dead_oil_viscosity_correlation, live_oil_viscosity_correlation, error_tolerance)
 
         pressure_initial += dp_calc
         pressures[i] = pressure_initial
