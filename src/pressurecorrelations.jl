@@ -1,7 +1,5 @@
 # Pressure correlations for PressureDrop package.
 
-#TODO: ensure appropriate kwarg handling so that all correlations utilize a common interface.
-
 
 #%% Helper functions
 
@@ -100,6 +98,11 @@ end
 # appear to be more robust.
 
 
+# Define coefficients tuple a single time #TODO: benchmark and make sure this really is faster than defining inside fn
+const BB_coefficients =     (segregated = (a = 0.980, b= 0.4846, c = 0.0868, e = 0.011, f = -3.7680, g = 3.5390, h = -1.6140),
+                            intermittent = (a = 0.845, b = 0.5351, c = 0.0173, e = 2.960, f = 0.3050, g = -0.4473, h = 0.0978),
+                            distributed = (a = 1.065, b = 0.5824, c = 0.0609),
+                            downhill = (e = 4.700, f = -0.3692, g = 0.1244, h = -0.5056) )
 
 """
 Helper function for Beggs and Brill. Returns adjusted liquid holdup, ε_l(α).
@@ -121,14 +124,10 @@ function BeggsAndBrillAdjustedLiquidHoldup(flowpattern, λ_l, N_Fr, N_lv, α, in
         correctionfactor = 1.0
     end
 
-    BB_coefficients = Dict("segregated" => (a = 0.980, b= 0.4846, c = 0.0868, e = 0.011, f = -3.7680, g = 3.5390, h = -1.6140),
-                            "intermittent" => (a = 0.845, b = 0.5351, c = 0.0173, e = 2.960, f = 0.3050, g = -0.4473, h = 0.0978),
-                            "distributed" => (a = 1.065, b = 0.5824, c = 0.0609),
-                            "downhill" => (e = 4.700, f = -0.3692, g = 0.1244, h = -0.5056) )
-
-    a = BB_coefficients[flowpattern][:a]
-    b = BB_coefficients[flowpattern][:b]
-    c = BB_coefficients[flowpattern][:c]
+    flow = Symbol(flowpattern)
+    a = BB_coefficients[flow][:a]
+    b = BB_coefficients[flow][:b]
+    c = BB_coefficients[flow][:c]
 
     ε_l_horizontal = a * λ_l^b / N_Fr^c #liquid holdup assuming horizontal (α = 0 rad)
     ε_l_horizontal = max(ε_l_horizontal, λ_l)
@@ -140,10 +139,10 @@ function BeggsAndBrillAdjustedLiquidHoldup(flowpattern, λ_l, N_Fr, N_lv, α, in
             if flowpattern == "distributed"
                 ψ = 1.0
             else
-                e = BB_coefficients[flowpattern][:e]
-                f = BB_coefficients[flowpattern][:f]
-                g = BB_coefficients[flowpattern][:g]
-                h = BB_coefficients[flowpattern][:h]
+                e = BB_coefficients[flow][:e]
+                f = BB_coefficients[flow][:f]
+                g = BB_coefficients[flow][:g]
+                h = BB_coefficients[flow][:h]
 
                 C = max( (1 - λ_l) * log(e * λ_l^f * N_lv^g * N_Fr^h), 0)
 
@@ -154,10 +153,10 @@ function BeggsAndBrillAdjustedLiquidHoldup(flowpattern, λ_l, N_Fr, N_lv, α, in
                 end
             end
         else #downhill flow
-            e = BB_coefficients["downhill"][:e]
-            f = BB_coefficients["downhill"][:f]
-            g = BB_coefficients["downhill"][:g]
-            h = BB_coefficients["downhill"][:h]
+            e = BB_coefficients[:downhill][:e]
+            f = BB_coefficients[:downhill][:f]
+            g = BB_coefficients[:downhill][:g]
+            h = BB_coefficients[:downhill][:h]
 
             C = max( (1 - λ_l) * log(e * λ_l^f * N_lv^g * N_Fr^h), 0)
 
@@ -190,7 +189,7 @@ for additional ref
 function BeggsAndBrill( md, tvd, inclination, id,
                         v_sl, v_sg, ρ_l, ρ_g, σ_l, μ_l, μ_g,
                         roughness, pressure_est,
-                        uphill_flow = true, PayneCorrection = true )
+                        uphill_flow = true, PayneCorrection = true)
 
     α = (90 - inclination) * π / 180 #inclination in rad measured from horizontal
 
@@ -211,16 +210,18 @@ function BeggsAndBrill( md, tvd, inclination, id,
         ε_l_adj = BeggsAndBrillAdjustedLiquidHoldup(flowpattern, λ_l, N_Fr, N_lv, α, inclination, uphill_flow, PayneCorrection)
     end
 
+    #TODO: is adjusted liquid holdup <= 1 enforced elsewhere already?
+
     #%% friction factor:
     y = λ_l / ε_l_adj^2
     if 1.0 < y < 1.2
-        s = ln(2.2y - 1.2) #handle the discontinuity
+        s = log(2.2y - 1.2) #handle the discontinuity
     else
         ln_y = log(y)
         s = ln_y / (-0.0523 + 3.182 * ln_y - 0.872 * ln_y^2 + 0.01853 * ln_y^4)
     end
 
-    fbyfn = ℯ^s #f/fₙ
+    fbyfn = exp(s) #f/fₙ
 
     ρ_ns = ρ_l * λ_l + ρ_g * (1-λ_l) #no-slip density
     μ_ns = μ_l * λ_l + μ_g * (1-λ_l) #no-slip friction in centipoise
@@ -232,7 +233,7 @@ function BeggsAndBrill( md, tvd, inclination, id,
     #%% core calculation:
     ρ_m = ρ_l * ε_l_adj + ρ_g * (1 - ε_l_adj) #mixture density in lb/ft³
 
-    dpdl_el = (1/144.0) * ρ_m * sin(α) #elevation component
+    dpdl_el = (1/144.0) * ρ_m #TODO:re-validate results having removed sin(α) when multiplying by TVD: $(* sin(α)) #elevation component
     friction_effect = uphill_flow ? 1 : -1 #note that friction MUST act against the direction of flow
     dpdl_f = friction_effect * 1.294e-3 * fric * (ρ_ns * v_m^2) / id #frictional component
     E_k = 2.16e-4 * fric * (v_m * v_sg * ρ_ns) / pressure_est #kinetic effects; typically negligible
@@ -240,4 +241,89 @@ function BeggsAndBrill( md, tvd, inclination, id,
     dp_dl = (dpdl_el * tvd + dpdl_f * md) / (1 - friction_effect*E_k) #assumes friction and kinetic effects both increase pressure in the same 1D direction
 
     return dp_dl
-end #TODO: add tests
+end #Beggs and Brill
+
+
+
+#%% Hagedorn & Brown
+"""
+"""
+function HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, μ_l, σ_l)
+    N_lv = 1.938 * v_sl * (ρ_l / σ_l)^0.25 #liquid velocity number per Duns & Ros
+    N_gv = 1.938 * v_sg * (ρ_l / σ_l)^0.25 #gas velocity number per Duns & Ros; yes, use liquid density & viscosity
+    N_d = 120.872 * id/12 * (ρ_l / σ_l)^0.5 #pipe diameter number; uses id in ft
+    N_l = 0.15726 * μ_l * (1/(ρ_l * σ_l^3))^0.25 #liquid viscosity number
+
+    CN_l = 0.061 * N_l^3 - 0.0929 * N_l^2 + 0.0505 * N_l + 0.0019 #liquid viscosity coefficient * liquid viscosity number
+
+    H = N_lv / N_g^0.575 * (pressure_est/14.7)^0.1 * CN_l / N_d #holdup correlation group
+
+    ε_l_by_ψ = sqrt((0.0047 + 1123.32 * H + 729489.64 * H^2)/(1 + 1097.1566 * H + 722153.97 * H^2))
+
+    B = N_gv * N_lv^0.38 / N_d^2.14 #additional correlation group
+    if B <= 0.025
+        ψ = 27170 * B^3 - 317.52 * B^2 + 0.5472 * B + 0.9999 #secondary correlation factor
+    elseif B > 0.055
+        ψ = 2.5714 * B + 1.5962
+    elseif B > 0.025
+        ψ = -533.33 * B^2 + 58.524 * B + 0.1171
+    end
+
+    return ψ * ε_l_by_ψ
+end #TODO: tests
+
+
+
+"""
+Returns ΔP in psi.
+
+Does not incorporate flow regimes. Originally developed for vertical wells.
+
+same args as B&B for interface continuity
+"""
+function HagedornAndBrown(md, tvd, inclination, id,
+                            v_sl, v_sg, ρ_l, ρ_g, σ_l, μ_l, μ_g,
+                            roughness, pressure_est,
+                            uphill_flow = true, GriffithWallisCorrection = true)
+
+    #TODO: look at the second paragraph of Fekete documentation
+    #TODO: look at "modifications" section of Fekete documentation
+
+    v_m = v_sl + v_sg
+
+    #%% holdup:
+    λ_l = v_sl / v_m
+
+    if GriffithWallisCorrection
+        λ_g = 1 - λ_g
+        L_B = max(1.071 - 0.2218 * v_m^2 / id, 0.13) #Griffith bubble flow boundary
+        if λ_g <  L_B
+            v_s = 0.8 #assumed slip velocity of 0.8 ft/s -- probably assumes gas in oil bubbles with no water cut or vice versa?
+            ε_l = (v_s - v_m + sqrt((v_m - v_s)^2 + 4*v_s*v_sl) ) / (2 * v_s)
+        else
+            ε_l = HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, μ_l, σ_l)
+        end
+    else #no correction
+        ε_l = HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, μ_l, σ_l)
+    end
+
+    if uphill_flow
+        ε_l = max(ε_l, λ_l) #correction to original: for uphill flow, true holdup must by definition be >= no-slip holdup
+    end
+
+    ρ_m = ρ_l * ε_l + ρ_g * (1 - ε_l) #mixture density in lb/ft³
+
+    #%% friction factor:
+    μ_m = μ_l^ε_l + μ_g^(1-ε_l)
+    N_Re = 124 * ρ_ns * v_m * id / μ_m #uses μ_m, as opposed to μ_ns
+    fric = ChenFrictionFactor(N_Re, id, roughness)
+
+    #%% core calculation:
+    dpdl_el = 1/144.0 * ρ_m
+    dpdl_f = 1.294e-3 * fric * ρ_ns^2 * v_m^2 / (ρ_m * id)
+    #dpdl_kinetic = 2.16e-4 * ρ_m * v_m * (dvm_dh) #neglected except with high mass flow rates
+
+    dp_dl = dpdl_el * tvd + dpdl_f * md + dpdl_kinetic * md
+
+    return dp_dl
+end #Hagedorn & Brown #TODO: add tests
