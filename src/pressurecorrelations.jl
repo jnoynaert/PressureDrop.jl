@@ -256,7 +256,7 @@ function HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, μ_l, σ_l)
 
     CN_l = 0.061 * N_l^3 - 0.0929 * N_l^2 + 0.0505 * N_l + 0.0019 #liquid viscosity coefficient * liquid viscosity number
 
-    H = N_lv / N_g^0.575 * (pressure_est/14.7)^0.1 * CN_l / N_d #holdup correlation group
+    H = N_lv / N_gv^0.575 * (pressure_est/14.7)^0.1 * CN_l / N_d #holdup correlation group
 
     ε_l_by_ψ = sqrt((0.0047 + 1123.32 * H + 729489.64 * H^2)/(1 + 1097.1566 * H + 722153.97 * H^2))
 
@@ -271,7 +271,6 @@ function HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, μ_l, σ_l)
 
     return ψ * ε_l_by_ψ
 end #TODO: tests
-
 
 
 """
@@ -311,10 +310,11 @@ function HagedornAndBrown(md, tvd, inclination, id,
         ε_l = max(ε_l, λ_l) #correction to original: for uphill flow, true holdup must by definition be >= no-slip holdup
     end
 
+    ρ_ns = ρ_l * λ_l + ρ_g * (1 - λ_l) #no-slip density
     ρ_m = ρ_l * ε_l + ρ_g * (1 - ε_l) #mixture density in lb/ft³
 
     #%% friction factor:
-    μ_m = μ_l^ε_l + μ_g^(1-ε_l)
+    μ_m = μ_l^ε_l * μ_g^(1-ε_l)
     N_Re = 124 * ρ_ns * v_m * id / μ_m #uses μ_m, as opposed to μ_ns
     fric = ChenFrictionFactor(N_Re, id, roughness)
 
@@ -323,7 +323,7 @@ function HagedornAndBrown(md, tvd, inclination, id,
     dpdl_f = 1.294e-3 * fric * ρ_ns^2 * v_m^2 / (ρ_m * id)
     #dpdl_kinetic = 2.16e-4 * ρ_m * v_m * (dvm_dh) #neglected except with high mass flow rates
 
-    dp_dl = dpdl_el * tvd + dpdl_f * md + dpdl_kinetic * md
+    dp_dl = dpdl_el * tvd + dpdl_f * md #+ dpdl_kinetic * md
 
     return dp_dl
 end #Hagedorn & Brown #TODO: add tests

@@ -30,4 +30,4 @@ The pressure drop calculations converge quickly enough in most cases that specia
 
 For bulk calculations, note that as always with Julia code, the best performance will be achieved by wrapping any calculations in a function, e.g. a `main()` block, to enable proper type inference by the compiler.
 
-The majority of startup and runtime delays are driven by the `Gadfly` plotting dependency, which while excellent, can incur a significant precompilation penalty.
+Plotting functions are loaded separately by `import`ing or `using` the integrated `PressurePlots` module, to allow avoiding the startup overhead of the `Gadfly` plotting dependency.

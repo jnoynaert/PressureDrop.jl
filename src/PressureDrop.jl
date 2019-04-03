@@ -10,6 +10,7 @@ push!(LOAD_PATH, @__DIR__) #enable separate loading of PressurePlots.jl
 
 export  traverse_topdown, read_survey,
         BeggsAndBrill,
+        HagedornAndBrown,
         Ramey_wellboretemp, Shiu_Beggs_relaxationfactor,
         LeeGasViscosity,
         HankinsonWithWichertPseudoCriticalTemp,
