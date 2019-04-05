@@ -11,7 +11,6 @@ end
 
 #%% Beggs and Brill flowmap
 
-#TODO:
 #=
 @test BeggsAndBrillFlowMap(x, y) == "segregated"
 @test BeggsAndBrillFlowMap(x, y) == "transition"

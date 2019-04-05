@@ -3,7 +3,7 @@ Assumes MD, INC, TVD, ID order for columns.
 
 Skip header of n lines with skiplines = n.
 """
-function read_survey(;path::String, delim = ',', skiplines::Int64 = 1, maxdepth = false::Union{Bool, Real}, id_included = false, id = 2.441)
+function read_survey(;path::String, delim::Char = ',', skiplines::Int64 = 1, maxdepth::Union{Bool, Real} = false, id_included = false, id = 2.441)
 
     nlines = countlines(path) - skiplines
     ncols = id_included ? 4 : 3

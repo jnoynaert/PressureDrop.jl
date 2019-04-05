@@ -84,6 +84,3 @@ plot(   layer(x = pressure_values, y = testwell.md, Geom.line),
 =#
 
 end #testset IHS Cleveland 6 - B&B
-
-
-#TODO: test beggs & brill with 100% WC
