@@ -248,7 +248,7 @@ end #Beggs and Brill
 #%% Hagedorn & Brown
 """
 """
-function HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, μ_l, σ_l)
+function HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, ρ_l, μ_l, σ_l)
     N_lv = 1.938 * v_sl * (ρ_l / σ_l)^0.25 #liquid velocity number per Duns & Ros
     N_gv = 1.938 * v_sg * (ρ_l / σ_l)^0.25 #gas velocity number per Duns & Ros; yes, use liquid density & viscosity
     N_d = 120.872 * id/12 * (ρ_l / σ_l)^0.5 #pipe diameter number; uses id in ft
@@ -292,25 +292,25 @@ function HagedornAndBrown(md, tvd, inclination, id,
 
     #%% holdup:
     λ_l = v_sl / v_m
+    λ_g = 1 - λ_l
 
     if GriffithWallisCorrection
-        λ_g = 1 - λ_g
         L_B = max(1.071 - 0.2218 * v_m^2 / id, 0.13) #Griffith bubble flow boundary
         if λ_g <  L_B
             v_s = 0.8 #assumed slip velocity of 0.8 ft/s -- probably assumes gas in oil bubbles with no water cut or vice versa?
             ε_l = (v_s - v_m + sqrt((v_m - v_s)^2 + 4*v_s*v_sl) ) / (2 * v_s)
         else
-            ε_l = HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, μ_l, σ_l)
+            ε_l = HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, ρ_l, μ_l, σ_l)
         end
     else #no correction
-        ε_l = HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, μ_l, σ_l)
+        ε_l = HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, ρ_l, μ_l, σ_l)
     end
 
     if uphill_flow
         ε_l = max(ε_l, λ_l) #correction to original: for uphill flow, true holdup must by definition be >= no-slip holdup
     end
 
-    ρ_ns = ρ_l * λ_l + ρ_g * (1 - λ_l) #no-slip density
+    ρ_ns = ρ_l * λ_l + ρ_g * (λ_g) #no-slip density
     ρ_m = ρ_l * ε_l + ρ_g * (1 - ε_l) #mixture density in lb/ft³
 
     #%% friction factor:

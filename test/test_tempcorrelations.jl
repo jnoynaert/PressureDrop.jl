@@ -1,3 +1,5 @@
+using PressureDrop
+
 include("../src/pressurecorrelations.jl")
 include("../src/tempcorrelations.jl")
 
@@ -9,7 +11,7 @@ APIoil = 24
 sg_water = 1
 GLR = 1.762 * 1000^2 / (2219 + 11)
 sg_gas = 0.7
-id = 2.992 #mismatch?
+id = 2.992
 whp = 150 + 14.7
 A = Shiu_Beggs_relaxationfactor(q_o, q_w, APIoil, sg_water, GLR, sg_gas, id, whp)
 

@@ -38,6 +38,16 @@ function Ramey_wellboretemp(z, inclination, T_bh, A, G_g = 1.0)
     return T_bh - g_g * z * sin(α) + A * g_g * sin(α) * (1 - exp(-z / A))
 end
 
+
+"""
+"""
+function linear_wellboretemp(;WHT, BHT, well::Wellbore)
+    temp_slope = (BHT - WHT) / maximum(well.tvd)
+
+    return [WHT + depth * temp_slope for depth in well.tvd]
+end
+
+
 #TODO: function to create temp traverse in main file, and use a Wellbore struct as an input
 """
 """

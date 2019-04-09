@@ -1,3 +1,39 @@
+#=General parameters for example runs
+BHT = 165
+
+WHP = 220 PSIG
+
+oil_API = 35
+sg_gas = 0.65
+CO2 = 0.5%
+N2 = 2%
+sg_water = 1.07
+roughness = 0.0006500
+
+settings for PVT:
+dead oil visco -> Glaso
+Saturated oil vis -> chew & ChewAndConnallySaturatedOilViscosity
+undersaturated -> vazquez
+gas -> Lee
+Water -> matthews & russell
+oil density -> standing
+bpp & R_S -> standing
+oil comp -> vazquez & beggs
+oil fvf -> standing
+Z -> Hall & Yarborough
+=
+
+survey = Sawgrass 9 to TD (12175 MD), first segment edited to 0 inclination (460 md/tvd)
+
+tubing id = 2.441
+=#
+
+#= for manual testing:
+cd("src")
+include("PressureDrop.jl")
+using .PressureDrop
+=#
+
 # helper function for testing to load the example results
 function load_example(path, ncol, delim = ',', skiplines = 1) #make sure to use nscenario+1 cols
 
@@ -20,6 +56,7 @@ function load_example(path, ncol, delim = ',', skiplines = 1) #make sure to use 
 
     return output
 end
+
 
 # helper function for testing to interpolate the results to match wellbore segmentation
 function match_example(well::Wellbore, example::Array{Float64,2})
@@ -47,39 +84,20 @@ function match_example(well::Wellbore, example::Array{Float64,2})
 end
 
 
-#=General parameters
-BHT = 165
 
-WHP = 220 PSIG
-
+#%% general parameters
+dp_est = 10 #psi
+error_tolerance = 0.1 #psi
+outlet_pressure = 220 #WHP in psi
 oil_API = 35
 sg_gas = 0.65
-CO2 = 0.5%
-N2 = 2%
+CO2 = 0.005
 sg_water = 1.07
 roughness = 0.0006500
-
-settings for PVT in IHS:
-dead oil visco -> Glaso
-Saturated oil vis -> chew & ChewAndConnallySaturatedOilViscosity
-undersaturated -> vazquez
-gas -> Lee
-Water -> matthews & russell
-oil density -> standing
-bpp & R_S -> standing
-oil comp -> vazquez & beggs
-oil fvf -> standing
-Z -> Hall & Yarborough
-=
-
-survey = Sawgrass 9 to TD (12175 MD), first segment edited to 0 inclination (460 md/tvd)
-
-tubing id = 2.441
-=#
-#%% general parameters
 BHT = 165
+id = 2.441
 
-#%% scenarios
+#%% scenario parameters
 scenarios = (:A, :B, :C, :D, :E)
 
 parameters =    (rate = (A = 500, B = 250, C = 1000, D = 3000, E = 50),
@@ -90,32 +108,87 @@ parameters =    (rate = (A = 500, B = 250, C = 1000, D = 3000, E = 50),
 #%% load test Wellbore
 testpath = "../test/testdata/Sawgrass 9-32/"
 surveypath = testpath*"Test survey - sawgrass 9.csv"
-testwell = read_survey(path = surveypath, id = 2.441)
+testwell = read_survey(path = surveypath, id = id)
 
-#%% generate temperature profiles
+#%% generate linear temperature profiles
 function create_temps(scenario)
         WHT = parameters[:WHT][scenario]
-        temp_slope = (BHT - WHT) / maximum(testwell.tvd)
-        return [WHT + depth * temp_slope for depth in testwell.tvd]
+
+        return linear_wellboretemp(WHT = WHT, BHT = BHT, well = testwell)
 end
 
 temps = [create_temps(s) for s in scenarios]
-temp_profiles = NamedTuple{scenarios}(temps)
+temp_profiles = NamedTuple{scenarios}(temps) #temp profiles labelled by scenario
 
 
-#%% example: test scenario A for B&B
-#TODO: finisht test:
+@testset "Beggs and Brill with Palmer correction - scenarios" begin
+
 # load test results to compare & generate interpolations from expected results at same depths as test well segmentation
 examplepath = testpath*"Perform - B&B with Palmer correction.csv"
-BB_example = load_example(examplepath, length(scenarios)+1)
-BB_matched_example = match_example(testwell, BB_example)
+test_example = load_example(examplepath, length(scenarios)+1)
+matched_example = match_example(testwell, test_example)
 
 # generate test data -- map across all examples
-#traverse_topdown(wellbore = testwell, roughness = 0.0006, temperatureprofile = test_temp,
-                             pressurecorrelation = BeggsAndBrill, dp_est = 10, error_tolerance = 0.1,
-                             q_o = 400, q_w = 500, GLR = 2000, APIoil = 36, sg_water = 1.05, sg_gas = 0.75,
-                             outlet_pressure = 150)
+corr = BeggsAndBrill
+test_results = Array{Float64, 2}(undef, length(testwell.md), 1 + length(scenarios))
+test_results[:,1] = testwell.md
+for (index, scenario) in enumerate(scenarios)
+    WC = parameters[:WC][scenario]
+    rate = parameters[:rate][scenario]
+    q_o = rate * (1 - WC)
+    q_w = rate * WC
+    GLR = parameters[:GLR][scenario]
+
+    test_results[:,index+1] = traverse_topdown(wellbore = testwell, roughness = roughness, temperatureprofile = temp_profiles[scenario],
+                             pressurecorrelation = corr, dp_est = dp_est, error_tolerance = error_tolerance,
+                             q_o = q_o, q_w = q_w, GLR = GLR, APIoil = oil_API, sg_water = sg_water, sg_gas = sg_gas,
+                             outlet_pressure = outlet_pressure, molFracCO2 = CO2)
+end
 
 # compare test data
-tolerance = 35 #psi
-#abs.(results .- example) .<= tolerance
+# NOTE: points after the first survey point at > 90° inclination are discarded;
+# the reference data appears to force positive frictional effects.
+hz_index = findnext(x -> x >= 90, testwell.inc, 1)
+compare_tolerance = 40 #every scenario except the high-rate scenario can take a 15-psi tolerance
+for index in 2:length(scenarios)+1
+    println("Comparing scenario", index-1, " on index ", index)
+    @test all( abs.(test_results[1:hz_index,index] .- matched_example[1:hz_index,index])  .<= compare_tolerance )
+end
+
+end #testset for B&B scenarios
+
+@testset "Hagedorn & Brown with G&W correction - scenarios" begin
+
+# load test results to compare & generate interpolations from expected results at same depths as test well segmentation
+examplepath = testpath*"Perform - H&B with Griffith & Wallis.csv"
+test_example = load_example(examplepath, length(scenarios)+1)
+matched_example = match_example(testwell, test_example)
+
+# generate test data -- map across all examples
+corr = HagedornAndBrown
+test_results = Array{Float64, 2}(undef, length(testwell.md), 1 + length(scenarios))
+test_results[:,1] = testwell.md
+for (index, scenario) in enumerate(scenarios)
+    WC = parameters[:WC][scenario]
+    rate = parameters[:rate][scenario]
+    q_o = rate * (1 - WC)
+    q_w = rate * WC
+    GLR = parameters[:GLR][scenario]
+
+    test_results[:,index+1] = traverse_topdown(wellbore = testwell, roughness = roughness, temperatureprofile = temp_profiles[scenario],
+                             pressurecorrelation = corr, dp_est = dp_est, error_tolerance = error_tolerance,
+                             q_o = q_o, q_w = q_w, GLR = GLR, APIoil = oil_API, sg_water = sg_water, sg_gas = sg_gas,
+                             outlet_pressure = outlet_pressure, molFracCO2 = CO2)
+end
+
+# compare test data
+# NOTE: points after the first survey point at > 90° inclination are discarded
+hz_index = findnext(x -> x >= 90, testwell.inc, 1)
+compare_tolerance = 40
+for index in 2:length(scenarios)+1
+    println("Comparing scenario ", index-1, " on index ", index)
+    @test all( abs.(test_results[1:hz_index,index] .- matched_example[1:hz_index,index])  .<= compare_tolerance )
+    println("Max difference :", maximum(test_results[1:hz_index,index] .- matched_example[1:hz_index,index]))
+end
+
+end #TODO: need unit tests to dig into errored scenarios.

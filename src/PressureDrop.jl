@@ -8,10 +8,10 @@ push!(LOAD_PATH, @__DIR__) #enable separate loading of PressurePlots.jl
 #TODO: @inbounds master loop
 #TODO: add test/runtests.jl per Takacs results, or per a reference result from IHS, and run on every new build once you have a main loop in place
 
-export  traverse_topdown, read_survey,
+export  Wellbore, traverse_topdown, read_survey,
         BeggsAndBrill,
         HagedornAndBrown,
-        Ramey_wellboretemp, Shiu_Beggs_relaxationfactor,
+        Ramey_wellboretemp, Shiu_Beggs_relaxationfactor, linear_wellboretemp,
         LeeGasViscosity,
         HankinsonWithWichertPseudoCriticalTemp,
         HankinsonWithWichertPseudoCriticalPressure,
@@ -24,12 +24,6 @@ export  traverse_topdown, read_survey,
         GlasoDeadOilViscosity,
         ChewAndConnallySaturatedOilViscosity,
         GouldWaterVolumeFactor
-
-
-include("pvtproperties.jl")
-include("pressurecorrelations.jl")
-include("tempcorrelations.jl")
-include("utilities.jl")
 
 
 #TODO: pretty printing for Wellbore
@@ -50,6 +44,11 @@ end
 
 Wellbore(md, inc, tvd, id::Float64) = Wellbore(md, inc, tvd, repeat([id], inner = length(md))) #convenience constructor for uniform tubulars
 
+
+include("pvtproperties.jl")
+include("pressurecorrelations.jl")
+include("tempcorrelations.jl")
+include("utilities.jl")
 
 
 """
