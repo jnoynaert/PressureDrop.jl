@@ -1,5 +1,3 @@
-using PressureDrop
-
 include("../src/pressurecorrelations.jl")
 include("../src/tempcorrelations.jl")
 

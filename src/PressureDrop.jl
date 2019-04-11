@@ -61,7 +61,7 @@ function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_init
                                             q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
                                             pseudocrit_pressure_correlation::Function, pseudocrit_temp_correlation::Function, Z_correlation::Function,
                                             gas_viscosity_correlation::Function, solutionGORcorrelation::Function, oilVolumeFactor_correlation::Function, waterVolumeFactor_correlation::Function,
-                                            dead_oil_viscosity_correlation::Function, live_oil_viscosity_correlation::Function, error_tolerance = 0.1)
+                                            dead_oil_viscosity_correlation::Function, live_oil_viscosity_correlation::Function, error_tolerance = 0.01)
 
     dh_md = md_end - md_initial
     dh_tvd = tvd_end - tvd_initial
@@ -147,7 +147,7 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
     pressures = Array{Float64, 1}(undef, nsegments)
     pressure_initial = pressures[1] = outlet_pressure
 
-    for i in 2:nsegments
+    @inbounds for i in 2:nsegments
         dp_calc = calculate_pressuresegment_topdown(pressurecorrelation, pressure_initial, dp_est, temperatureprofile[i],
                                                     wellbore.md[i-1], wellbore.md[i], wellbore.tvd[i-1], wellbore.tvd[i], (wellbore.inc[i] + wellbore.inc[i-1])/2,
                                                     wellbore.id[i], roughness,

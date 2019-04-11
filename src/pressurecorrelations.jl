@@ -56,6 +56,8 @@ and k is the pipe ID in inches.
 
 Directly uses Moody for laminar flow; uses Chen 1979 correlation for turbulent flow.
 
+Used in place of the Colebrook implicit solution.
+
 Takacs p30
 """
 function ChenFrictionFactor(N_Re, id, roughness = 0.01)
@@ -247,6 +249,7 @@ end #Beggs and Brill
 
 #%% Hagedorn & Brown
 """
+Does not account for inclination or oil/water slip
 """
 function HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, ρ_l, μ_l, σ_l)
     N_lv = 1.938 * v_sl * (ρ_l / σ_l)^0.25 #liquid velocity number per Duns & Ros
@@ -260,18 +263,91 @@ function HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, ρ_l, μ_l, 
 
     ε_l_by_ψ = sqrt((0.0047 + 1123.32 * H + 729489.64 * H^2)/(1 + 1097.1566 * H + 722153.97 * H^2))
 
-    B = N_gv * N_lv^0.38 / N_d^2.14 #additional correlation group
-    if B <= 0.025
-        ψ = 27170 * B^3 - 317.52 * B^2 + 0.5472 * B + 0.9999 #secondary correlation factor
-    elseif B > 0.055
-        ψ = 2.5714 * B + 1.5962
-    elseif B > 0.025
-        ψ = -533.33 * B^2 + 58.524 * B + 0.1171
-    end
+    B = N_gv * N_l^0.38 / N_d^2.14
+    ψ = (1.0886 - 69.9473*B + 2334.3497*B^2 - 12896.683*B^3)/(1 - 53.4401*B + 1517.9369*B^2 - 8419.8115*B^3) #Economedes et al 235
 
     return ψ * ε_l_by_ψ
 end #TODO: tests
 
+
+"""
+Does not account for inclination or oil/water slip
+
+Matching the method demonstrated by U Lafayette
+"""
+function HagedornAndBrownLiquidHoldup_2(pressure_est, id, v_sl, v_sg, ρ_l, μ_l, σ_l)
+    N_lv = 1.938 * v_sl * (ρ_l / σ_l)^0.25 #liquid velocity number per Duns & Ros
+    N_gv = 1.938 * v_sg * (ρ_l / σ_l)^0.25 #gas velocity number per Duns & Ros; yes, use liquid density & viscosity
+    N_d = 120.872 * id/12 * sqrt(ρ_l / σ_l) #pipe diameter number; uses id in ft
+    N_l = 0.15726 * μ_l * (1/(ρ_l * σ_l^3))^0.25 #liquid viscosity number
+
+    CN_l = 10^(-2.69851 + 0.15840954*(ln(N_l)+3) + -0.55099756*(ln(N_l)+3)^2 + 0.54784917*(ln(N_l)+3)^3 + -0.12194578*(ln(N_l)+3)^4) #liquid viscosity coefficient * liquid viscosity number
+
+    H = N_lv / N_gv^0.575 * (pressure_est/14.7)^0.1 * CN_l / N_d #holdup correlation group
+
+    ε_l_by_ψ = -0.10306578 + 0.617774*(ln(CN_l)+6) + -0.632946*(ln(CN_l)+6)^2 + 0.29598*(ln(CN_l)+6)^3 + AE$16*(ln(AD21)+6)^4
+
+    B = N_gv * N_l^0.38 / N_d^2.14 #TODO: verify using N_l vs N_lv
+    B_index = (B - 0.012) / abs(B - 0.012)
+    B_modified = (1 - index)/2 * 0.012 + (1 + index)/2 * B
+
+    ψ = 0.91162574 + -4.82175636*B_modified + 1232.25036621*B_modified^2 + -22253.57617*B_modified^3 + 116174.28125*B_modified^4
+
+    return ψ * ε_l_by_ψ
+end #TODO: tests
+
+
+"""
+"""
+function HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, uphill_flow)
+
+    ε_l = HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, ρ_l, μ_l, σ_l)
+
+    if uphill_flow
+        ε_l = max(ε_l, λ_l) #correction to original: for uphill flow, true holdup must by definition be >= no-slip holdup
+    end
+
+    ρ_m = ρ_l * ε_l + ρ_g * (1 - ε_l) #mixture density in lb/ft³
+    massflow = π*(id_ft/2)^2 * (v_sl * ρ_l + v_sg * ρ_g) * 86400 #86400 s/day
+
+    #%% friction factor:
+    μ_m = μ_l^ε_l * μ_g^(1-ε_l)
+    N_Re = 2.2e-2 * massflow / (id_ft * μ_m)
+    fric = ChenFrictionFactor(N_Re, id, roughness)
+
+    #%% core calculation:
+    dpdl_el = 1/144.0 * ρ_m
+    dpdl_f = 1/144.0 * fric * massflow^2 / (7.413e10 * id_ft^5 *ρ_m)
+    #dpdl_kinetic = 2.16e-4 * ρ_m * v_m * (dvm_dh) #neglected except with high mass flow rates
+
+    dp_dl = dpdl_el * tvd + dpdl_f * md #+ dpdl_kinetic * md
+
+    return dp_dl
+end
+
+
+"""
+"""
+function GriffithWallisPressureDrop(v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, md, tvd, uphill_flow)
+    v_s = 0.8 #assumed slip velocity of 0.8 ft/s -- probably assumes gas in oil bubbles with no water cut or vice versa?
+    ε_l = 1 - 0.5 * (1 + v_m / v_s - sqrt((1 + v_m/v_s)^2 - 4*v_sg/v_s))
+
+    if uphill_flow
+        ε_l = max(ε_l, λ_l) #correction to original: for uphill flow, true holdup must by definition be >= no-slip holdup
+    end
+
+    ρ_m = ρ_l * ε_l + ρ_g * (1 - ε_l) #mixture density in lb/ft³
+    massflow = π*(id_ft/2)^2 * (v_sl * ρ_l + v_sg * ρ_g) * 86400 #86400 s/day
+
+    N_Re = 2.2e-2 * massflow / (id_ft * μ_l)
+    fric = ChenFrictionFactor(N_Re, id, roughness)
+
+    dpdl_el = 1/144.0 * ρ_m
+    dpdl_f = 1/144.0 * fric * massflow^2 / (7.413e10 * id_ft^5 * ρ_l * ε_l^2)
+    dpdl = dpdl_el * tvd + dpdl_f * md
+
+    return dpdl
+end
 
 """
 Returns ΔP in psi.
@@ -285,8 +361,7 @@ function HagedornAndBrown(md, tvd, inclination, id,
                             roughness, pressure_est,
                             uphill_flow = true, GriffithWallisCorrection = true)
 
-    #TODO: look at the second paragraph of Fekete documentation
-    #TODO: look at "modifications" section of Fekete documentation
+    id_ft = id/12
 
     v_m = v_sl + v_sg
 
@@ -297,33 +372,13 @@ function HagedornAndBrown(md, tvd, inclination, id,
     if GriffithWallisCorrection
         L_B = max(1.071 - 0.2218 * v_m^2 / id, 0.13) #Griffith bubble flow boundary
         if λ_g <  L_B
-            v_s = 0.8 #assumed slip velocity of 0.8 ft/s -- probably assumes gas in oil bubbles with no water cut or vice versa?
-            ε_l = (v_s - v_m + sqrt((v_m - v_s)^2 + 4*v_s*v_sl) ) / (2 * v_s)
+            dpdl = GriffithWallisPressureDrop(v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, md, tvd, uphill_flow)
         else
-            ε_l = HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, ρ_l, μ_l, σ_l)
+            dpdl = HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, uphill_flow)
         end
     else #no correction
-        ε_l = HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, ρ_l, μ_l, σ_l)
+        dpdl = HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, uphill_flow)
     end
 
-    if uphill_flow
-        ε_l = max(ε_l, λ_l) #correction to original: for uphill flow, true holdup must by definition be >= no-slip holdup
-    end
-
-    ρ_ns = ρ_l * λ_l + ρ_g * (λ_g) #no-slip density
-    ρ_m = ρ_l * ε_l + ρ_g * (1 - ε_l) #mixture density in lb/ft³
-
-    #%% friction factor:
-    μ_m = μ_l^ε_l * μ_g^(1-ε_l)
-    N_Re = 124 * ρ_ns * v_m * id / μ_m #uses μ_m, as opposed to μ_ns
-    fric = ChenFrictionFactor(N_Re, id, roughness)
-
-    #%% core calculation:
-    dpdl_el = 1/144.0 * ρ_m
-    dpdl_f = 1.294e-3 * fric * ρ_ns^2 * v_m^2 / (ρ_m * id)
-    #dpdl_kinetic = 2.16e-4 * ρ_m * v_m * (dvm_dh) #neglected except with high mass flow rates
-
-    dp_dl = dpdl_el * tvd + dpdl_f * md #+ dpdl_kinetic * md
-
-    return dp_dl
+    return dpdl
 end #Hagedorn & Brown #TODO: add tests

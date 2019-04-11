@@ -1,6 +1,6 @@
 include("../src/pressurecorrelations.jl")
 
-#TODO: @test chen friction factor
+#TODO: @test chen friction factor against Moody diagram
 
 @testset "Superficial velocities" begin
 
