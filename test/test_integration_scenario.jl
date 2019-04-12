@@ -157,7 +157,6 @@ end
 
 end #testset for B&B scenarios
 
-
 @testset "Hagedorn & Brown with G&W correction - scenarios" begin
 
 # load test results to compare & generate interpolations from expected results at same depths as test well segmentation

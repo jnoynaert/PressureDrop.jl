@@ -60,7 +60,7 @@ Used in place of the Colebrook implicit solution.
 
 Takacs p30
 """
-function ChenFrictionFactor(N_Re, id, roughness = 0.01)
+function ChenFrictionFactor_Economedes(N_Re, id, roughness = 0.01) #Economedes #TODO: why does this break B&B and lead to under-predicting the drop?
 
     if N_Re <= 2200 #laminar flow boundary ~2000-2300
         return 16 / N_Re
@@ -69,8 +69,25 @@ function ChenFrictionFactor(N_Re, id, roughness = 0.01)
 
         x = -4*log10(k/3.7065 - 5.0452/N_Re * log10(k^1.1098 / 2.8257 + (7.149/N_Re)^0.8981))
 
-        return (1/x)^2
+        return 1/x^2
 
+    end
+end
+
+ChenFrictionFactor(71620, 2.441, 0.0002) #Takacs
+ChenFrictionFactor_Economedes(71620, 2.441, 0.0002)
+
+function ChenFrictionFactor(N_Re, id, roughness = 0.01) #Takacs
+
+    if N_Re <= 2200 #laminar flow boundary ~2000-2300
+        return 64 / N_Re
+    else #turbulent flow
+        k = roughness/id
+
+        A = k^1.1098 / 2.8257 + (7.149 / N_Re)^0.8981
+        x = -2 * log10(k / 3.7065 - 5.0452 / N_Re * log10(A))
+
+        return 1/x^2
     end
 end
 
