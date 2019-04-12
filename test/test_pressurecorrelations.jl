@@ -1,6 +1,8 @@
 include("../src/pressurecorrelations.jl")
 
-#TODO: @test chen friction factor against Moody diagram
+@testset "Friction factors" begin
+    @test ChenFrictionFactor(35700, 2.259, 0.001) ≈ 0.0063 atol = 0.001
+end
 
 @testset "Superficial velocities" begin
 

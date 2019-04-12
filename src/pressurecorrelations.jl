@@ -63,14 +63,14 @@ Takacs p30
 function ChenFrictionFactor(N_Re, id, roughness = 0.01)
 
     if N_Re <= 2200 #laminar flow boundary ~2000-2300
-        return 64 / N_Re
+        return 16 / N_Re
     else #turbulent flow
         k = roughness/id
 
-        A = k^1.1098 / 2.8257 + (7.149 / N_Re)^0.8981
-        x = -2 * log10(k / 3.7065 - 5.0452 / N_Re * log10(A))
+        x = -4*log10(k/3.7065 - 5.0452/N_Re * log10(k^1.1098 / 2.8257 + (7.149/N_Re)^0.8981))
 
-        return 1/x^2
+        return (1/x)^2
+
     end
 end
 
@@ -281,11 +281,11 @@ function HagedornAndBrownLiquidHoldup_2(pressure_est, id, v_sl, v_sg, ρ_l, μ_l
     N_d = 120.872 * id/12 * sqrt(ρ_l / σ_l) #pipe diameter number; uses id in ft
     N_l = 0.15726 * μ_l * (1/(ρ_l * σ_l^3))^0.25 #liquid viscosity number
 
-    CN_l = 10^(-2.69851 + 0.15840954*(ln(N_l)+3) + -0.55099756*(ln(N_l)+3)^2 + 0.54784917*(ln(N_l)+3)^3 + -0.12194578*(ln(N_l)+3)^4) #liquid viscosity coefficient * liquid viscosity number
+    CN_l = 10^(-2.69851 + 0.15840954*(log(N_l)+3) + -0.55099756*(log(N_l)+3)^2 + 0.54784917*(log(N_l)+3)^3 + -0.12194578*(log(N_l)+3)^4) #liquid viscosity coefficient * liquid viscosity number
 
     H = N_lv / N_gv^0.575 * (pressure_est/14.7)^0.1 * CN_l / N_d #holdup correlation group
 
-    ε_l_by_ψ = -0.10306578 + 0.617774*(ln(CN_l)+6) + -0.632946*(ln(CN_l)+6)^2 + 0.29598*(ln(CN_l)+6)^3 + AE$16*(ln(AD21)+6)^4
+    ε_l_by_ψ = -0.10306578 + 0.617774*(log(CN_l)+6) + -0.632946*(log(CN_l)+6)^2 + 0.29598*(log(CN_l)+6)^3 + -0.0401*(log(CN_l)+6)^4
 
     B = N_gv * N_l^0.38 / N_d^2.14 #TODO: verify using N_l vs N_lv
     B_index = (B - 0.012) / abs(B - 0.012)
@@ -297,9 +297,31 @@ function HagedornAndBrownLiquidHoldup_2(pressure_est, id, v_sl, v_sg, ρ_l, μ_l
 end #TODO: tests
 
 
+#=manual example economedes et al
+μ_g = 0.0131
+Z = 0.935
+v_sl = 4.67
+v_sg = 8.72
+id = 2.259
+roughness = 0.0006
+
+ρ_l = 49.49
+ρ_g = 2.6
+pressure_est = 800
+
+md = 1
+tvd = 1
+uphill_flow = true
+roughness = 0.0006
+
+σ_l = 30
+μ_l = 2
+
+=#
+
 """
 """
-function HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, uphill_flow)
+function HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, uphill_flow, roughness)
 
     ε_l = HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, ρ_l, μ_l, σ_l)
 
@@ -328,7 +350,7 @@ end
 
 """
 """
-function GriffithWallisPressureDrop(v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, md, tvd, uphill_flow)
+function GriffithWallisPressureDrop(v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, md, tvd, uphill_flow, roughness)
     v_s = 0.8 #assumed slip velocity of 0.8 ft/s -- probably assumes gas in oil bubbles with no water cut or vice versa?
     ε_l = 1 - 0.5 * (1 + v_m / v_s - sqrt((1 + v_m/v_s)^2 - 4*v_sg/v_s))
 
@@ -348,6 +370,9 @@ function GriffithWallisPressureDrop(v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, md
 
     return dpdl
 end
+
+
+
 
 """
 Returns ΔP in psi.
@@ -372,12 +397,12 @@ function HagedornAndBrown(md, tvd, inclination, id,
     if GriffithWallisCorrection
         L_B = max(1.071 - 0.2218 * v_m^2 / id, 0.13) #Griffith bubble flow boundary
         if λ_g <  L_B
-            dpdl = GriffithWallisPressureDrop(v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, md, tvd, uphill_flow)
+            dpdl = GriffithWallisPressureDrop(v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, md, tvd, uphill_flow, roughness)
         else
-            dpdl = HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, uphill_flow)
+            dpdl = HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, uphill_flow, roughness)
         end
     else #no correction
-        dpdl = HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, uphill_flow)
+        dpdl = HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, uphill_flow, roughness)
     end
 
     return dpdl
