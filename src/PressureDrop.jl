@@ -23,7 +23,9 @@ export  Wellbore, traverse_topdown, read_survey,
         BeggsAndRobinsonDeadOilViscosity,
         GlasoDeadOilViscosity,
         ChewAndConnallySaturatedOilViscosity,
-        GouldWaterVolumeFactor
+        GouldWaterVolumeFactor,
+        SerghideFrictionFactor,
+        ChenFrictionFactor
 
 
 #TODO: pretty printing for Wellbore
@@ -61,7 +63,7 @@ function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_init
                                             q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
                                             pseudocrit_pressure_correlation::Function, pseudocrit_temp_correlation::Function, Z_correlation::Function,
                                             gas_viscosity_correlation::Function, solutionGORcorrelation::Function, oilVolumeFactor_correlation::Function, waterVolumeFactor_correlation::Function,
-                                            dead_oil_viscosity_correlation::Function, live_oil_viscosity_correlation::Function, error_tolerance = 0.01)
+                                            dead_oil_viscosity_correlation::Function, live_oil_viscosity_correlation::Function, frictionfactor::Function, error_tolerance = 0.01)
 
     dh_md = md_end - md_initial
     dh_tvd = tvd_end - tvd_initial
@@ -85,7 +87,7 @@ function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_init
     μ_l = mixture_properties_simple(q_o, q_w, live_oil_viscosity_correlation(μ_oD, R_s), assumedWaterViscosity)
 
     dp_calc = pressurecorrelation(dh_md, dh_tvd, inclination, id,
-                                    v_sl, v_sg, ρ_l, ρ_g, σ_l, μ_l, μ_g, roughness, p_avg,
+                                    v_sl, v_sg, ρ_l, ρ_g, σ_l, μ_l, μ_g, roughness, p_avg, frictionfactor,
                                     uphill_flow)
 
     while abs(dp_est - dp_calc) >= error_tolerance
@@ -109,7 +111,7 @@ function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_init
         μ_l = mixture_properties_simple(q_o, q_w, live_oil_viscosity_correlation(μ_oD, R_s), assumedWaterViscosity)
 
         dp_calc = pressurecorrelation(dh_md, dh_tvd, inclination, id,
-                                        v_sl, v_sg, ρ_l, ρ_g, σ_l, μ_l, μ_g, roughness, p_avg,
+                                        v_sl, v_sg, ρ_l, ρ_g, σ_l, μ_l, μ_g, roughness, p_avg, frictionfactor,
                                         uphill_flow)
     end
 
@@ -138,7 +140,7 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
                             pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp,
                             Z_correlation::Function = KareemEtAlZFactor, gas_viscosity_correlation::Function = LeeGasViscosity, solutionGORcorrelation::Function = StandingSolutionGOR,
                             oilVolumeFactor_correlation::Function = StandingOilVolumeFactor, waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor,
-                            dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity)
+                            dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity, frictionfactor::Function = SerghideFrictionFactor)
 
     nsegments = length(wellbore.md)
 
@@ -154,7 +156,7 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
                                                     q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
                                                     pseudocrit_pressure_correlation, pseudocrit_temp_correlation, Z_correlation,
                                                     gas_viscosity_correlation, solutionGORcorrelation, oilVolumeFactor_correlation, waterVolumeFactor_correlation,
-                                                    dead_oil_viscosity_correlation, live_oil_viscosity_correlation, error_tolerance)
+                                                    dead_oil_viscosity_correlation, live_oil_viscosity_correlation, frictionfactor, error_tolerance)
 
         pressure_initial += dp_calc
         pressures[i] = pressure_initial

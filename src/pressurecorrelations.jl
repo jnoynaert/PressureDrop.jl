@@ -58,38 +58,42 @@ Directly uses Moody for laminar flow; uses Chen 1979 correlation for turbulent f
 
 Used in place of the Colebrook implicit solution.
 
+Not intended for Reynolds numbers between 2000-4000
+
 Takacs p30
 """
-function ChenFrictionFactor_Economedes(N_Re, id, roughness = 0.01) #Economedes #TODO: why does this break B&B and lead to under-predicting the drop?
+function ChenFrictionFactor(N_Re, id, roughness = 0.01) #Takacs #returns Economides value * 4
 
-    if N_Re <= 2200 #laminar flow boundary ~2000-2300
-        return 16 / N_Re
-    else #turbulent flow
-        k = roughness/id
+    if N_Re <= 4000 #laminar flow boundary ~2000-2300
 
-        x = -4*log10(k/3.7065 - 5.0452/N_Re * log10(k^1.1098 / 2.8257 + (7.149/N_Re)^0.8981))
-
-        return 1/x^2
-
-    end
-end
-
-ChenFrictionFactor(71620, 2.441, 0.0002) #Takacs
-ChenFrictionFactor_Economedes(71620, 2.441, 0.0002)
-
-function ChenFrictionFactor(N_Re, id, roughness = 0.01) #Takacs
-
-    if N_Re <= 2200 #laminar flow boundary ~2000-2300
         return 64 / N_Re
     else #turbulent flow
         k = roughness/id
 
-        A = k^1.1098 / 2.8257 + (7.149 / N_Re)^0.8981
-        x = -2 * log10(k / 3.7065 - 5.0452 / N_Re * log10(A))
+        x = -2 * log10(k/3.7065 - 5.0452/N_Re * log10(k^1.1098 / 2.8257 + (7.149/N_Re)^0.8981))
 
         return 1/x^2
     end
 end
+
+"""
+Serghide 1984
+"""
+function SerghideFrictionFactor(N_Re, id, roughness = 0.01)
+    if N_Re <= 4000 #laminar flow boundary ~2000-2300
+
+        return 64 / N_Re
+    else #turbulent flow
+        k = roughness/id
+        A = -2 * log10(k/3.7 + 12/N_Re)
+        B = -2 * log10(k/3.7 + 2.51*A/N_Re)
+        C = -2 * log10(k/3.7 + 2.51*B/N_Re)
+
+        return (A-((B-A)^2 / (C - (2*B) + A)))^-2
+    end
+end
+
+
 
 
 #%% Beggs and Brill
@@ -207,7 +211,7 @@ for additional ref
 """
 function BeggsAndBrill( md, tvd, inclination, id,
                         v_sl, v_sg, ρ_l, ρ_g, σ_l, μ_l, μ_g,
-                        roughness, pressure_est,
+                        roughness, pressure_est, frictionfactor::Function = SerghideFrictionFactor,
                         uphill_flow = true, PayneCorrection = true)
 
     α = (90 - inclination) * π / 180 #inclination in rad measured from horizontal
@@ -245,7 +249,7 @@ function BeggsAndBrill( md, tvd, inclination, id,
     ρ_ns = ρ_l * λ_l + ρ_g * (1-λ_l) #no-slip density
     μ_ns = μ_l * λ_l + μ_g * (1-λ_l) #no-slip friction in centipoise
     N_Re = 124 * ρ_ns * v_m * id / μ_ns #Reynolds number
-    f_n = ChenFrictionFactor(N_Re, id, roughness)
+    f_n = frictionfactor(N_Re, id, roughness)
     fric = f_n * fbyfn #friction factor
 
 
@@ -281,64 +285,15 @@ function HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, ρ_l, μ_l, 
     ε_l_by_ψ = sqrt((0.0047 + 1123.32 * H + 729489.64 * H^2)/(1 + 1097.1566 * H + 722153.97 * H^2))
 
     B = N_gv * N_l^0.38 / N_d^2.14
-    ψ = (1.0886 - 69.9473*B + 2334.3497*B^2 - 12896.683*B^3)/(1 - 53.4401*B + 1517.9369*B^2 - 8419.8115*B^3) #Economedes et al 235
+    ψ = (1.0886 - 69.9473*B + 2334.3497*B^2 - 12896.683*B^3)/(1 - 53.4401*B + 1517.9369*B^2 - 8419.8115*B^3) #economides et al 235
 
     return ψ * ε_l_by_ψ
 end #TODO: tests
 
 
 """
-Does not account for inclination or oil/water slip
-
-Matching the method demonstrated by U Lafayette
 """
-function HagedornAndBrownLiquidHoldup_2(pressure_est, id, v_sl, v_sg, ρ_l, μ_l, σ_l)
-    N_lv = 1.938 * v_sl * (ρ_l / σ_l)^0.25 #liquid velocity number per Duns & Ros
-    N_gv = 1.938 * v_sg * (ρ_l / σ_l)^0.25 #gas velocity number per Duns & Ros; yes, use liquid density & viscosity
-    N_d = 120.872 * id/12 * sqrt(ρ_l / σ_l) #pipe diameter number; uses id in ft
-    N_l = 0.15726 * μ_l * (1/(ρ_l * σ_l^3))^0.25 #liquid viscosity number
-
-    CN_l = 10^(-2.69851 + 0.15840954*(log(N_l)+3) + -0.55099756*(log(N_l)+3)^2 + 0.54784917*(log(N_l)+3)^3 + -0.12194578*(log(N_l)+3)^4) #liquid viscosity coefficient * liquid viscosity number
-
-    H = N_lv / N_gv^0.575 * (pressure_est/14.7)^0.1 * CN_l / N_d #holdup correlation group
-
-    ε_l_by_ψ = -0.10306578 + 0.617774*(log(CN_l)+6) + -0.632946*(log(CN_l)+6)^2 + 0.29598*(log(CN_l)+6)^3 + -0.0401*(log(CN_l)+6)^4
-
-    B = N_gv * N_l^0.38 / N_d^2.14 #TODO: verify using N_l vs N_lv
-    B_index = (B - 0.012) / abs(B - 0.012)
-    B_modified = (1 - index)/2 * 0.012 + (1 + index)/2 * B
-
-    ψ = 0.91162574 + -4.82175636*B_modified + 1232.25036621*B_modified^2 + -22253.57617*B_modified^3 + 116174.28125*B_modified^4
-
-    return ψ * ε_l_by_ψ
-end #TODO: tests
-
-
-#=manual example economedes et al
-μ_g = 0.0131
-Z = 0.935
-v_sl = 4.67
-v_sg = 8.72
-id = 2.259
-roughness = 0.0006
-
-ρ_l = 49.49
-ρ_g = 2.6
-pressure_est = 800
-
-md = 1
-tvd = 1
-uphill_flow = true
-roughness = 0.0006
-
-σ_l = 30
-μ_l = 2
-
-=#
-
-"""
-"""
-function HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, uphill_flow, roughness)
+function HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, frictionfactor::Function, uphill_flow,  roughness)
 
     ε_l = HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, ρ_l, μ_l, σ_l)
 
@@ -352,11 +307,13 @@ function HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, 
     #%% friction factor:
     μ_m = μ_l^ε_l * μ_g^(1-ε_l)
     N_Re = 2.2e-2 * massflow / (id_ft * μ_m)
-    fric = ChenFrictionFactor(N_Re, id, roughness)
+    fric = frictionfactor(N_Re, id, roughness)/4 #correct friction factor
 
     #%% core calculation:
     dpdl_el = 1/144.0 * ρ_m
-    dpdl_f = 1/144.0 * fric * massflow^2 / (7.413e10 * id_ft^5 *ρ_m)
+    dpdl_f = 1/144.0 * fric * massflow^2 / (7.413e10 * id_ft^5 *ρ_m) #economides
+    #ρ_ns = λ_l * ρ_l + λ_g * ρ_g
+    #dpdl_f = 1.294e-3 * fric * ρ_ns^2 * v_m^2 / (ρ_m * id) #Takacs -- takes normal friction factor
     #dpdl_kinetic = 2.16e-4 * ρ_m * v_m * (dvm_dh) #neglected except with high mass flow rates
 
     dp_dl = dpdl_el * tvd + dpdl_f * md #+ dpdl_kinetic * md
@@ -367,7 +324,7 @@ end
 
 """
 """
-function GriffithWallisPressureDrop(v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, md, tvd, uphill_flow, roughness)
+function GriffithWallisPressureDrop(v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, md, tvd, frictionfactor::Function, uphill_flow,  roughness)
     v_s = 0.8 #assumed slip velocity of 0.8 ft/s -- probably assumes gas in oil bubbles with no water cut or vice versa?
     ε_l = 1 - 0.5 * (1 + v_m / v_s - sqrt((1 + v_m/v_s)^2 - 4*v_sg/v_s))
 
@@ -379,7 +336,7 @@ function GriffithWallisPressureDrop(v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, md
     massflow = π*(id_ft/2)^2 * (v_sl * ρ_l + v_sg * ρ_g) * 86400 #86400 s/day
 
     N_Re = 2.2e-2 * massflow / (id_ft * μ_l)
-    fric = ChenFrictionFactor(N_Re, id, roughness)
+    fric = frictionfactor(N_Re, id, roughness)/4 #correct friction factor
 
     dpdl_el = 1/144.0 * ρ_m
     dpdl_f = 1/144.0 * fric * massflow^2 / (7.413e10 * id_ft^5 * ρ_l * ε_l^2)
@@ -400,7 +357,7 @@ same args as B&B for interface continuity
 """
 function HagedornAndBrown(md, tvd, inclination, id,
                             v_sl, v_sg, ρ_l, ρ_g, σ_l, μ_l, μ_g,
-                            roughness, pressure_est,
+                            roughness, pressure_est, frictionfactor::Function = SerghideFrictionFactor,
                             uphill_flow = true, GriffithWallisCorrection = true)
 
     id_ft = id/12
@@ -414,12 +371,12 @@ function HagedornAndBrown(md, tvd, inclination, id,
     if GriffithWallisCorrection
         L_B = max(1.071 - 0.2218 * v_m^2 / id, 0.13) #Griffith bubble flow boundary
         if λ_g <  L_B
-            dpdl = GriffithWallisPressureDrop(v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, md, tvd, uphill_flow, roughness)
+            dpdl = GriffithWallisPressureDrop(v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, md, tvd, frictionfactor, uphill_flow, roughness)
         else
-            dpdl = HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, uphill_flow, roughness)
+            dpdl = HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, frictionfactor, uphill_flow, roughness)
         end
     else #no correction
-        dpdl = HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, uphill_flow, roughness)
+        dpdl = HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, frictionfactor, uphill_flow, roughness)
     end
 
     return dpdl

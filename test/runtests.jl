@@ -4,7 +4,7 @@ using PressureDrop
 include("test_pvt.jl")
 include("test_pressurecorrelations.jl")
 include("test_tempcorrelations.jl")
-include("test_integration_legacy.jl") #tolerance test
+#include("test_integration_legacy.jl") #tolerance test
 include("test_integration_scenario.jl")
 
 #TODO: change all of your test function calls for unexported functions to be fully qualifeid,
