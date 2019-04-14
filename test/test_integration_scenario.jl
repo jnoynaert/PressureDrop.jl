@@ -151,8 +151,9 @@ end
 hz_index = findnext(x -> x >= 90, testwell.inc, 1)
 compare_tolerance = 40 #every scenario except the high-rate scenario can take a 15-psi tolerance
 for index in 2:length(scenarios)+1
-    println("Comparing scenario", index-1, " on index ", index)
+    println("Comparing scenario ", index-1, " on index ", index)
     @test all( abs.(test_results[1:hz_index,index] .- matched_example[1:hz_index,index])  .<= compare_tolerance )
+    println("Max difference :", maximum(abs.(test_results[1:hz_index,index] .- matched_example[1:hz_index,index])))
 end
 
 end #testset for B&B scenarios

@@ -3,12 +3,13 @@
 #%% Gas
 
 """
+LeeGasViscosity(specificGravity, psiAbs, tempF, Z)
+
 Gas viscosity (μ_g) in centipoise.
 
 Takes gas specific gravity, psia, °F, Z (deviation factor).
 
-Lee et al. Takacs p20.
-https://petrowiki.org/Gas_viscosity
+Lee et al 1966 method.
 """
 function LeeGasViscosity(specificGravity, psiAbs, tempF, Z)
 
@@ -25,11 +26,13 @@ end
 
 
 """
+HankinsonWithWichertPseudoCriticalTemp(specificGravity, molFracCO2, molFracH2S)
+
 Pseudo-critical temperature, adjusted pseudo-critical temperature in °R, and Wichert correction factor
 
 Takes gas specific gravity, mol fraction of CO₂, mol fraction of H₂S.
 
-Hankin-Thomas-Phillips, with Wichert and Aziz correction for sour components. Takacs p18.
+Hankin-Thomas-Phillips method, with Wichert and Aziz correction for sour components.
 """
 function HankinsonWithWichertPseudoCriticalTemp(specificGravity, molFracCO2, molFracH2S)
   #Hankinson-Thomas-Phillips pseudo-parameter:
@@ -47,11 +50,13 @@ end
 
 
 """
+HankinsonWithWichertPseudoCriticalPressure(specificGravity, molFracCO2, molFracH2S)
+
 Pseudo-critical pressure in psia.
 
 Takes gas specific gravity, mol fraction of CO₂, mol fraction of H₂S.
 
-Hankin-Thomas-Phillips, with Wichert and Aziz correction for sour components. Takacs p18.
+Hankin-Thomas-Phillips method, with Wichert and Aziz correction for sour components.
 """
 function HankinsonWithWichertPseudoCriticalPressure(specificGravity, molFracCO2, molFracH2S)
   #Hankinson-Thomas-Phillips pseudo-parameter:
@@ -66,11 +71,13 @@ end
 
 
 """
+PapayZFactor(pressurePseudoCritical, tempPseudoCriticalRankine, psiAbs, tempF)
+
 Natural gas compressibility deviation factor (Z).
 
 Take pseudocritical pressure (psia), pseudocritical temperature (°R), pressure (psia), temperature (°F).
 
-Papay. Takacs p19.
+Papay 1968 method.
 """
 function PapayZFactor(pressurePseudoCritical, tempPseudoCriticalRankine, psiAbs, tempF)
 
@@ -84,6 +91,8 @@ end
 
 
 """
+KareemEtAlZFactor(pressurePseudoCritical, tempPseudoCriticalRankine, psiAbs, tempF)
+
 Natural gas compressibility deviation factor (Z).
 
 Take pseudocritical pressure (psia), pseudocritical temperature (°R), pressure (psia), temperature (°F).
@@ -141,6 +150,8 @@ end
 
 
 """
+KareemEtAlZFactor_simplified(pressurePseudoCritical, tempPseudoCriticalRankine, psiAbs, tempF)
+
 Natural gas compressibility deviation factor (Z).
 
 Take pseudocritical pressure (psia), pseudocritical temperature (°R), pressure (psia), temperature (°F).
@@ -180,6 +191,8 @@ end
 
 
 """
+gasVolumeFactor(pressureAbs, Z, tempF)
+
 Corrected gas volume factor (B_g).
 
 Takes absolute pressure (psia), Z-factor, temp (°F).
@@ -191,6 +204,8 @@ end
 
 
 """
+gasDensity_insitu(specificGravityGas, Z_factor, abspressure, tempF)
+
 In-situ gas density in lb/ft³ (ρ_g).
 
 Takes gas s.g., Z-factor, absolute pressure (psia), temperature (°F).
@@ -203,17 +218,19 @@ function gasDensity_insitu(specificGravityGas, Z_factor, abspressure, tempF)
 end
 
 
-
 #%% Oil
-#TODO: add Hanafy et al from http://fekete.com/SAN/TheoryAndEquations/WellTestTheoryEquations/Hanafy.htm
-#TODO: add Vasquez-Beggs
+#TODO: add Vasquez-Beggs for solution GOR
+#TODO: add Hanafy et al correlations
+
 
 """
+StandingSolutionGOR(APIoil, specificGravityGas, psiAbs, tempF)
+
 Solution GOR (Rₛ) in scf/bbl.
 
 Takes oil gravity (°API), gas specific gravity, pressure (psia), temp (°F).
 
-Standing. Takacs p13.
+Standing method.
 """
 function StandingSolutionGOR(APIoil, specificGravityGas, psiAbs, tempF)
 
@@ -224,11 +241,13 @@ end
 
 
 """
-Standing oil volume factor (Bₒ).
+StandingOilVolumeFactor(APIoil, specificGravityGas, solutionGOR, psiAbs, tempF)
+
+Oil volume factor (Bₒ).
 
 Takes oil gravity (°API), gas specific gravity, solution GOR (scf/bbl), absolute pressure (psia), temp (°F).
 
-Standing. Takacs p13.
+Standing method.
 """
 function StandingOilVolumeFactor(APIoil, specificGravityGas, solutionGOR, psiAbs, tempF)
 
@@ -239,11 +258,11 @@ end
 
 
 """
+oilDensity_insitu(APIoil,  specificGravityGas,  solutionGOR,  oilVolumeFactor)
+
 Oil density (ρₒ) in mass-lbs per ft³.
 
 Takes oil gravity (°API), gas specific gravity, solution GOR (R_s, scf/bbl), oil volume factor.
-
-Takacs 50.
 """
 function oilDensity_insitu(APIoil,  specificGravityGas,  solutionGOR,  oilVolumeFactor)
 
@@ -252,13 +271,15 @@ end
 
 
 """
+BeggsAndRobinsonDeadOilViscosity(APIoil, tempF)
+
 Dead oil viscosity (μ_oD) in centipoise.
 
 Takes oil gravity (°API), temp (°F).
 
 Use with caution at 100-150° F: viscosity can be significantly overstated.
 
-Beggs and Robinson.
+Beggs and Robinson method.
 """
 function BeggsAndRobinsonDeadOilViscosity(APIoil, tempF)
 
@@ -274,11 +295,13 @@ end
 
 
 """
+GlasoDeadOilViscosity(APIoil, tempF)
+
 Dead oil viscosity (μ_oD) in centipoise.
 
 Takes oil gravity (°API), temp (°F).
 
-Glaso. https://petrowiki.org/Calculating_PVT_properties#Dead_oil_viscosity
+Glaso method.
 """
 function GlasoDeadOilViscosity(APIoil, tempF)
 
@@ -287,11 +310,13 @@ end
 
 
 """
+ChewAndConnallySaturatedOilViscosity(deadOilViscosity,  solutionGOR)
+
 Saturated oil viscosity (μₒ) in centipoise.
 
 Takes dead oil viscosity (cp), solution GOR (scf/bbl).
 
-Chew and Connally method. Takacs p15.
+Chew and Connally method to correct from dead to live oil viscosity.
 """
 function ChewAndConnallySaturatedOilViscosity(deadOilViscosity,  solutionGOR)
 
@@ -305,9 +330,11 @@ end
 #%% Water
 
 """
+waterDensity_stb(waterGravity)
+
 Water density in lb per ft³.
 
-Takes gravity.
+Takes water specific gravity.
 """
 function waterDensity_stb(waterGravity)
   return waterGravity * 62.4 #lb per ft^3
@@ -315,9 +342,11 @@ end
 
 
 """
+waterDensity_insitu(waterGravity, B_w)
+
 Water density in lb per ft³.
 
-Takes gravity, B_w.
+Takes specific gravity, B_w.
 """
 function waterDensity_insitu(waterGravity, B_w)
   return waterGravity * 62.4 / B_w #lb per ft^3
@@ -325,11 +354,13 @@ end
 
 
 """
+GouldWaterVolumeFactor(pressureAbs,  tempF)
+
 Water volume factor (B_w).
 
 Takes absolute pressure (psia), temp (°F).
 
-Gould. Takacs p12.
+Gould method.
 """
 function GouldWaterVolumeFactor(pressureAbs,  tempF)
 
@@ -342,7 +373,13 @@ const assumedWaterViscosity = 1.0 #centipoise
 #%% Interfacial tension
 
 """
-Baker and Swerdloff? see https://www.ihsenergy.ca/support/documentation_ca/Harmony/content/html_files/reference_material/calculations_and_correlations/pressure_loss_calculations.htm
+gas_oil_interfacialtension(APIoil, pressureAbsolute, tempF)
+
+Gas-oil interfactial tension in dynes/cm.
+
+Takes oil API, absolute pressure (psia), temp (°F).
+
+Possibly Baker Swerdloff method; same method utilized by [Fekete](https://www.ihsenergy.ca/support/documentation_ca/Harmony/content/html_files/reference_material/calculations_and_correlations/pressure_loss_calculations.htm)
 """
 function gas_oil_interfacialtension(APIoil, pressureAbsolute, tempF)
 
@@ -362,7 +399,13 @@ end
 
 
 """
-Baker and Swerdloff? see https://www.ihsenergy.ca/support/documentation_ca/Harmony/content/html_files/reference_material/calculations_and_correlations/pressure_loss_calculations.htm
+function gas_water_interfacialtension(pressureAbsolute, tempF)
+
+Gas-water interfactial tension in dynes/cm.
+
+Takes absolute pressure (psia), temp (°F).
+
+Possibly Baker Swerdloff method; same method utilized by [Fekete](https://www.ihsenergy.ca/support/documentation_ca/Harmony/content/html_files/reference_material/calculations_and_correlations/pressure_loss_calculations.htm)
 """
 function gas_water_interfacialtension(pressureAbsolute, tempF)
 

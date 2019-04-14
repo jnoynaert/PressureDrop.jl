@@ -8,6 +8,10 @@ push!(LOAD_PATH, @__DIR__) #enable separate loading of PressurePlots.jl
 #TODO: @inbounds master loop
 #TODO: add test/runtests.jl per Takacs results, or per a reference result from IHS, and run on every new build once you have a main loop in place
 
+#TODO: function to create temp traverse in main file, and use a Wellbore struct as an input, and wrap combining Ramey & Shiu
+#TODO: handle outlet pressures in psig for all inputs.
+
+
 export  Wellbore, traverse_topdown, read_survey,
         BeggsAndBrill,
         HagedornAndBrown,

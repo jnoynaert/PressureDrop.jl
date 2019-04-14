@@ -1,9 +1,23 @@
-"""
-Assumes flow has stabilized and transient time component does not change.
-WHP in psiA
-GLR in scf/bbl
+# temperature correlation functions for PressureDrop package.
 
-surprisingly sensitive to gas rate
+"""
+Shiu_Beggs_relaxationfactor(<arguments>)
+
+Generates the relaxation factor, A, needed for the Ramey method, for underspecified conditions.
+
+This correlation assumes flow has stabilized and that the transient time component f(t) is not changing.
+
+# Arguments
+All arguments are in U.S. field units.
+
+`q_o`: oil rate in stb/d
+`q_w`: water rate in stb/d
+`APIoil`: API oil gravity
+`sg_water`: water specific gravity
+`GLR`: gas:liquid ratio in scf/stb
+`sg_gas`: gas specific gravity
+`id`: flow path inner diameter in inches
+`whp`: wellhead/outlet absolute pressure in psia
 """
 function Shiu_Beggs_relaxationfactor(q_o, q_w, APIoil, sg_water, GLR, sg_gas, id, whp)
     outlet_pressure = whp - 14.67
@@ -26,9 +40,16 @@ end
 
 
 """
-geothermal gradient, g_g (°F per 100 ft)
-tvd FROM well bottom, z (ft)
-relaxation factor, A
+Ramey_wellboretemp(z, inclination, T_bh, A, G_g = 1.0)
+
+Estimates wellbore temp using Ramey 1962 method.
+
+#Arguments
+`z`: true vertical depth **from the bottom of the well**, ft
+`inclination`: inclination from vertical in degrees
+`T_bh`: bottomhole temperature, °F
+`A`: relaxation factor
+`G_g = 1.0`: geothermal gradient in °F per 100 ft of true vertical depth
 """
 function Ramey_wellboretemp(z, inclination, T_bh, A, G_g = 1.0)
 
@@ -46,8 +67,3 @@ function linear_wellboretemp(;WHT, BHT, well::Wellbore)
 
     return [WHT + depth * temp_slope for depth in well.tvd]
 end
-
-
-#TODO: function to create temp traverse in main file, and use a Wellbore struct as an input
-"""
-"""
