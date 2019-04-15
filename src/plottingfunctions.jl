@@ -1,10 +1,3 @@
-module PressurePlots
-
-using Gadfly
-using Compose
-
-export plot_pressure, plot_temperature, plot_pressureandtemp
-
 """
 plot_pressure(well::Wellbore, pressures, ctitle = nothing)
 
@@ -73,6 +66,3 @@ function plot_pressureandtemp(well::Wellbore, pressures, temps, ctitle = nothing
         hstack(compose(context(0, 0, 0.75, 1), render(pressure)),
                 compose(context(0.75, 1, 0.25, 1), render(temp)))
 end
-
-
-end #PressurePlots

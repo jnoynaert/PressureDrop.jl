@@ -69,7 +69,7 @@ parameters =    (rate = (A = 500, B = 250, C = 1000, D = 3000, E = 50),
                  WHT = (A = 100, B = 90, C = 105, D = 115, E = 80))
 
 #%% load test Wellbore
-testpath = joinpath(dirname(pathof(PressureDrop)), "..", "test/testdata/Sawgrass 9-32")
+testpath = joinpath(dirname(dirname(pathof(PressureDrop))), "test/testdata/Sawgrass 9-32")
 surveypath = joinpath(testpath, "Test survey - sawgrass 9.csv")
 testwell = read_survey(path = surveypath, id = id)
 

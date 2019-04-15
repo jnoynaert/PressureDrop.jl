@@ -4,11 +4,12 @@
 
 module PressureDrop
 
-push!(LOAD_PATH, @__DIR__) #enable separate loading of PressurePlots.jl
+using Requires
 
-import Base.show
+import Base.show #to export Wellbore printing method
 
 export  Wellbore, traverse_topdown, read_survey, pressure_and_temp,
+        plot_pressure, plot_temperature, plot_pressureandtemp,
         BeggsAndBrill,
         HagedornAndBrown,
         Shiu_wellboretemp, Ramey_temp, Shiu_Beggs_relaxationfactor, linear_wellboretemp,
@@ -305,6 +306,10 @@ function pressure_and_temp(;well::Wellbore, roughness, temperature_method = "lin
                                 dead_oil_viscosity_correlation = dead_oil_viscosity_correlation, live_oil_viscosity_correlation = live_oil_viscosity_correlation, frictionfactor = frictionfactor)
 
     return pressures, temps
+end
+
+function __init__()
+    @require Gadfly = "c91e804a-d5a3-530f-b6f0-dfbca275c004" include("plottingfunctions.jl")
 end
 
 end #module PressureDrop

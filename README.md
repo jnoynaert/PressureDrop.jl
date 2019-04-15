@@ -7,11 +7,24 @@ Note that all calculations and inputs are currently in U.S. field units.
 
 # Installation
 
-TODO: register package & add instructions
+From the Julia prompt: press `]`, then type `add Julia`.
+In Jupyter: execute a cell containing `using Pkg; Pkg.add("PressureDrop")`.
 
-# Example usage
+# Usage
 
-TODO: add notebook exmaples
+```
+using PressureDrop
+
+build well
+
+use combined wrapper
+
+using Gadfly #necessary to make integrated plotting functions available
+
+call plots
+```
+
+TODO: add additional examples in notebook.
 
 # Supported correlations
 
@@ -26,4 +39,4 @@ The pressure drop calculations converge quickly enough in most cases that specia
 
 For bulk calculations, note that as always with Julia, the best performance will be achieved by wrapping any calculations in a function, e.g. a `main()` block, to enable proper type inference by the compiler.
 
-Plotting functions are loaded separately by `import`ing or `using` the integrated `PressurePlots` module, to allow avoiding the startup overhead of the `Gadfly` plotting dependency.
+Plotting functions are lazily loaded to avoid the overhead of the `Gadfly` plotting dependency.
