@@ -1,4 +1,4 @@
-# PressureDrop.jl
+# PressureDrop.jl [![Build Status](https://travis-ci.org/jnoynaert/PressureDrop.jl.svg?branch=master)](https://travis-ci.org/jnoynaert/PressureDrop.jl)
 Julia package for computing multiphase pressure profiles for gas lift optimization of oil &amp; gas wells.
 
 Currently calculates outlet-referenced models for producing wells using non-coupled temperature gradients.
