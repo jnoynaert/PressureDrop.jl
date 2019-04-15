@@ -21,7 +21,7 @@ function LeeGasViscosity(specificGravity, psiAbs, tempF, Z)
   X = 3.5 + (986.0/tempR) + 0.01*molecularWeight
   Y = 2.4 - 0.2*X
 
-  return K * exp(X * density^Y ); #in centipoise
+  return K * exp(X * density^Y ) #in centipoise
 end
 
 

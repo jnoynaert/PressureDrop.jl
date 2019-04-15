@@ -11,7 +11,7 @@ GLR = 1.762 * 1000^2 / (2219 + 11)
 sg_gas = 0.7
 id = 2.992
 whp = 150 + 14.7
-A = Shiu_Beggs_relaxationfactor(q_o, q_w, APIoil, sg_water, GLR, sg_gas, id, whp)
+A = Shiu_Beggs_relaxationfactor(q_o, q_w, GLR, APIoil, sg_water, sg_gas, id, whp)
 
 @test A ≈ 2089 atol = 1
 
@@ -19,8 +19,8 @@ g_g = 0.0106 * 100
 bht = 173
 z = 5985 - 0
 
-@test Ramey_wellboretemp(z, 0, bht, A, g_g) ≈ 130 atol = 2
-@test Ramey_wellboretemp(1, 0, bht, A, g_g) ≈ 173 atol = 0.1
+@test Ramey_temp(z, bht, A, g_g) ≈ 130 atol = 2
+@test Ramey_temp(1, bht, A, g_g) ≈ 173 atol = 0.1
 
 #= visual test
 depths = range(1, z, length = 100) ;

@@ -22,14 +22,7 @@ end
 
 #%% Beggs and Brill flowmap
 
-#=
-@test BeggsAndBrillFlowMap(x, y) == "segregated"
-@test BeggsAndBrillFlowMap(x, y) == "transition"
-@test BeggsAndBrillFlowMap(x, y) == "intermittent"
-@test BeggsAndBrillFlowMap(x, y) == "distributed"
-=#
-
-#= B&B flowmap graphical test, to make sure the correct mapping is generated: passed 3/7/2019.
+#= B&B flowmap graphical test, to make sure the correct mapping is generated
 # Re-run after any modifications to B&B flowmap function.
 # Note that this does not establish stability at the region boundaries.
 

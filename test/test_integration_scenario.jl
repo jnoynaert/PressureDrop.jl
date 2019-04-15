@@ -1,39 +1,3 @@
-#=General parameters for example runs
-BHT = 165
-
-WHP = 220 PSIG
-
-oil_API = 35
-sg_gas = 0.65
-CO2 = 0.5%
-N2 = 2%
-sg_water = 1.07
-roughness = 0.0006500
-
-settings for PVT:
-dead oil visco -> Glaso
-Saturated oil vis -> chew & ChewAndConnallySaturatedOilViscosity
-undersaturated -> vazquez
-gas -> Lee
-Water -> matthews & russell
-oil density -> standing
-bpp & R_S -> standing
-oil comp -> vazquez & beggs
-oil fvf -> standing
-Z -> Hall & Yarborough
-=
-
-survey = Sawgrass 9 to TD (12175 MD), first segment edited to 0 inclination (460 md/tvd)
-
-tubing id = 2.441
-=#
-
-#= for manual testing:
-cd("src")
-include("PressureDrop.jl")
-using .PressureDrop
-=#
-
 # helper function for testing to load the example results
 function load_example(path, ncol, delim = ',', skiplines = 1) #make sure to use nscenario+1 cols
 
@@ -82,7 +46,6 @@ function match_example(well::Wellbore, example::Array{Float64,2})
 
     return output
 end
-
 
 
 #%% general parameters
@@ -158,6 +121,7 @@ end
 
 end #testset for B&B scenarios
 
+
 @testset "Hagedorn & Brown with G&W correction - scenarios" begin
 
 # load test results to compare & generate interpolations from expected results at same depths as test well segmentation
@@ -192,4 +156,4 @@ for index in 2:length(scenarios)+1
     println("Max difference :", maximum(abs.(test_results[1:hz_index,index] .- matched_example[1:hz_index,index])))
 end
 
-end #TODO: need unit tests to dig into errored scenarios.
+end #H&B testset

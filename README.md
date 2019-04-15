@@ -9,12 +9,11 @@ Does not solve coupled temperature gradients.
 
 # Installation
 
-TODO: register package
-TODO: publish minimalist DockerHub container with just Julia, this package, and dependencies
+TODO: register package & add instructions
 
 # Example usage
 
-TODO. Add as a notebook
+TODO. Add as a notebook!
 
 # Supported correlations
 

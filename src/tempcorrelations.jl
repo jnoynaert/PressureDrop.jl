@@ -19,7 +19,7 @@ All arguments are in U.S. field units.
 `id`: flow path inner diameter in inches
 `whp`: wellhead/outlet absolute pressure in psia
 """
-function Shiu_Beggs_relaxationfactor(q_o, q_w, APIoil, sg_water, GLR, sg_gas, id, whp)
+function Shiu_Beggs_relaxationfactor(q_o, q_w, GLR, APIoil, sg_water, sg_gas, id, whp)
     outlet_pressure = whp - 14.67
     sg_oil = 141.5/(APIoil + 131.5)
     q_g = (q_o + q_w) * GLR
@@ -44,26 +44,58 @@ Ramey_wellboretemp(z, inclination, T_bh, A, G_g = 1.0)
 
 Estimates wellbore temp using Ramey 1962 method.
 
-#Arguments
+# Arguments
 `z`: true vertical depth **from the bottom of the well**, ft
-`inclination`: inclination from vertical in degrees
 `T_bh`: bottomhole temperature, °F
 `A`: relaxation factor
 `G_g = 1.0`: geothermal gradient in °F per 100 ft of true vertical depth
 """
-function Ramey_wellboretemp(z, inclination, T_bh, A, G_g = 1.0)
+function Ramey_temp(z, T_bh, A, G_g = 1.0)
 
     g_g = G_g / 100
-    α = (90 - inclination) * π / 180
 
-    return T_bh - g_g * z * sin(α) + A * g_g * sin(α) * (1 - exp(-z / A))
+    return T_bh - g_g * z + A * g_g * (1 - exp(-z / A)) #TODO: verify that the sin modification doesn't severely skew results
 end
 
 
 """
+linear_wellboretemp(;WHT, BHT, well::Wellbore)
+
+Linear temperature profile from a wellhead temperature and bottomhole temperature in °F for a Wellbore object.
+
+Interpolation is based on true vertical depth of the wellbore, not md.
 """
 function linear_wellboretemp(;WHT, BHT, well::Wellbore)
     temp_slope = (BHT - WHT) / maximum(well.tvd)
 
     return [WHT + depth * temp_slope for depth in well.tvd]
+end
+
+
+"""
+Shiu_wellboretemp(<named arguments>)
+
+Wrapper to compute temperature profile for a Wellbore object using Ramey correlation with Shiu relaxation factor correlation.
+
+# Arguments
+- `BHT`: bottomhole temperature in °F
+- `geothermal_gradient = 1.0`: geothermal gradient in °F per 100 feet
+- `well::Wellbore`: Wellbore object to use as reference for segmentation, inclination, and
+- `q_o`: oil rate in stb/d
+- `q_w`: water rate in stb/d
+- `GLR`: gas:liquid ratio in scf/day
+- `APIoil`: oil gravity
+- `sg_water`: water specific gravity
+- `sg_gas`: gas specific gravity
+- `WHP`
+"""
+function Shiu_wellboretemp(;BHT, geothermal_gradient = 1.0, well::Wellbore, q_o, q_w, GLR, APIoil, sg_water, sg_gas, WHP)
+
+    id_avg = sum(well.id)/length(well.id)
+    A = Shiu_Beggs_relaxationfactor(q_o, q_w, GLR, APIoil, sg_water, sg_gas, id_avg, WHP) #use average inner diameter to calculate relaxation factor
+    TD = maximum(well.tvd)
+    depths = TD .- well.tvd
+    temp_profile = [Ramey_temp(z, BHT, A, geothermal_gradient) for z in depths]
+
+    return temp_profile
 end
