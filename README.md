@@ -1,11 +1,9 @@
 # PressureDrop.jl
 Package for computing multiphase pressure profiles for gas lift optimization of oil &amp; gas wells.
 
-**Note that all calculations are currently in U.S. field units.**
-TODO: show example units for inputs.
+Currently calculates outlet-referenced models for producing wells using non-coupled temperature gradients.
 
-Does not solve coupled temperature gradients.
-
+Note that all calculations and inputs are currently in U.S. field units.
 
 # Installation
 
@@ -13,20 +11,19 @@ TODO: register package & add instructions
 
 # Example usage
 
-TODO. Add as a notebook!
+TODO: add notebook exmaples
 
 # Supported correlations
 
-TODO
+- Beggs and Brill 1973, with Payne correction factors. Best for inclined pipe.
+- Hagedorn and Brown 1965, with Griffith and Wallis bubble flow correction. Best for high water cuts.
 
-# Notes
-
-Note about applicable range of pvt correlations available
+Neither correlation accounts for oil-water phase slip.
 
 # Performance
 
 The pressure drop calculations converge quickly enough in most cases that special performance considerations do not need to be taken into account during interactive use.
 
-For bulk calculations, note that as always with Julia code, the best performance will be achieved by wrapping any calculations in a function, e.g. a `main()` block, to enable proper type inference by the compiler.
+For bulk calculations, note that as always with Julia, the best performance will be achieved by wrapping any calculations in a function, e.g. a `main()` block, to enable proper type inference by the compiler.
 
 Plotting functions are loaded separately by `import`ing or `using` the integrated `PressurePlots` module, to allow avoiding the startup overhead of the `Gadfly` plotting dependency.

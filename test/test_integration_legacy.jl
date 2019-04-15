@@ -28,6 +28,7 @@ oilVolumeFactor_correlation = StandingOilVolumeFactor
 waterVolumeFactor_correlation = GouldWaterVolumeFactor
 dead_oil_viscosity_correlation = GlasoDeadOilViscosity
 live_oil_viscosity_correlation = ChewAndConnallySaturatedOilViscosity
+frictionfactor = SerghideFrictionFactor
 error_tolerance = 1.0 #psi
 
 ΔP_est = PressureDrop.calculate_pressuresegment_topdown(pressurecorrelation, p_initial, dp_est, t_avg,
@@ -35,7 +36,7 @@ error_tolerance = 1.0 #psi
                                 q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
                                 pseudocrit_pressure_correlation, pseudocrit_temp_correlation, Z_correlation,
                                 gas_viscosity_correlation, solutionGORcorrelation, oilVolumeFactor_correlation, waterVolumeFactor_correlation,
-                                dead_oil_viscosity_correlation, live_oil_viscosity_correlation, error_tolerance)
+                                dead_oil_viscosity_correlation, live_oil_viscosity_correlation, frictionfactor, error_tolerance)
 
 @test ΔP_est ≈ 3770 * (0.170 + 0.312) / 2 atol = 100 #order of magnitude test based on average between example points in Takacs (50).
 

@@ -21,7 +21,7 @@ end
     @test StandingSolutionGOR(41.06, 0.916, 346.6, 80.3) ≈ 109.7 atol = 1
     @test StandingOilVolumeFactor(30.0, 0.6, 121.4, 800.0, 120.0) ≈ 1.07 atol = 0.05
     @test oilDensity_insitu(41.06,  0.916,  109.7,  1.05) ≈ 49.9 atol = 0.5
-    @test BeggsAndRobinsonDeadOilViscosity( 37.9,  120) ≈ 4.05 atol = 0.05 #TODO: find another test result. I don't trust the source of this one.
+    @test BeggsAndRobinsonDeadOilViscosity( 37.9,  120) ≈ 4.05 atol = 0.05
     @test GlasoDeadOilViscosity(37.9, 120) ≈ 2.30 atol = 0.1
     @test ChewAndConnallySaturatedOilViscosity(2.3, 769.0) ≈ 0.638 atol = 0.1
 

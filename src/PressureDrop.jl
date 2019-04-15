@@ -1,12 +1,14 @@
 # Package for computing multiphase pressure profiles for gas lift optimization of oil & gas wells
 
+#TODO: check with @code_warntype inside a main() block
+
 module PressureDrop
 
 push!(LOAD_PATH, @__DIR__) #enable separate loading of PressurePlots.jl
 
 import Base.show
 
-export  Wellbore, traverse_topdown, read_survey,
+export  Wellbore, traverse_topdown, read_survey, pressure_and_temp,
         BeggsAndBrill,
         HagedornAndBrown,
         Shiu_wellboretemp, Ramey_temp, Shiu_Beggs_relaxationfactor, linear_wellboretemp,
@@ -23,8 +25,7 @@ export  Wellbore, traverse_topdown, read_survey,
         ChewAndConnallySaturatedOilViscosity,
         GouldWaterVolumeFactor,
         SerghideFrictionFactor,
-        ChenFrictionFactor#,
-        #TODO: export other wrappers
+        ChenFrictionFactor
 
 
 """
@@ -149,39 +150,43 @@ end
 """
 traverse_topdown(;<named arguments>)
 
-Develop pressure traverse from wellhead down to datum, returning a pressure profile as an Array{Float64,1}.
+Develop pressure traverse from wellhead down to datum in psia, returning a pressure profile as an Array{Float64,1}.
+
+Pressure correlation functions available:
+- `BeggsAndBrill` with Payne correction factors
+- `HagedornAndBrown` with Griffith and Wallis bubble flow correction
 
 # Arguments
 
 All arguments are named keyword arguments.
 
 ## Required
--`wellbore::Wellbore`: Wellbore object that defines segmentation/mesh, with md, tvd, inclination, and hydraulic diameter
--`roughness`: pipe wall roughness in inches
--`temperatureprofile::Array{Float64, 1}`: temperature profile (in °F) as an array with **matching entries for each pipe segment defined in the Wellbore input**
--`outlet_pressure`: outlet pressure (wellhead pressure) in psia
--`dp_est`: estimated starting pressure differential (in psi) to use for all segments--impacts convergence time
--`q_o`: oil rate in stocktank barrels/day
--`q_w`: water rate in stb/d
--`GLR`: producing gas:liquid ratio at standard conditions in scf/bbl
--`APIoil`: API gravity of the produced oil
--`sg_water`: specific gravity of produced water
--`sg_gas`: specific gravity of produced gas
+- `wellbore::Wellbore`: Wellbore object that defines segmentation/mesh, with md, tvd, inclination, and hydraulic diameter
+- `roughness`: pipe wall roughness in inches
+- `temperatureprofile::Array{Float64, 1}`: temperature profile (in °F) as an array with **matching entries for each pipe segment defined in the Wellbore input**
+- `outlet_pressure`: absolute outlet pressure (wellhead pressure) in **psia**
+- `dp_est`: estimated starting pressure differential (in psi) to use for all segments--impacts convergence time
+- `q_o`: oil rate in stocktank barrels/day
+- `q_w`: water rate in stb/d
+- `GLR`: producing gas:liquid ratio at standard conditions in scf/bbl
+- `APIoil`: API gravity of the produced oil
+- `sg_water`: specific gravity of produced water
+- `sg_gas`: specific gravity of produced gas
 
 ## Optional
--`pressurecorrelation::Function: pressure correlation to use
--`error_tolerance = 0.1`: error tolerance for each segment in psi
--`molFracCO2 = 0.0`, `molFracH2S = 0.0`: produced gas fractions of hydrogen sulfide and CO2, [0,1]
--`pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure`: psuedocritical pressure function to use
--`pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp`: pseudocritical temperature function to use
--`Z_correlation::Function = KareemEtAlZFactor`: natural gas compressibility/Z-factor correlation to use
--`gas_viscosity_correlation::Function = LeeGasViscosity`: gas viscosity correlation to use
--`solutionGORcorrelation::Function = StandingSolutionGOR`: solution GOR correlation to use
--`oilVolumeFactor_correlation::Function = StandingOilVolumeFactor`: oil volume factor correlation to use
--`waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor`: water volume factor correlation to use
--`dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity`: dead oil viscosity correlation to use
--`live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity`: saturated oil viscosity correction function to use
--`frictionfactor::Function = SerghideFrictionFactor`: correlation function for Darcy-Weisbach friction factor
+- `pressurecorrelation::Function = BeggsAndBrill: pressure correlation to use
+- `error_tolerance = 0.1`: error tolerance for each segment in psi
+- `molFracCO2 = 0.0`, `molFracH2S = 0.0`: produced gas fractions of hydrogen sulfide and CO2, [0,1]
+- `pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure`: psuedocritical pressure function to use
+- `pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp`: pseudocritical temperature function to use
+- `Z_correlation::Function = KareemEtAlZFactor`: natural gas compressibility/Z-factor correlation to use
+- `gas_viscosity_correlation::Function = LeeGasViscosity`: gas viscosity correlation to use
+- `solutionGORcorrelation::Function = StandingSolutionGOR`: solution GOR correlation to use
+- `oilVolumeFactor_correlation::Function = StandingOilVolumeFactor`: oil volume factor correlation to use
+- `waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor`: water volume factor correlation to use
+- `dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity`: dead oil viscosity correlation to use
+- `live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity`: saturated oil viscosity correction function to use
+- `frictionfactor::Function = SerghideFrictionFactor`: correlation function for Darcy-Weisbach friction factor
 """
 function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Array{Float64, 1},
                             pressurecorrelation::Function = BeggsAndBrill,
@@ -218,7 +223,88 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
 end
 
 
-#TODO: pressure + temp wrapper function from Wellbore with passthrough arguments; allow linear or Shiu method temp
 
+"""
+pressure_and_temp(;<named arguments>)
+
+Develop pressure traverse in psia and temperature profile in °F from wellhead down to datum.
+
+Returns a pressure profile as an Array{Float64,1} and a temperature profile as an Array{Float64,1}, referenced to the measured depths in the original Wellbore object.
+
+Pressure correlation functions available:
+- `BeggsAndBrill` with Payne correction factors
+- `HagedornAndBrown` with Griffith and Wallis bubble flow correction
+
+Temperature methods available:
+- "Shiu" to utilize the Ramey 1962 method with the Shiu 1980 relaxation factor correlation
+- "linear" for a linear interpolation between wellhead and bottomhole temperature based on TVD
+
+# Arguments
+
+All arguments are named keyword arguments.
+
+## Required
+- `well::Wellbore`: Wellbore object that defines segmentation/mesh, with md, tvd, inclination, and hydraulic diameter
+- `roughness`: pipe wall roughness in inches
+- `temperature_method = "linear"`: temperature method to use; "Shiu" for Ramey method with Shiu relaxation factor, "linear" for linear interpolation
+- `WHT = nothing`: wellhead temperature in °F; required for `temperature_method = "linear"`
+- `geothermal_gradient = nothing`: geothermal gradient in °F per 100 ft; required for `temperature_method = "Shiu"`
+- `BHT` = bottomhole temperature in °F
+- `WHP`: absolute outlet pressure (wellhead pressure) in **psia**
+- `dp_est`: estimated starting pressure differential (in psi) to use for all segments--impacts convergence time
+- `q_o`: oil rate in stocktank barrels/day
+- `q_w`: water rate in stb/d
+- `GLR`: producing gas:liquid ratio at standard conditions in scf/bbl
+- `APIoil`: API gravity of the produced oil
+- `sg_water`: specific gravity of produced water
+- `sg_gas`: specific gravity of produced gas
+
+## Optional
+- `pressurecorrelation::Function = BeggsAndBrill: pressure correlation to use
+- `error_tolerance = 0.1`: error tolerance for each segment in psi
+- `molFracCO2 = 0.0`, `molFracH2S = 0.0`: produced gas fractions of hydrogen sulfide and CO2, [0,1]
+- `pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure`: psuedocritical pressure function to use
+- `pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp`: pseudocritical temperature function to use
+- `Z_correlation::Function = KareemEtAlZFactor`: natural gas compressibility/Z-factor correlation to use
+- `gas_viscosity_correlation::Function = LeeGasViscosity`: gas viscosity correlation to use
+- `solutionGORcorrelation::Function = StandingSolutionGOR`: solution GOR correlation to use
+- `oilVolumeFactor_correlation::Function = StandingOilVolumeFactor`: oil volume factor correlation to use
+- `waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor`: water volume factor correlation to use
+- `dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity`: dead oil viscosity correlation to use
+- `live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity`: saturated oil viscosity correction function to use
+- `frictionfactor::Function = SerghideFrictionFactor`: correlation function for Darcy-Weisbach friction factor
+- `outlet_referenced = true`: whether to use outlet pressure (WHP) or inlet pressure (BHP) for
+"""
+function pressure_and_temp(;well::Wellbore, roughness, temperature_method = "linear", WHT = nothing, geothermal_gradient = nothing, BHT,
+                            pressurecorrelation::Function = BeggsAndBrill,
+                            WHP, dp_est, error_tolerance = 0.1,
+                            q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
+                            pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp,
+                            Z_correlation::Function = KareemEtAlZFactor, gas_viscosity_correlation::Function = LeeGasViscosity, solutionGORcorrelation::Function = StandingSolutionGOR,
+                            oilVolumeFactor_correlation::Function = StandingOilVolumeFactor, waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor,
+                            dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity, frictionfactor::Function = SerghideFrictionFactor,
+                            outlet_referenced = true)
+
+    if temperature_method == "linear"
+        @assert WHT != nothing "Must specific a wellhead temperature to utilize linear temperature method."
+        temps = linearmethod(WHT = WHT, BHT = BHT, well = well)
+    elseif temperature_method == "Shiu"
+        @assert geothermal_gradient != nothing "Must specify a geothermal gradient to utilize Shiu/Ramey temperature method.\nRefer to published geothermal gradient maps for your region to establish a sensible default."
+        temps = Shiu_wellboretemp(BHT = BHT, geothermal_gradient = geothermal_gradient, well = well, q_o = q_o, q_w = q_w, GLR = GLR, APIoil = APIoil, sg_water = sg_water, sg_gas = sg_gas, WHP = WHP)
+    else
+        throw(ArgumentError("Invalid temperature method. Use one of (\"Shiu\", \"linear\")."))
+    end
+
+    pressures = traverse_topdown(wellbore = well, roughness = roughness, temperatureprofile = temps,
+                                pressurecorrelation = pressurecorrelation,
+                                outlet_pressure = WHP, dp_est = dp_est, error_tolerance = error_tolerance,
+                                q_o = q_o, q_w = q_w, GLR = GLR, APIoil = APIoil, sg_water = sg_water, sg_gas = sg_gas, molFracCO2 = molFracCO2, molFracH2S = molFracH2S,
+                                pseudocrit_pressure_correlation = pseudocrit_pressure_correlation, pseudocrit_temp_correlation = HankinsonWithWichertPseudoCriticalTemp,
+                                Z_correlation = Z_correlation, gas_viscosity_correlation = gas_viscosity_correlation, solutionGORcorrelation = solutionGORcorrelation,
+                                oilVolumeFactor_correlation = oilVolumeFactor_correlation, waterVolumeFactor_correlation = waterVolumeFactor_correlation,
+                                dead_oil_viscosity_correlation = dead_oil_viscosity_correlation, live_oil_viscosity_correlation = live_oil_viscosity_correlation, frictionfactor = frictionfactor)
+
+    return pressures, temps
+end
 
 end #module PressureDrop

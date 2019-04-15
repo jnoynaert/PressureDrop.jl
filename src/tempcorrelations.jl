@@ -54,7 +54,7 @@ function Ramey_temp(z, T_bh, A, G_g = 1.0)
 
     g_g = G_g / 100
 
-    return T_bh - g_g * z + A * g_g * (1 - exp(-z / A)) #TODO: verify that the sin modification doesn't severely skew results
+    return T_bh - g_g * z + A * g_g * (1 - exp(-z / A))
 end
 
 
