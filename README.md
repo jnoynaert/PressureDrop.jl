@@ -27,7 +27,7 @@ julia> pressures, temps = pressure_and_temp(well = example_well, q_o = 250, q_w 
                                     temperature_method = "Shiu", geothermal_gradient = 1.0, BHT = 165);
 
 Flowing bottomhole pressure of 963.3 psia at 7975.0' MD.
-Average gradient 9.088 psi/ft.
+Average gradient 0.121 psi/ft (MD), 0.136 psi/ft (TVD).
 
 julia> using Gadfly #necessary to make integrated plotting functions available
 

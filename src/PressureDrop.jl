@@ -305,7 +305,9 @@ function pressure_and_temp(;well::Wellbore, roughness, temperature_method = "lin
                                 oilVolumeFactor_correlation = oilVolumeFactor_correlation, waterVolumeFactor_correlation = waterVolumeFactor_correlation,
                                 dead_oil_viscosity_correlation = dead_oil_viscosity_correlation, live_oil_viscosity_correlation = live_oil_viscosity_correlation, frictionfactor = frictionfactor)
 
-    println("Flowing bottomhole pressure of $(round(pressures[end], digits = 1)) psia at $(well.md[end])' MD. \nAverage gradient $(round(pressures[end]/length(well.md), digits = 3)) psi/ft.")
+    println("Flowing bottomhole pressure of $(round(pressures[end], digits = 1)) psia at $(well.md[end])' MD.",
+            "\nAverage gradient $(round(pressures[end]/well.md[end], digits = 3)) psi/ft (MD), $(round(pressures[end]/well.tvd[end], digits = 3)) psi/ft (TVD).")
+
     return pressures, temps
 end
 
