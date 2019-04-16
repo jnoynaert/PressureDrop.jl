@@ -32,9 +32,9 @@ Average gradient 9.088 psi/ft.
 julia> using Gadfly #necessary to make integrated plotting functions available
 
 julia> plot_pressureandtemp(example_well, pressures, temps) #expect a long time to first plot due to precompilation; subsequent calls will be faster
-
-![example plot](examples/exampleplot.svg)
 ```
+![example plot](examples/exampleplot.png)
+
 
 # Supported correlations
 
