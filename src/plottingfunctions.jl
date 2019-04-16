@@ -1,3 +1,6 @@
+using .Gadfly
+using Compose: compose, context
+
 """
 plot_pressure(well::Wellbore, pressures, ctitle = nothing)
 
@@ -7,7 +10,7 @@ See `traverse_topdown` and `pressure_and_temp`.
 """
 function plot_pressure(well::Wellbore, pressures, ctitle = nothing)
 
-        plot(layer(x = pressures, y = well.md, Geom.line, Theme(default_color = "darkblue")),
+        plot(layer(x = pressures, y = well.md, Geom.path),
                 Scale.x_continuous(format = :plain),
                 Guide.xlabel("Pressure (psia)"),
                 Scale.y_continuous(format = :plain),
@@ -26,7 +29,7 @@ See `linear_wellboretemp` and `Shiu_wellboretemp`.
 """
 function plot_temperature(well::Wellbore, temps, ctitle = nothing)
 
-        plot(x = temps, y = well.md, Geom.line, Theme(default_color = "red"),
+        plot(x = temps, y = well.md, Geom.path, Theme(default_color = "red"),
                 Scale.x_continuous(format = :plain),
                 Guide.xlabel("Temperature (°F)"),
                 Scale.y_continuous(format = :plain),
@@ -45,16 +48,16 @@ See `traverse_topdown`,`pressure_and_temp`, `linear_wellboretemp`, `Shiu_wellbor
 """
 function plot_pressureandtemp(well::Wellbore, pressures, temps, ctitle = nothing)
 
-        pressure = plot(x = pressures, y = well.md, Geom.line,
+        pressure = plot(x = pressures, y = well.md, Geom.path,
                 Scale.x_continuous(format = :plain),
                 Guide.xlabel("psia"),
                 Scale.y_continuous(format = :plain),
                 Guide.ylabel("Measured Depth (ft)"),
                 Guide.title(ctitle),
                 Coord.cartesian(yflip = true),
-                Theme(default_color = "darkblue", plot_padding=[5mm, 0mm, 5mm, 5mm]))
+                Theme(plot_padding=[5mm, 0mm, 5mm, 5mm]))
 
-        temp = plot(x = temps, y = well.md, Geom.line, Theme(default_color = "red"),
+        temp = plot(x = temps, y = well.md, Geom.path, Theme(default_color = "red"),
                 Scale.x_continuous(format = :plain),
                 Guide.xlabel("°F"),
                 Scale.y_continuous(labels = nothing),

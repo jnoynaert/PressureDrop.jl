@@ -48,7 +48,7 @@ end #testset Takacs B&B vertical
 
 #%% end to end test
 
-testpath = joinpath(dirname(dirname(pathof(PressureDrop))), "test/testdata/Cleveland 6/Test survey - Cleveland 6.csv")
+testpath = joinpath(dirname(dirname(pathof(PressureDrop))), "test/testdata/Cleveland_6/Test_survey_Cleveland_6.csv")
 
 testwell = read_survey(path = testpath, id_included = false, maxdepth = 10000, id = 2.441)
 test_temp = collect(range(85, 160, length = length(testwell.md)))
@@ -58,7 +58,7 @@ pressure_values = traverse_topdown(wellbore = testwell, roughness = 0.0006, temp
                                     q_o = 400, q_w = 500, GLR = 2000, APIoil = 36, sg_water = 1.05, sg_gas = 0.75,
                                     outlet_pressure = 150)
 
-ihs_data = joinpath(dirname(dirname(pathof(PressureDrop))), "test/testdata/Cleveland 6/Perform results - Cleveland 6 long.csv")
+ihs_data = joinpath(dirname(dirname(pathof(PressureDrop))), "test/testdata/Cleveland_6/Perform_results_cleveland_6_long.csv")
 ihs_pressures = [parse.(Float64, split(line, ',', keepempty = false)) for line in readlines(ihs_data)[2:end]] |>
                         x -> hcat(x...)'
 
@@ -67,7 +67,7 @@ ihs_pressures = [parse.(Float64, split(line, ',', keepempty = false)) for line i
 
 
 #= view results
-ihs_temps = "C:/pressuredrop.git/test/testdata/Cleveland 6/Perform temps - Cleveland 6 long.csv"
+ihs_temps = "C:/pressuredrop.git/test/testdata/Cleveland_6/Perform_temps_cleveland_6_long.csv"
 ihs_temps = [parse.(Float64, split(line, ',', keepempty = false)) for line in readlines(ihs_temps)[2:end]] |>
                         x -> hcat(x...)' ;
 

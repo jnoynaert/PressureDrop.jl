@@ -69,8 +69,8 @@ parameters =    (rate = (A = 500, B = 250, C = 1000, D = 3000, E = 50),
                  WHT = (A = 100, B = 90, C = 105, D = 115, E = 80))
 
 #%% load test Wellbore
-testpath = joinpath(dirname(dirname(pathof(PressureDrop))), "test/testdata/Sawgrass 9-32")
-surveypath = joinpath(testpath, "Test survey - sawgrass 9.csv")
+testpath = joinpath(dirname(dirname(pathof(PressureDrop))), "test/testdata/Sawgrass_9_32")
+surveypath = joinpath(testpath, "Test_survey_Sawgrass_9.csv")
 testwell = read_survey(path = surveypath, id = id)
 
 #%% generate linear temperature profiles
@@ -87,7 +87,7 @@ temp_profiles = NamedTuple{scenarios}(temps) #temp profiles labelled by scenario
 @testset "Beggs and Brill with Palmer correction - scenarios" begin
 
 # load test results to compare & generate interpolations from expected results at same depths as test well segmentation
-examplepath = joinpath(testpath,"Perform - B&B with Palmer correction.csv")
+examplepath = joinpath(testpath,"Perform_BandB_with_Palmer_correction.csv")
 test_example = load_example(examplepath, length(scenarios)+1)
 matched_example = match_example(testwell, test_example)
 
@@ -125,7 +125,7 @@ end #testset for B&B scenarios
 @testset "Hagedorn & Brown with G&W correction - scenarios" begin
 
 # load test results to compare & generate interpolations from expected results at same depths as test well segmentation
-examplepath = joinpath(testpath,"Perform - H&B with Griffith & Wallis.csv")
+examplepath = joinpath(testpath,"Perform_HandB_with_GriffithWallis.csv")
 test_example = load_example(examplepath, length(scenarios)+1)
 matched_example = match_example(testwell, test_example)
 
