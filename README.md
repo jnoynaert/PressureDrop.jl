@@ -14,7 +14,7 @@ In Jupyter: execute a cell containing `using Pkg; Pkg.add("PressureDrop")`.
 # Usage
 
 ```
-using PressureDrop
+julia> using PressureDrop
 
 julia> example_well = read_survey(path = path_to_survey, id = 2.441)
 

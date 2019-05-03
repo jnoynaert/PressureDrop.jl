@@ -10,14 +10,14 @@ This correlation assumes flow has stabilized and that the transient time compone
 # Arguments
 All arguments are in U.S. field units.
 
-`q_o`: oil rate in stb/d
-`q_w`: water rate in stb/d
-`APIoil`: API oil gravity
-`sg_water`: water specific gravity
-`GLR`: gas:liquid ratio in scf/stb
-`sg_gas`: gas specific gravity
-`id`: flow path inner diameter in inches
-`whp`: wellhead/outlet absolute pressure in psia
+- `q_o`: oil rate in stb/d
+- `q_w`: water rate in stb/d
+- `APIoil`: API oil gravity
+- `sg_water`: water specific gravity
+- `GLR`: gas:liquid ratio in scf/stb
+- `sg_gas`: gas specific gravity
+- `id`: flow path inner diameter in inches
+- `whp`: wellhead/outlet absolute pressure in psia
 """
 function Shiu_Beggs_relaxationfactor(q_o, q_w, GLR, APIoil, sg_water, sg_gas, id, whp)
     outlet_pressure = whp - 14.67
@@ -45,10 +45,10 @@ Ramey_wellboretemp(z, inclination, T_bh, A, G_g = 1.0)
 Estimates wellbore temp using Ramey 1962 method.
 
 # Arguments
-`z`: true vertical depth **from the bottom of the well**, ft
-`T_bh`: bottomhole temperature, °F
-`A`: relaxation factor
-`G_g = 1.0`: geothermal gradient in °F per 100 ft of true vertical depth
+- `z`: true vertical depth **from the bottom of the well**, ft
+- `T_bh`: bottomhole temperature, °F
+- `A`: relaxation factor
+- `G_g = 1.0`: geothermal gradient in °F per 100 ft of true vertical depth
 """
 function Ramey_temp(z, T_bh, A, G_g = 1.0)
 

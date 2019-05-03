@@ -20,7 +20,7 @@ Assumes the column order for the file is (MD, INC, TVD, <optional ID>), in U.S. 
 `id_included::Bool = false`: whether the survey segment ID is stored as a fourth column. This is the easiest option to include tapered strings.
 `id::Real = 2.441`: the diameter to assume for the entire wellbore length, if the ID is not included in the survey file.
 """
-function read_survey(;path::String, delim::Char = ',', skiplines::Int64 = 1, maxdepth::Union{Bool, Real} = false, id_included::Bool = false, id::Real = 2.441)
+function read_survey(;path::String, delim::Char = ',', skiplines::Int64 = 1, maxdepth::Union{Bool, Real} = false, id_included::Bool = false, id::Real = 2.441, allow_negatives::Bool = false)
 
     nlines = countlines(path) - skiplines
     ncols = id_included ? 4 : 3
@@ -44,6 +44,6 @@ function read_survey(;path::String, delim::Char = ',', skiplines::Int64 = 1, max
         output = output[output[:,1] .<= maxdepth, :]
     end
 
-    return id_included ? Wellbore(output[:,1], output[:,2], output[:,3], output[:,4]) :
-        Wellbore(output[:,1], output[:,2], output[:,3], id)
+    return id_included ? Wellbore(output[:,1], output[:,2], output[:,3], output[:,4], allow_negatives) :
+        Wellbore(output[:,1], output[:,2], output[:,3], id, allow_negatives)
 end
