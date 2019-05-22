@@ -8,8 +8,8 @@ using Requires
 
 import Base.show #to export Wellbore printing method
 
-export  Wellbore, traverse_topdown, read_survey, pressure_and_temp,
-        plot_pressure, plot_temperature, plot_pressureandtemp,
+export  Wellbore, traverse_topdown, casing_traverse_topdown, read_survey, pressure_and_temp,
+        plot_pressure, plot_gaslift_pressures, plot_temperature, plot_pressureandtemp, plot_gaslift,
         BeggsAndBrill,
         HagedornAndBrown,
         Shiu_wellboretemp, Ramey_temp, Shiu_Beggs_relaxationfactor, linear_wellboretemp,
@@ -87,8 +87,14 @@ Base.show(io::IO, well::Wellbore) = print(io,
 
 include("pvtproperties.jl")
 include("pressurecorrelations.jl")
+include("casingcalculations.jl")
 include("tempcorrelations.jl")
 include("utilities.jl")
+
+
+function __init__()
+    @require Gadfly = "c91e804a-d5a3-530f-b6f0-dfbca275c004" include("plottingfunctions.jl")
+end
 
 
 """
@@ -328,10 +334,5 @@ end
 
 
 # derate tubing temp by 10-15% to get casing temp--set this as a default
-
-
-function __init__()
-    @require Gadfly = "c91e804a-d5a3-530f-b6f0-dfbca275c004" include("plottingfunctions.jl")
-end
 
 end #module PressureDrop
