@@ -17,10 +17,10 @@ All arguments are in U.S. field units.
 - `GLR`: gas:liquid ratio in scf/stb
 - `sg_gas`: gas specific gravity
 - `id`: flow path inner diameter in inches
-- `whp`: wellhead/outlet absolute pressure in psia
+- `WHP`: wellhead/outlet absolute pressure in psia
 """
-function Shiu_Beggs_relaxationfactor(q_o, q_w, GLR, APIoil, sg_water, sg_gas, id, whp)
-    outlet_pressure = whp - 14.67
+function Shiu_Beggs_relaxationfactor(q_o, q_w, GLR, APIoil, sg_water, sg_gas, id, WHP)
+    outlet_pressure = WHP - 14.67
     sg_oil = 141.5/(APIoil + 131.5)
     q_g = (q_o + q_w) * GLR
     w = 1/86400 * (350*(q_o*sg_oil + q_w*sg_water) + 0.0764*q_g*sg_gas) #mass flow rate in lb/sec
@@ -87,7 +87,7 @@ Wrapper to compute temperature profile for a Wellbore object using Ramey correla
 - `APIoil`: oil gravity
 - `sg_water`: water specific gravity
 - `sg_gas`: gas specific gravity
-- `WHP`
+- `WHP`: wellhead/outlet absolute pressure in psia
 """
 function Shiu_wellboretemp(;BHT, geothermal_gradient = 1.0, well::Wellbore, q_o, q_w, GLR, APIoil, sg_water, sg_gas, WHP)
 

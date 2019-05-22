@@ -7,9 +7,9 @@ Note that all calculations and inputs are currently in U.S. field units.
 
 # Installation
 
-From the Julia prompt: press `]`, then type `add Julia`.
+From the Julia prompt: press `]`, then type `add PressureDrop`.
 
-In Jupyter: execute a cell containing `using Pkg; Pkg.add("PressureDrop")`.
+Alternatively, in Jupyter: execute a cell containing `using Pkg; Pkg.add("PressureDrop")`.
 
 # Usage
 

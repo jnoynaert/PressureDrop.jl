@@ -140,8 +140,6 @@ function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_init
         dp_est = dp_calc
         p_avg = p_initial + dp_est/2
 
-        P_pc = pseudocrit_pressure_correlation(sg_gas, molFracCO2, molFracH2S)
-        _, T_pc, _ = pseudocrit_temp_correlation(sg_gas, molFracCO2, molFracH2S)
         Z = Z_correlation(P_pc, T_pc, p_avg, t_avg)
         ρ_g = gasDensity_insitu(sg_gas, Z, p_avg, t_avg)
         B_g = gasVolumeFactor(p_avg, Z, t_avg)
@@ -327,6 +325,10 @@ function pressure_and_temp(;well::Wellbore, roughness, temperature_method = "lin
 
     return pressures, temps
 end
+
+
+# derate tubing temp by 10-15% to get casing temp--set this as a default
+
 
 function __init__()
     @require Gadfly = "c91e804a-d5a3-530f-b6f0-dfbca275c004" include("plottingfunctions.jl")

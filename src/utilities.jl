@@ -13,12 +13,12 @@ Assumes the column order for the file is (MD, INC, TVD, <optional ID>), in U.S. 
 
 # Arguments
 
-`path::String`: absolute or relative path to survey file
-`delim::Char = ','`: file delimiter
-`skiplines::Int64 = 1`: number of lines to skip before survey data starts; assumes a 1-line header by default
-`maxdepth::Union{Bool, Real} = false`: If set to a real number, drop survey data past a certain measured depth. If false, keep the entire survey.
-`id_included::Bool = false`: whether the survey segment ID is stored as a fourth column. This is the easiest option to include tapered strings.
-`id::Real = 2.441`: the diameter to assume for the entire wellbore length, if the ID is not included in the survey file.
+- `path::String`: absolute or relative path to survey file
+- `delim::Char = ','`: file delimiter
+- `skiplines::Int64 = 1`: number of lines to skip before survey data starts; assumes a 1-line header by default
+- `maxdepth::Union{Bool, Real} = false`: If set to a real number, drop survey data past a certain measured depth. If false, keep the entire survey.
+- `id_included::Bool = false`: whether the survey segment ID is stored as a fourth column. This is the easiest option to include tapered strings.
+- `id::Real = 2.441`: the diameter to assume for the entire wellbore length, if the ID is not included in the survey file.
 """
 function read_survey(;path::String, delim::Char = ',', skiplines::Int64 = 1, maxdepth::Union{Bool, Real} = false, id_included::Bool = false, id::Real = 2.441, allow_negatives::Bool = false)
 
