@@ -8,8 +8,9 @@ using Requires
 
 import Base.show #to export Wellbore printing method
 
-export  Wellbore, traverse_topdown, casing_traverse_topdown, read_survey, pressure_and_temp,
+export  Wellbore, GasliftValves, traverse_topdown, casing_traverse_topdown, read_survey, pressure_and_temp,
         plot_pressure, plot_gaslift_pressures, plot_temperature, plot_pressureandtemp, plot_gaslift,
+        valve_table, estimate_valve_Rvalue,
         BeggsAndBrill,
         HagedornAndBrown,
         Shiu_wellboretemp, Ramey_temp, Shiu_Beggs_relaxationfactor, linear_wellboretemp,
@@ -49,6 +50,7 @@ To bypass both the error checking and convenience feature, pass `true` as the fi
 `Wellbore(md, inc, tvd, id::Float64, allow_negatives = false)`: defines a new Wellbore object with a uniform ID along the entire flow path.
 """
 struct Wellbore
+
     md::Array{Float64, 1}
     inc::Array{Float64, 1}
     tvd::Array{Float64, 1}
@@ -75,14 +77,14 @@ struct Wellbore
             new(md, inc, tvd, id) :
             throw(DimensionMismatch("Mismatched number of wellbore elements used in wellbore constructor."))
     end
-end
+end #struct Wellbore
 
 #convenience constructor for uniform tubulars
 Wellbore(md, inc, tvd, id::Float64, allow_negatives = false) = Wellbore(md, inc, tvd, repeat([id], inner = length(md)), allow_negatives)
 
 #Printing for Wellbore structs
 Base.show(io::IO, well::Wellbore) = print(io,
-    "Wellbore with $(length(well.md)) segments.\nEnds at $(well.md[end])' MD / $(well.tvd[end])' TVD. \nMax inclination $(maximum(well.inc))°. Average ID $(round(sum(well.id)/length(well.id), digits = 3)) in.")
+    "Wellbore with $(length(well.md)) points.\nEnds at $(well.md[end])' MD / $(well.tvd[end])' TVD. \nMax inclination $(maximum(well.inc))°. Average ID $(round(sum(well.id)/length(well.id), digits = 3)) in.")
 
 
 include("pvtproperties.jl")
@@ -142,7 +144,7 @@ function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_init
                                     v_sl, v_sg, ρ_l, ρ_g, σ_l, μ_l, μ_g, roughness, p_avg, frictionfactor,
                                     uphill_flow)
 
-    while abs(dp_est - dp_calc) >= error_tolerance
+    while abs(dp_est - dp_calc) > error_tolerance
         dp_est = dp_calc
         p_avg = p_initial + dp_est/2
 

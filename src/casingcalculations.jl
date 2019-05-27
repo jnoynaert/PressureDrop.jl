@@ -23,7 +23,7 @@ function casing_pressuresegment_topdown(p_initial, dp_est, t_avg,
 
     dp_calc = (1/144.0) * ρ_g * dh_tvd
 
-    while abs(dp_est - dp_calc) >= error_tolerance
+    while abs(dp_est - dp_calc) > error_tolerance
         dp_est = dp_calc
         p_avg = p_initial + dp_est/2
 

@@ -3,7 +3,7 @@ Julia package for computing multiphase pressure profiles for gas lift optimizati
 
 Currently calculates outlet-referenced models for producing wells using non-coupled temperature gradients.
 
-Note that all calculations and inputs are currently in U.S. field units.
+Note that all inputs and calculations are in U.S. field units.
 
 # Installation
 
@@ -36,12 +36,12 @@ julia> plot_pressureandtemp(example_well, pressures, temps) #expect a long time 
 ![example plot](examples/exampleplot.png)
 
 
-# Supported correlations
+# Supported pressure correlations
 
-- Beggs and Brill 1973, with Payne correction factors. Best for inclined pipe.
-- Hagedorn and Brown 1965, with Griffith and Wallis bubble flow correction.
+- Beggs and Brill, with the Payne correction factors. Best for inclined pipe.
+- Hagedorn and Brown, with the Griffith and Wallis bubble flow adjustment.
 
-Neither correlation accounts for oil-water phase slip.
+Neither correlation accounts for oil-water phase slip. Both are assume **steady-state conditions**.
 
 # Performance
 
