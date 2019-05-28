@@ -88,13 +88,14 @@ In general, T-C will be optimistic, but should be expected to have an effective 
 - `T_cd`: gas (casing fluid) temperature at depth, °F
 - `portsize_64ths`: valve port size in 64ths inch
 - `sg_gas`: gas specific gravity relative to air
-- - `molFracCO2 = 0.0`, `molFracH2S = 0.0`: produced gas fractions of hydrogen sulfide and CO2, [0,1]
+- `molFracCO2 = 0.0`, `molFracH2S = 0.0`: produced gas fractions of hydrogen sulfide and CO2, [0,1]
+- `C_d = 0.827`: discharge coefficient--uses 0.827 by defaul to match original T-C
 - `Z_correlation::Function = KareemEtAlZFactor`: natural gas compressibility/Z-factor correlation to use
 - `pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure`: psuedocritical pressure function to use
 - `pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp`: pseudocritical temperature function to use
 """
 function ThornhillCraver_gaspassage(P_td, P_cd, T_cd, portsize_64ths,
-                                    sg_gas, molFracCO2 = 0, molFracH2S = 0, Z_correlation::Function = KareemEtAlZFactor, pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp)
+                                    sg_gas, molFracCO2 = 0, molFracH2S = 0, C_d = 0.827, Z_correlation::Function = KareemEtAlZFactor, pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp)
 
     if P_td > P_cd
         return 0
@@ -111,7 +112,7 @@ function ThornhillCraver_gaspassage(P_td, P_cd, T_cd, portsize_64ths,
     F_cf = (2/(k+1))^(k/(k-1)) #critical flow ratio
     F_du = max(P_td/P_cd, F_cf) #critical flow condition check
 
-    return A_p * 155.5 *  P_cd * sqrt(2 * 32.16 * k / (k-1) * (F_du^(2/k) - F_du^((k+1)/k))) / sqrt(Z * sg_gas * T_gd)
+    return C_d * A_p * 155.5 *  P_cd * sqrt(2 * 32.16 * k / (k-1) * (F_du^(2/k) - F_du^((k+1)/k))) / sqrt(Z * sg_gas * T_gd)
 end
 
 
@@ -158,6 +159,7 @@ function domepressure_downhole(PTRO, R, T_v, error_tolerance = 0.1, delta_est = 
 end
 
 
+#TODO: clean doc
 """
 
 **CAUTION**: All inputs are in psia, but PSO/PSCs are returned in psig for ease of interpretation.
@@ -189,8 +191,8 @@ function valve_calcs(valves::GasliftValves, well::Wellbore, sg_gas, tubing_press
     PVO = (P_bd .- (P_td .* valves.R)) ./ (1 .- valves.R) #valve opening pressure at depth
 
     csg_diffs = P_cd .- casing_pressures[1] #casing differential to depth
-    PSC = PVC .+ csg_diffs
-    PSO = PVO .+ csg_diffs
+    PSC = PVC .- csg_diffs
+    PSO = PVO .- csg_diffs
 
     T_C = ThornhillCraver_gaspassage.(P_td, P_cd, T_cd, valves.port, sg_gas)
 
@@ -205,13 +207,14 @@ end
 
 
 #TODO: switch this so that valve_table wraps valve_calcs
+#TODO: add doc
 """
 """
 function valve_table(valvedata)
-    header = ["GLV" "MD" "TVD" "PSO" "PSC" "Port" "R" "PPEF" "PTRO" "TP" "CP" "PVO" "PVC" "T_td" "T_cd" "Q_orifice" "Q_1" "Q_1.5";
+    header = ["GLV" "MD" "TVD" "PSO" "PSC" "Port" "R" "PPEF" "PTRO" "TP" "CP" "PVO" "PVC" "T_td" "T_cd" "Q_o" "Q_1.5" "Q_1";
                 "" "ft" "ft" "psig" "psig" "64ths" "" "%" "psig" "psia" "psia" "psia" "psia" "°F" "°F" "mcf/d" "mcf/d" "mcf/d"]
 
-    pretty_table(valvedata, header, unicode_rounded; header_crayon = crayon"yellow bold", formatter = ft_printf("%.0f", [1:6;8:17]))
+    pretty_table(valvedata, header, unicode_rounded; header_crayon = crayon"yellow bold", formatter = ft_printf("%.0f", [1:6;8:18]))
 end
 
 

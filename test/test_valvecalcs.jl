@@ -13,7 +13,7 @@ end
 
     seats = [7*4, 32, 5*8, 3*16]
     Hernandez_results = [3.15, 4.11, 6.36, 9.39] .* 1000
-    results = [0.827 * ThornhillCraver_gaspassage(420, 850, 150, s, 0.7) for s in seats]
+    results = [ThornhillCraver_gaspassage(420, 850, 150, s, 0.7) for s in seats]
     @test all(abs.(Hernandez_results .- results) .<= Hernandez_results .* 0.02) #2% tolerance to account for changing C_ds that aren't easily available (test cases use Winkler C_ds)
 
     @test ThornhillCraver_gaspassage(1200, 1100, 140, 16, 0.7) == 0

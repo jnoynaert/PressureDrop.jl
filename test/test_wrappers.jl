@@ -30,7 +30,8 @@ end
 end #testset for Wellbore object
 
 
-#%% setup
+@testset "Pressure and temp wrapper" begin
+
 segments = 100
 MDs = range(0, 5000, length = segments) |> collect
 incs = repeat([0], inner = segments)
@@ -43,9 +44,6 @@ pressures, temps = pressure_and_temp(well = well, roughness = 0.0006,
                                     pressurecorrelation = HagedornAndBrown, WHP = 350, dp_est = 25,
                                     q_o = 100, q_w = 500, GLR = 1200, APIoil = 35, sg_water = 1.1, sg_gas = 0.8)
 
-
-@testset "Pressure and temp wrapper" begin
-
 @test length(pressures) == length(temps) == segments
 @test pressures[1] == 350
 @test pressures[end] ≈ 1068 atol = 1
@@ -57,19 +55,34 @@ end #testset for pressure & temp wrapper
 
 @testset "Valve table" begin
 
-valves = GasliftValves([1000,3000,4500], [1100,1050,950], [0.073,0.073,0.073], [16,16,16])
-casing_pressures = casing_traverse_topdown(wellbore = well, temperatureprofile = temps,
-                                    CHP = 950, sg_gas = 0.7, dp_est = 10)
+#EHU 256H example using Weatherford method
 
-vdata = valve_calcs(valves, well, 0.8, pressures, casing_pressures, temps)
-valve_table(vdata)
+MDs = [0,1813, 2375, 2885, 3395]
+TVDs = [0,1800, 2350, 2850, 3350]
+incs = [0,0,0,0,0]
+id = 2.441
 
-#TODO: generate in Excel using valve sheet & gas passage calculator
+well = Wellbore(MDs, incs, TVDs, id)
+valves = GasliftValves([1813,2375,2885,3395], [1005,990,975,960], [0.073,0.073,0.073,0.073], [16,16,16,16])
+
+tubing_pressures = 14.7 .+ [150,837,850,840,831]
+casing_pressures = 1070 .+ 14.7 .+ [0,53,70,85,100]
+temps = [135,145,148,151,153]
+
+vdata = valve_calcs(valves, well, 0.72, tubing_pressures, casing_pressures, temps, temps)
+
+valve_table(vdata) #implicit test
+
+results = vdata[1:4, [5,13,12,4]] #PSC, PVC, PVO, PSO
+
 expected_results =
-[1;
- 1;
- 1]
+[1050. 1103 1124 1071;
+ 1023 1092 1111 1042;
+ 996  1080 1099 1015;
+ 968  1068 1087 987]
 
-@test expected_results == expected_results
+expected_results[:,2:3] = expected_results[:,2:3] .+ 14.7
+
+@test all(abs.(expected_results .- results) .< (expected_results .* 0.01)) #1% tolerance due to using TCFs versus PVT-based dome correction, as well as rounding errors
 
 end #testset for valve table
