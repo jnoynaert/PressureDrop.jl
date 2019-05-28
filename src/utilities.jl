@@ -83,7 +83,7 @@ function interpolate_all(well::Wellbore, properties::Array{Array{T,1},1} where T
         throw(DimensionMismatch("Property array lengths and number of wellbore survey points must match."))
     end
 
-    if !(all(points .<= well.md[end]) && all(points .== well.md[1]))
+    if !(all(points .<= well.md[end]) && all(points .>= well.md[1]))
         throw(DimensionMismatch("Interpolation points cannot be outside wellbore measured depth."))
     end
 
