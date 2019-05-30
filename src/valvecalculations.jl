@@ -1,24 +1,8 @@
 using PrettyTables
 
-
+#TODO: docs
 """
-struct Wellbore: object to define a flow path as an input for pressure drop calculations
-
-See `read_survey` for helper method to create a Wellbore object from deviation survey files.
-
-# Fields
-- `md::Array{Float64, 1}`: measured depth for each segment in feet
-- `inc::Array{Float64, 1}`: inclination from vertical for each segment in degrees, e.g. true vertical = 0°
-- `tvd::Array{Float64, 1}`: true vertical depth for each segment in feet
-- `id::Array{Float64, 1}`: inner diameter for each pip segment in inches
-
-# Constructors
-By default, negative depths are disallowed, and a 0 MD / 0 TVD point is added if not present, to allow graceful handling of outlet pressure definitions.
-To bypass both the error checking and convenience feature, pass `true` as the final argument to the constructor.
-
-`Wellbore(md, inc, tvd, id::Array{Float64, 1}, allow_negatives = false)`: defines a new Wellbore object from a survey with inner diameter defined for each segment. Lengths of each input array must be equal.
-
-`Wellbore(md, inc, tvd, id::Float64, allow_negatives = false)`: defines a new Wellbore object with a uniform ID along the entire flow path.
+Indicate orifice valves with an R-value and PTRO of 0.
 """
 struct GasliftValves
 
@@ -38,7 +22,7 @@ struct GasliftValves
         if any(R .> 1) || any(R .< 0)
             throw(ArgumentError("R-values are the area ratio of the port to the bellows and must be in [0, 1]."))
         elseif any(R .> 0.2)
-            @info "Large R-value entered--validate valve entry data."
+            @info "Large R-value(s) entered--validate valve entry data."
         end
 
         new(convert(Array{Float64,1}, md), convert(Array{Float64,1}, PTRO), convert(Array{Float64,1}, R), ports)
@@ -174,7 +158,7 @@ Note that:
 """
 function valve_calcs(valves::GasliftValves, well::Wellbore, sg_gas, tubing_pressures::Array{T, 1} where T <: Real, casing_pressures::Array{T, 1} where T <: Real,
                     tubing_temps::Array{T, 1} where T <: Real, casing_temps::Array{T, 1} where T <: Real = tubing_temps .* 0.85,
-                    one_inch_coefficient = 0.76, one_pt_five_inch_coefficient = 0.6)
+                    dp_min = 100, one_inch_coefficient = 0.76, one_pt_five_inch_coefficient = 0.6)
 
     interp_values = interpolate_all(well, [tubing_pressures, casing_pressures, tubing_temps, casing_temps, well.tvd], valves.md)
 
@@ -201,20 +185,36 @@ function valve_calcs(valves::GasliftValves, well::Wellbore, sg_gas, tubing_press
     PPEF = valves.R ./ (1 .- valves.R) .* 100 #production pressure effect factor
 
     # returns PSOs in psig to avoid confusion
-    return hcat(GLV_numbers, valves.md, interp_values[:,5], PSO .- 14.65, PSC .- 14.65, valves.port, valves.R, PPEF, valves.PTRO,
+    valvetable = hcat(GLV_numbers, valves.md, interp_values[:,5], PSO .- 14.65, PSC .- 14.65, valves.port, valves.R, PPEF, valves.PTRO,
                 P_td, P_cd, PVO, PVC, T_td, T_cd, T_C, T_C * one_inch_coefficient, T_C * one_pt_five_inch_coefficient)
+
+    #lowest valve where PVO <= CP && PVC > CP && R-value != 0
+    valve_ids = collect(1:length(valves.md))
+    active_valve_row = findlast(i -> P_cd[i] - P_td[i] >= dp_min && valves.R[i] > 0 && PVO[i] <= P_cd[i] && PVC[i] > P_cd[i], valve_ids) #only check non-orifice valves
+    if active_valve_row === nothing
+        if P_cd[end] - P_td[end] >= dp_min #operating on orifice valve
+            active_valve_row = length(valves.md)
+        else
+            active_valve_row = 1 #nominal lockout, but assume you are injecting on top valve
+        end
+    end
+    injection_depth = valves.md[active_valve_row]
+
+    return valvetable, injection_depth
 end
 
 
-#TODO: switch this so that valve_table wraps valve_calcs
 #TODO: add doc
 """
 """
-function valve_table(valvedata)
+function valve_table(valvedata, injection_depth)
     header = ["GLV" "MD" "TVD" "PSO" "PSC" "Port" "R" "PPEF" "PTRO" "TP" "CP" "PVO" "PVC" "T_td" "T_cd" "Q_o" "Q_1.5" "Q_1";
                 "" "ft" "ft" "psig" "psig" "64ths" "" "%" "psig" "psia" "psia" "psia" "psia" "°F" "°F" "mcf/d" "mcf/d" "mcf/d"]
 
-    pretty_table(valvedata, header, unicode_rounded; header_crayon = crayon"yellow bold", formatter = ft_printf("%.0f", [1:6;8:18]))
+    operating_valve = Highlighter((data, i, j) -> (data[i,2] == injection_depth), crayon"bg:dark_gray white bold")
+
+    pretty_table(valvedata, header, unicode_rounded; header_crayon = crayon"yellow bold",
+                 formatter = ft_printf("%.0f", [1:6;8:18]), highlighters = (operating_valve,))
 end
 
 

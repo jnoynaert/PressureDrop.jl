@@ -69,9 +69,9 @@ tubing_pressures = 14.7 .+ [150,837,850,840,831]
 casing_pressures = 1070 .+ 14.7 .+ [0,53,70,85,100]
 temps = [135,145,148,151,153]
 
-vdata = valve_calcs(valves, well, 0.72, tubing_pressures, casing_pressures, temps, temps)
+vdata, active_valve_row = valve_calcs(valves, well, 0.72, tubing_pressures, casing_pressures, temps, temps)
 
-valve_table(vdata) #implicit test
+valve_table(vdata, active_valve_row) #implicit test
 
 results = vdata[1:4, [5,13,12,4]] #PSC, PVC, PVO, PSO
 
@@ -86,3 +86,5 @@ expected_results[:,2:3] = expected_results[:,2:3] .+ 14.7
 @test all(abs.(expected_results .- results) .< (expected_results .* 0.01)) #1% tolerance due to using TCFs versus PVT-based dome correction, as well as rounding errors
 
 end #testset for valve table
+
+#TODO: add a wrapper test that also checks read_valves

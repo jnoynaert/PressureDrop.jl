@@ -1,7 +1,5 @@
 # Package for computing multiphase pressure profiles for gas lift optimization of oil & gas wells
 
-#TODO: check with @code_warntype inside a main() block
-
 module PressureDrop
 
 using Requires
@@ -334,7 +332,13 @@ function pressure_and_temp(;well::Wellbore, roughness, temperature_method = "lin
     return pressures, temps
 end
 
+#TODO: modify ALL tubing functions to allow injection points for tbg; take a natural GLR argument and injection depth argument that default to nothing so existing workflows don't break
+#^^require passing valves with wellbore creation to make new segments? <-- better option than making Wellbore mutable.
 
-# derate tubing temp by 10-15% to get casing temp--set this as a default
+# TODO:wrapper to also return casing pressure
+
+# TODO:wrapper to return tubing, casing pressures & temps, as well as recalculate with auto-calced injection point
+
+# TODO: modify every wrapper to take and return psig!! including in valvecalcs.
 
 end #module PressureDrop

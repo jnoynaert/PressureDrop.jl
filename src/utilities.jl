@@ -50,6 +50,41 @@ end
 
 
 """
+read_valves(;path::String, delim::Char = ',', skiplines::Int64 = 1)
+
+Expects a CSV with columns for [measured depth (ft)], [test rack opening pressure (psig)], [R-value (dimensionless)], [port size (diameter in 64ths inch)].
+
+Indicate orifice valves with an R-value and PTRO of 0.
+
+# Arguments
+- `path::String`: absolute or relative path to survey file
+- `delim::Char = ','`: file delimiter
+- `skiplines::Int64 = 1`: number of lines to skip before survey data starts; assumes a 1-line header by default
+"""
+function read_valves(;path::String, delim::Char = ',', skiplines::Int64 = 1)
+
+    nlines = countlines(path) - skiplines
+    output = Array{Float64, 2}(undef, nlines, 4)
+    filestream = open(path, "r")
+
+    try
+        for skip in 1:skiplines
+            readline(filestream)
+        end
+
+        for (index, line) in enumerate(eachline(filestream))
+            parsedline = parse.(Float64, split(line, delim, keepempty = false))
+            output[index, :] = parsedline
+        end
+    finally
+        close(filestream)
+    end
+
+    return GasliftValves(md, PTRO, R, port) #constructor will parse to appropriate types
+end
+
+
+"""
 interpolate(well::Wellbore, property::Array{Real,1}, point)
 
 Interpolate between points without any bounds checking.
