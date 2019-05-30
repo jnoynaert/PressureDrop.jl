@@ -1,34 +1,5 @@
 using PrettyTables
 
-#TODO: docs
-"""
-Indicate orifice valves with an R-value and PTRO of 0.
-"""
-struct GasliftValves
-
-    md::Array{Float64,1}
-    PTRO::Array{Float64,1}
-    R::Array{Float64,1}
-    port::Array{Int8,1}
-
-    function GasliftValves(md::Array, PTRO::Array, R::Array, port::Array)
-
-        ports = try
-            convert(Array{Int8,1}, port)
-        catch
-            throw(ArgumentError("Specify port sizes in integer 64ths inches, e.g. 16 for a quarter-inch port."))
-        end
-
-        if any(R .> 1) || any(R .< 0)
-            throw(ArgumentError("R-values are the area ratio of the port to the bellows and must be in [0, 1]."))
-        elseif any(R .> 0.2)
-            @info "Large R-value(s) entered--validate valve entry data."
-        end
-
-        new(convert(Array{Float64,1}, md), convert(Array{Float64,1}, PTRO), convert(Array{Float64,1}, R), ports)
-    end
-end
-
 
 """
 ThornhillCraver_gaspassage_simplified(P_td, P_cd, T_cd, portsize_64ths)

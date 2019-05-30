@@ -18,3 +18,38 @@ end
 
     @test ThornhillCraver_gaspassage(1200, 1100, 140, 16, 0.7) == 0
 end
+
+
+@testset "Valve table" begin
+
+#EHU 256H example using Weatherford method
+
+MDs = [0,1813, 2375, 2885, 3395]
+TVDs = [0,1800, 2350, 2850, 3350]
+incs = [0,0,0,0,0]
+id = 2.441
+
+well = Wellbore(MDs, incs, TVDs, id)
+valves = GasliftValves([1813,2375,2885,3395], [1005,990,975,960], [0.073,0.073,0.073,0.073], [16,16,16,16])
+
+tubing_pressures = 14.7 .+ [150,837,850,840,831]
+casing_pressures = 1070 .+ 14.7 .+ [0,53,70,85,100]
+temps = [135,145,148,151,153]
+
+vdata, active_valve_row = valve_calcs(valves, well, 0.72, tubing_pressures, casing_pressures, temps, temps)
+
+valve_table(vdata, active_valve_row) #implicit test
+
+results = vdata[1:4, [5,13,12,4]] #PSC, PVC, PVO, PSO
+
+expected_results =
+[1050. 1103 1124 1071;
+ 1023 1092 1111 1042;
+ 996  1080 1099 1015;
+ 968  1068 1087 987]
+
+expected_results[:,2:3] = expected_results[:,2:3] .+ 14.7
+
+@test all(abs.(expected_results .- results) .< (expected_results .* 0.01)) #1% tolerance due to using TCFs versus PVT-based dome correction, as well as rounding errors
+
+end #testset for valve table

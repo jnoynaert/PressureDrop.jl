@@ -28,68 +28,14 @@ export  Wellbore, GasliftValves, traverse_topdown, casing_traverse_topdown, read
         ChenFrictionFactor
 
 
-"""
-struct Wellbore: object to define a flow path as an input for pressure drop calculations
-
-See `read_survey` for helper method to create a Wellbore object from deviation survey files.
-
-# Fields
-- `md::Array{Float64, 1}`: measured depth for each segment in feet
-- `inc::Array{Float64, 1}`: inclination from vertical for each segment in degrees, e.g. true vertical = 0°
-- `tvd::Array{Float64, 1}`: true vertical depth for each segment in feet
-- `id::Array{Float64, 1}`: inner diameter for each pip segment in inches
-
-# Constructors
-By default, negative depths are disallowed, and a 0 MD / 0 TVD point is added if not present, to allow graceful handling of outlet pressure definitions.
-To bypass both the error checking and convenience feature, pass `true` as the final argument to the constructor.
-
-`Wellbore(md, inc, tvd, id::Array{Float64, 1}, allow_negatives = false)`: defines a new Wellbore object from a survey with inner diameter defined for each segment. Lengths of each input array must be equal.
-
-`Wellbore(md, inc, tvd, id::Float64, allow_negatives = false)`: defines a new Wellbore object with a uniform ID along the entire flow path.
-"""
-struct Wellbore
-
-    md::Array{Float64, 1}
-    inc::Array{Float64, 1}
-    tvd::Array{Float64, 1}
-    id::Array{Float64, 1}
-
-    function Wellbore(md, inc, tvd, id::Array{Float64, 1}, allow_negatives = false)
-        lens = length.([md, inc, tvd, id])
-
-        if !allow_negatives
-            if minimum(md) < 0 || minimum(tvd) < 0
-                throw(ArgumentError("Survey contains negative measured or true vertical depths. Pass the `allow_negatives` constructor flag if this is intentional."))
-            end
-
-            #add the origin/outlet reference point if missing
-            if !(md[1] == tvd[1] == 0)
-                md = vcat(0, md)
-                inc = vcat(0, inc)
-                tvd = vcat(0, tvd)
-                id = vcat(id[1], id)
-            end
-        end
-
-        count(x -> x == lens[1], lens) == length(lens) ?
-            new(md, inc, tvd, id) :
-            throw(DimensionMismatch("Mismatched number of wellbore elements used in wellbore constructor."))
-    end
-end #struct Wellbore
-
-#convenience constructor for uniform tubulars
-Wellbore(md, inc, tvd, id::Float64, allow_negatives = false) = Wellbore(md, inc, tvd, repeat([id], inner = length(md)), allow_negatives)
-
-#Printing for Wellbore structs
-Base.show(io::IO, well::Wellbore) = print(io,
-    "Wellbore with $(length(well.md)) points.\nEnds at $(well.md[end])' MD / $(well.tvd[end])' TVD. \nMax inclination $(maximum(well.inc))°. Average ID $(round(sum(well.id)/length(well.id), digits = 3)) in.")
-
-
-include("pvtproperties.jl")
-include("pressurecorrelations.jl")
-include("casingcalculations.jl")
-include("tempcorrelations.jl")
+#%% setup
+include("types.jl")
 include("utilities.jl")
+include("pvtproperties.jl")
+include("valvecalculations.jl")
+include("pressurecorrelations.jl")
+include("tempcorrelations.jl")
+include("casingcalculations.jl")
 
 
 function __init__()
@@ -97,6 +43,7 @@ function __init__()
 end
 
 
+#%% core functions
 """
 calculate_pressuresegment_topdown(<arguments>)
 
