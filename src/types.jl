@@ -1,9 +1,10 @@
-
-
-
-#%% structs
-#TODO: docs
 """
+struct GasliftValves: a type to define a string of gas lift valves for valve & pressure calculations.
+
+Constructor: `GasliftValves(md::Array, PTRO::Array, R::Array, port::Array)`
+
+Port sizes must be in integer increments of 64ths inches.
+
 Indicate orifice valves with an R-value and PTRO of 0.
 """
 struct GasliftValves
@@ -13,7 +14,7 @@ struct GasliftValves
     R::Array{Float64,1}
     port::Array{Int8,1}
 
-    function GasliftValves(md::Array, PTRO::Array, R::Array, port::Array)
+    function GasliftValves(md::Array{T} where T <: Real, PTRO::Array{T} where T <: Real, R::Array{T} where T <: AbstractFloat, port::Array{T} where T <: Int)
 
         ports = try
             convert(Array{Int8,1}, port)
@@ -33,7 +34,7 @@ end
 
 
 """
-struct Wellbore: object to define a flow path as an input for pressure drop calculations
+struct Wellbore: type to define a flow path as an input for pressure drop calculations
 
 See `read_survey` for helper method to create a Wellbore object from deviation survey files.
 
@@ -50,6 +51,8 @@ To bypass both the error checking and convenience feature, pass `true` as the fi
 `Wellbore(md, inc, tvd, id::Array{Float64, 1}, allow_negatives = false)`: defines a new Wellbore object from a survey with inner diameter defined for each segment. Lengths of each input array must be equal.
 
 `Wellbore(md, inc, tvd, id::Float64, allow_negatives = false)`: defines a new Wellbore object with a uniform ID along the entire flow path.
+
+`Wellbore(md, inc, tvd, id, valves::GasliftValves, allow_negatives = false)`: defines a new Wellbore object and adds interpolated survey points for each gas lift valve.
 """
 struct Wellbore
 
@@ -58,7 +61,7 @@ struct Wellbore
     tvd::Array{Float64, 1}
     id::Array{Float64, 1}
 
-    function Wellbore(md, inc, tvd, id::Array{Float64, 1}, allow_negatives = false)
+    function Wellbore(md, inc, tvd, id::Array{Float64, 1}, allow_negatives::Bool = false)
 
         lens = length.([md, inc, tvd, id])
 
@@ -85,31 +88,33 @@ struct Wellbore
 end #struct Wellbore
 
 #convenience constructor for uniform tubulars
-Wellbore(md, inc, tvd, id::Float64, allow_negatives = false) = Wellbore(md, inc, tvd, repeat([id], inner = length(md)), allow_negatives)
+Wellbore(md, inc, tvd, id::Float64, allow_negatives::Bool = false) = Wellbore(md, inc, tvd, repeat([id], inner = length(md)), allow_negatives)
 
 #convenience constructors to add reference depths for valves so that they can be used as injection points
 #TODO: add an error message to the injection point logic that makes it clear how to fix the problem if they don't use this constructor and you get an injection point that doesn't match the wellbore
-function Wellbore(md, inc, tvd, id, valves::GasliftValves, allow_negatives = false)
+function Wellbore(md, inc, tvd, id, valves::GasliftValves, allow_negatives::Bool = false)
 
     well = Wellbore(md, inc, tvd, id, allow_negatives)
 
-    for valve in valves
-        upper_index = searchsortedlast(well.md, valve.md)
+    for v in 1:length(valves.md)
 
-        if well.md[upper_index] != valve.md
-            lower_index = upper_md + 1 #also the target insertion position
-            insert!(well.md, lower_index, valve.md)
+        upper_index = searchsortedlast(well.md, valves.md[v])
+
+        if well.md[upper_index] != valves.md[v]
+            lower_index = upper_index + 1 #also the target insertion position
 
             x1, x2 = well.md[upper_index], well.md[lower_index]
             for property in [well.inc, well.tvd, well.id]
                 y1, y2 = property[upper_index], property[lower_index]
-                interpolated_value = (y1 + (y2 - y1)/(x2 - x1) * (valve.md - x1)
+                interpolated_value = y1 + (y2 - y1)/(x2 - x1) * (valves.md[v] - x1)
                 insert!(property, lower_index, interpolated_value)
             end
+
+            insert!(well.md, lower_index, valves.md[v])
         end
     end
 
-    return well #TODO: add a test in test_types.jl to make sure original objects did not change lengths
+    return well
 end
 
 

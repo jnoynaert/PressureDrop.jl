@@ -31,6 +31,24 @@ end #testset for Wellbore object
 
 @testset "Wellbore with valves" begin
 
-    @test false #TODO: test adding valves to a new wellbore object
+    md = [1.,2,3,4]
+    tvd = [2.,4,5,6]
+    inc = [0.,2,3,4]
+    id = [1.,1,1,1]
+    starting_length = length(md)
+
+    valve_md = [1.5,3.5]
+    PTRO = [1000, 900]
+    R = [0.07,0.07]
+    ports = [16,16]
+    valves = GasliftValves(valve_md, PTRO, R, ports)
+
+    well = Wellbore(md, inc, tvd, id, valves)
+
+    @test all(length.([md,tvd,inc,id]) .== starting_length)
+    @test well.md == [0,1,1.5,2,3,3.5,4]
+    @test well.tvd == [0,2.,3,4,5,5.5,6]
+    @test well.inc == [0,0.,1,2,3,3.5,4]
+    @test well.id == [1,1.,1,1,1,1,1]
 
 end
