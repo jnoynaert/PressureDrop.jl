@@ -7,7 +7,7 @@ using Requires
 import Base.show #to export Wellbore printing method
 
 export  Wellbore, GasliftValves, traverse_topdown, casing_traverse_topdown, read_survey, pressure_and_temp,
-        plot_pressure, plot_gaslift_pressures, plot_temperature, plot_pressureandtemp, plot_gaslift,
+        plot_pressure, plot_pressures, plot_temperature, plot_pressureandtemp, plot_gaslift,
         valve_table, estimate_valve_Rvalue,
         BeggsAndBrill,
         HagedornAndBrown,
@@ -216,6 +216,11 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
 end
 
 
+function BHP_summary(pressures, well)
+    println("Flowing bottomhole pressure of $(round(pressures[end], digits = 1)) psia at $(well.md[end])' MD.",
+        "\nAverage gradient $(round(pressures[end]/well.md[end], digits = 3)) psi/ft (MD), $(round(pressures[end]/well.tvd[end], digits = 3)) psi/ft (TVD).")
+end
+
 
 """
 pressure_and_temp(;<named arguments>)
@@ -300,18 +305,47 @@ function pressure_and_temp(;well::Wellbore, roughness, temperature_method = "lin
                                 oilVolumeFactor_correlation = oilVolumeFactor_correlation, waterVolumeFactor_correlation = waterVolumeFactor_correlation,
                                 dead_oil_viscosity_correlation = dead_oil_viscosity_correlation, live_oil_viscosity_correlation = live_oil_viscosity_correlation, frictionfactor = frictionfactor)
 
-    println("Flowing bottomhole pressure of $(round(pressures[end], digits = 1)) psia at $(well.md[end])' MD.",
-            "\nAverage gradient $(round(pressures[end]/well.md[end], digits = 3)) psi/ft (MD), $(round(pressures[end]/well.tvd[end], digits = 3)) psi/ft (TVD).")
+    BHP_summary(pressures, well)
 
     return pressures, temps
 end
 
-#TODO: modify ALL tubing functions to allow injection points for tbg; take a natural GLR argument and injection depth argument that defaults to nothing so existing workflows don't break
-#TODO: throw a warning if the injection point isn't included, and pick the first segment top after.
-#^^require passing valves with wellbore creation to make new segments? <-- better option than making Wellbore mutable.
 
-# TODO:wrapper to also return casing pressure
+#convenience wrapper
+#TODO: finish these wrappers
+function pressures_and_temp(;well::Wellbore, roughness, temperature_method = "linear", WHT = missing, geothermal_gradient = missing, BHT,
+                            pressurecorrelation::Function = BeggsAndBrill,
+                            WHP, dp_est, error_tolerance = 0.1,
+                            q_o, q_w, GLR, injection_point = missing, naturalGLR = missing,
+                            APIoil, sg_water, sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
+                            pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp,
+                            Z_correlation::Function = KareemEtAlZFactor, gas_viscosity_correlation::Function = LeeGasViscosity, solutionGORcorrelation::Function = StandingSolutionGOR,
+                            oilVolumeFactor_correlation::Function = StandingOilVolumeFactor, waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor,
+                            dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity, frictionfactor::Function = SerghideFrictionFactor,
+                            outlet_referenced = true,
+                            casing_temp_factor = 0.85,
+                            CHP, dp_est_inj,
+                            sg_gas_inj = sg_gas, molFracCO2_inj = molFracCO2, molFracH2S_inj = molFracH2S)
 
+    tubing_pressures, tubing_temps = pressure_and_temp(;well = well, roughness = roughness, temperature_method = temperature_method, WHT = missing, geothermal_gradient = missing, BHT,
+                            pressurecorrelation::Function = BeggsAndBrill,
+                            WHP, dp_est, error_tolerance = 0.1,
+                            q_o, q_w, GLR, injection_point = missing, naturalGLR = missing,
+                            APIoil, sg_water, sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
+                            pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp,
+                            Z_correlation::Function = KareemEtAlZFactor, gas_viscosity_correlation::Function = LeeGasViscosity, solutionGORcorrelation::Function = StandingSolutionGOR,
+                            oilVolumeFactor_correlation::Function = StandingOilVolumeFactor, waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor,
+                            dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity, frictionfactor::Function = SerghideFrictionFactor,
+                            outlet_referenced = true)
+
+    casing_pressures = casing_traverse_topdown(wellbore = wellbore, temperatureprofile = casing_temp_factor * tubing_temps,
+                                        CHP = CHP, dp_est = dp_est_inj, error_tolerance = error_tolerance,
+                                        sg_gas = sg_gas_inj, molFracCO2 = molFracCO2_inj, molFracH2S = molFracH2S_inj,
+                                        pseudocrit_pressure_correlation = pseudocrit_pressure_correlation, pseudocrit_temp_correlation = pseudocrit_temp_correlation,
+                                        Z_correlation = Z_correlation)
+
+    return tubing_pressures, casing_pressures, tubing_temps
+end
 # TODO:wrapper to return tubing, casing pressures & temps, as well as recalculate with auto-calced injection point
 
 # TODO: modify every wrapper to take and return psig!! including in valvecalcs.

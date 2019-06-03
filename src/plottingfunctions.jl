@@ -102,7 +102,7 @@ Plot pressure & temperature profiles for a given wellbore using the pressure & t
 
 See `traverse_topdown`,`pressure_and_temp`, `linear_wellboretemp`, `Shiu_wellboretemp`.
 """
-function plot_valves(well::Wellbore, tubing_pressures, casing_pressures, temps, ctitle = nothing, valvedata)
+function plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps, ctitle = nothing, valvedata)
 
         pressure = plot(layer(x = vcat(valvedata[:[12,13]]), Theme(default_color = "mediumpurple3")), #PVC and PVO
                         layer(x = tubing_pressures, y = well.md, Geom.path, Theme(default_color = "deepskyblue")),
