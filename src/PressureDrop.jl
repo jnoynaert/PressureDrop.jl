@@ -137,12 +137,14 @@ All arguments are named keyword arguments.
 - `dp_est`: estimated starting pressure differential (in psi) to use for all segments--impacts convergence time
 - `q_o`: oil rate in stocktank barrels/day
 - `q_w`: water rate in stb/d
-- `GLR`: producing gas:liquid ratio at standard conditions in scf/bbl
+- `GLR`: **total** wellhead gas:liquid ratio, inclusive of injection gas, in scf/bbl
 - `APIoil`: API gravity of the produced oil
 - `sg_water`: specific gravity of produced water
 - `sg_gas`: specific gravity of produced gas
 
 ## Optional
+- `injection_point = missing`: injection point in MD for gas lift, above which total GLR is used, and below which natural GLR is used
+- `naturalGLR = missing`: GLR to use below point of injection, in scf/bbl
 - `pressurecorrelation::Function = BeggsAndBrill: pressure correlation to use
 - `error_tolerance = 0.1`: error tolerance for each segment in psi
 - `molFracCO2 = 0.0`, `molFracH2S = 0.0`: produced gas fractions of hydrogen sulfide and CO2, [0,1]
@@ -160,7 +162,8 @@ All arguments are named keyword arguments.
 function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Array{Float64, 1},
                             pressurecorrelation::Function = BeggsAndBrill,
                             outlet_pressure, dp_est, error_tolerance = 0.1,
-                            q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
+                            q_o, q_w, GLR, injection_point = missing, naturalGLR = missing,
+                            APIoil, sg_water, sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
                             pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp,
                             Z_correlation::Function = KareemEtAlZFactor, gas_viscosity_correlation::Function = LeeGasViscosity, solutionGORcorrelation::Function = StandingSolutionGOR,
                             oilVolumeFactor_correlation::Function = StandingOilVolumeFactor, waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor,
@@ -169,6 +172,27 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
     nsegments = length(wellbore.md)
 
     @assert nsegments == length(temperatureprofile) "Number of wellbore segments does not match number of temperature points."
+
+    if !ismissing(injection_point) && !ismissing(naturalGLR)
+        inj_index = searchsortedlast(wellbore.md, injection_point)
+
+        if well.md[inj_index] != injection_point
+            if (injection_point - wellbore.md[inj_index]) > (wellbore.md[inj_index+1] - injection_point) #choose closest point
+                inj_index += 1
+            end
+
+            @info """Specified injection point at $injection_point not explicitly included in wellbore. Using $(well.md[inj_index]) as an approximate match.
+            Use the Wellbore constructor with a set of gas lift valves to add precise injection points."""
+        end
+
+        GLRs = vcat(repeat([GLR], inner = inj_index), repeat([naturalGLR], inner = nsegments - inj_index))
+    elseif !ismissing(injection_point) || !ismissing(naturalGLR)
+        @info "Both an injection point and natural GLR should be specified--ignoring partial specification."
+        GLRs = repeat([GLR], inner = nsegments)
+    else #no injection point
+        GLRs = repeat([GLR], inner = nsegments)
+    end
+
 
     pressures = Array{Float64, 1}(undef, nsegments)
     pressure_initial = pressures[1] = outlet_pressure
@@ -179,7 +203,7 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
                                                     wellbore.md[i-1], wellbore.md[i], wellbore.tvd[i-1], wellbore.tvd[i],
                                                     (wellbore.inc[i] + wellbore.inc[i-1])/2, #average inclination between survey points
                                                     wellbore.id[i], roughness,
-                                                    q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
+                                                    q_o, q_w, GLRs[i], APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
                                                     pseudocrit_pressure_correlation, pseudocrit_temp_correlation, Z_correlation,
                                                     gas_viscosity_correlation, solutionGORcorrelation, oilVolumeFactor_correlation, waterVolumeFactor_correlation,
                                                     dead_oil_viscosity_correlation, live_oil_viscosity_correlation, frictionfactor, error_tolerance)
@@ -216,19 +240,21 @@ All arguments are named keyword arguments.
 - `well::Wellbore`: Wellbore object that defines segmentation/mesh, with md, tvd, inclination, and hydraulic diameter
 - `roughness`: pipe wall roughness in inches
 - `temperature_method = "linear"`: temperature method to use; "Shiu" for Ramey method with Shiu relaxation factor, "linear" for linear interpolation
-- `WHT = nothing`: wellhead temperature in °F; required for `temperature_method = "linear"`
-- `geothermal_gradient = nothing`: geothermal gradient in °F per 100 ft; required for `temperature_method = "Shiu"`
+- `WHT = missing`: wellhead temperature in °F; required for `temperature_method = "linear"`
+- `geothermal_gradient = missing`: geothermal gradient in °F per 100 ft; required for `temperature_method = "Shiu"`
 - `BHT` = bottomhole temperature in °F
 - `WHP`: absolute outlet pressure (wellhead pressure) in **psia**
 - `dp_est`: estimated starting pressure differential (in psi) to use for all segments--impacts convergence time
 - `q_o`: oil rate in stocktank barrels/day
 - `q_w`: water rate in stb/d
-- `GLR`: producing gas:liquid ratio at standard conditions in scf/bbl
+- `GLR`: **total** wellhead gas:liquid ratio, inclusive of injection gas, in scf/bbl
 - `APIoil`: API gravity of the produced oil
 - `sg_water`: specific gravity of produced water
 - `sg_gas`: specific gravity of produced gas
 
 ## Optional
+- `injection_point = missing`: injection point in MD for gas lift, above which total GLR is used, and below which natural GLR is used
+- `naturalGLR = missing`: GLR to use below point of injection, in scf/bbl
 - `pressurecorrelation::Function = BeggsAndBrill: pressure correlation to use
 - `error_tolerance = 0.1`: error tolerance for each segment in psi
 - `molFracCO2 = 0.0`, `molFracH2S = 0.0`: produced gas fractions of hydrogen sulfide and CO2, [0,1]
@@ -244,10 +270,11 @@ All arguments are named keyword arguments.
 - `frictionfactor::Function = SerghideFrictionFactor`: correlation function for Darcy-Weisbach friction factor
 - `outlet_referenced = true`: whether to use outlet pressure (WHP) or inlet pressure (BHP) for
 """
-function pressure_and_temp(;well::Wellbore, roughness, temperature_method = "linear", WHT = nothing, geothermal_gradient = nothing, BHT,
+function pressure_and_temp(;well::Wellbore, roughness, temperature_method = "linear", WHT = missing, geothermal_gradient = missing, BHT,
                             pressurecorrelation::Function = BeggsAndBrill,
                             WHP, dp_est, error_tolerance = 0.1,
-                            q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
+                            q_o, q_w, GLR, injection_point = missing, naturalGLR = missing,
+                            APIoil, sg_water, sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
                             pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp,
                             Z_correlation::Function = KareemEtAlZFactor, gas_viscosity_correlation::Function = LeeGasViscosity, solutionGORcorrelation::Function = StandingSolutionGOR,
                             oilVolumeFactor_correlation::Function = StandingOilVolumeFactor, waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor,
@@ -255,10 +282,10 @@ function pressure_and_temp(;well::Wellbore, roughness, temperature_method = "lin
                             outlet_referenced = true)
 
     if temperature_method == "linear"
-        @assert WHT != nothing "Must specific a wellhead temperature to utilize linear temperature method."
+        @assert !(ismissing(WHT)) "Must specific a wellhead temperature to utilize linear temperature method."
         temps = linearmethod(WHT = WHT, BHT = BHT, well = well)
     elseif temperature_method == "Shiu"
-        @assert geothermal_gradient != nothing "Must specify a geothermal gradient to utilize Shiu/Ramey temperature method.\nRefer to published geothermal gradient maps for your region to establish a sensible default."
+        @assert !(ismissing(geothermal_gradient)) "Must specify a geothermal gradient to utilize Shiu/Ramey temperature method.\nRefer to published geothermal gradient maps for your region to establish a sensible default."
         temps = Shiu_wellboretemp(BHT = BHT, geothermal_gradient = geothermal_gradient, well = well, q_o = q_o, q_w = q_w, GLR = GLR, APIoil = APIoil, sg_water = sg_water, sg_gas = sg_gas, WHP = WHP)
     else
         throw(ArgumentError("Invalid temperature method. Use one of (\"Shiu\", \"linear\")."))
@@ -279,7 +306,8 @@ function pressure_and_temp(;well::Wellbore, roughness, temperature_method = "lin
     return pressures, temps
 end
 
-#TODO: modify ALL tubing functions to allow injection points for tbg; take a natural GLR argument and injection depth argument that default to nothing so existing workflows don't break
+#TODO: modify ALL tubing functions to allow injection points for tbg; take a natural GLR argument and injection depth argument that defaults to nothing so existing workflows don't break
+#TODO: throw a warning if the injection point isn't included, and pick the first segment top after.
 #^^require passing valves with wellbore creation to make new segments? <-- better option than making Wellbore mutable.
 
 # TODO:wrapper to also return casing pressure

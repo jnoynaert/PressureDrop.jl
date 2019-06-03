@@ -60,7 +60,7 @@ function plot_temperature(well::Wellbore, temps, ctitle = nothing)
 end
 
 
-#TODO: also plot valve opening and closing pressures as points
+
 """
 plot_pressureandtemp(well::Wellbore, tubing_pressures, casing_pressures, temps, ctitle = nothing, valvedepths = [])
 
@@ -71,8 +71,44 @@ See `traverse_topdown`,`pressure_and_temp`, `linear_wellboretemp`, `Shiu_wellbor
 function plot_pressureandtemp(well::Wellbore, tubing_pressures, casing_pressures, temps, ctitle = nothing, valvedepths = [])
 
         pressure = plot(layer(x = tubing_pressures, y = well.md, Geom.path, Theme(default_color = "deepskyblue")),
-                        layer(x = casing_pressures, y = well.md, Geom.path, Theme(default_color = "springgreen")),
+                        layer(x = casing_pressures, y = well.md, Geom.path, Theme(default_color = "mediumspringgreen")),
                         layer(yintercept = valvedepths, Geom.hline(color = "black")),
+                Scale.x_continuous(format = :plain),
+                Guide.xlabel("psia"),
+                Scale.y_continuous(format = :plain),
+                Guide.ylabel("Measured Depth (ft)"),
+                Guide.title(ctitle),
+                Coord.cartesian(yflip = true),
+                Theme(plot_padding=[5mm, 0mm, 5mm, 5mm]))
+
+        temp = plot(x = temps, y = well.md, Geom.path, Theme(default_color = "red"),
+                Scale.x_continuous(format = :plain),
+                Guide.xlabel("°F"),
+                Scale.y_continuous(labels = nothing),
+                Guide.yticks(label = false),
+                Guide.ylabel(nothing),
+                Coord.cartesian(yflip = true),
+                Theme(default_color = "red", plot_padding=[5mm, 5mm, 5mm, 5mm]))
+
+        hstack(compose(context(0, 0, 0.75, 1), render(pressure)),
+                compose(context(0.75, 1, 0.25, 1), render(temp)))
+end
+
+
+"""
+plot_pressureandtemp(well::Wellbore, tubing_pressures, casing_pressures, temps, ctitle = nothing, valvedepths = [])
+
+Plot pressure & temperature profiles for a given wellbore using the pressure & temperature outputs from the pressure traverse & temperature functions.
+
+See `traverse_topdown`,`pressure_and_temp`, `linear_wellboretemp`, `Shiu_wellboretemp`.
+"""
+function plot_valves(well::Wellbore, tubing_pressures, casing_pressures, temps, ctitle = nothing, valvedata)
+
+        pressure = plot(layer(x = vcat(valvedata[:[12,13]]), Theme(default_color = "mediumpurple3")), #PVC and PVO
+                        layer(x = tubing_pressures, y = well.md, Geom.path, Theme(default_color = "deepskyblue")),
+                        layer(x = casing_pressures, y = well.md, Geom.path, Theme(default_color = "mediumspringgreen")),
+                        layer(yintercept = valvedepths, Geom.hline(color = "black")),
+
                 Scale.x_continuous(format = :plain),
                 Guide.xlabel("psia"),
                 Scale.y_continuous(format = :plain),

@@ -156,6 +156,7 @@ function valve_calcs(valves::GasliftValves, well::Wellbore, sg_gas, tubing_press
     PPEF = valves.R ./ (1 .- valves.R) .* 100 #production pressure effect factor
 
     # returns PSOs in psig to avoid confusion
+    # NOTE: plot_valves in plottingfunctions.jl depends on the column order of this table for PVO/PVC
     valvetable = hcat(GLV_numbers, valves.md, interp_values[:,5], PSO .- 14.65, PSC .- 14.65, valves.port, valves.R, PPEF, valves.PTRO,
                 P_td, P_cd, PVO, PVC, T_td, T_cd, T_C, T_C * one_inch_coefficient, T_C * one_pt_five_inch_coefficient)
 
