@@ -90,4 +90,17 @@ function casing_traverse_topdown(;wellbore::Wellbore, temperatureprofile::Array{
     return pressures
 end
 
-# future addition of friction version should be added via multiple dispatch rather than branching logic
+
+"""
+Remaps casing traverse to work with WellModels
+"""
+function casing_traverse_topdown(m::WellModel)
+
+    casing_traverse_topdown(;wellbore = m.wellbore, temperatureprofile = m.temperatureprofile .* m.casing_temp_factor,
+                                        CHP = m.CHP, dp_est = m.dp_est_inj, error_tolerance = m.error_tolerance_inj,
+                                        sg_gas = m.sg_gas_inj, molFracCO2 = m.molFracCO2_inj, molFracH2S = m.molFracH2S_inj,
+                                        pseudocrit_pressure_correlation = pseudocrit_pressure_correlation,
+                                        pseudocrit_temp_correlation = pseudocrit_temp_correlation,
+                                        Z_correlation = Z_correlation)
+end
+# TODO: test

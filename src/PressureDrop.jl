@@ -2,11 +2,12 @@
 
 module PressureDrop
 
-using Requires
+using Requires, PrettyTables
 
-import Base.show #to export Wellbore printing method
+import Base.show #to export type printing methods
 
-export  Wellbore, GasliftValves, traverse_topdown, casing_traverse_topdown, read_survey, pressure_and_temp,
+export  Wellbore, GasliftValves, WellModel,
+        traverse_topdown, casing_traverse_topdown, read_survey, pressure_and_temp,
         plot_pressure, plot_pressures, plot_temperature, plot_pressureandtemp, plot_gaslift,
         valve_table, estimate_valve_Rvalue,
         BeggsAndBrill,
@@ -41,6 +42,90 @@ include("casingcalculations.jl")
 function __init__()
     @require Gadfly = "c91e804a-d5a3-530f-b6f0-dfbca275c004" include("plottingfunctions.jl")
 end
+
+
+#%% TODO: Don't kill traverses. Leave as is and make a "mapper wrapper" to convert struct to args for people who just want a traverse
+#model struct. ONLY applies to wrapper functions.
+"""
+Makes it easier to iterate well models
+"""
+mutable struct WellModel
+
+    wellbore::Wellbore; roughness
+    valves::Union{GasliftValves, missing}
+    temperatureprofile::Union{Array{Real,1}, missing}
+    temperature_method; WHT; geothermal_gradient; BHT; casing_temp_factor
+    pressurecorrelation::Function; outlet_referenced::Bool
+    WHP; CHP; dp_est; dp_est_inj; error_tolerance; error_tolerance_inj
+    q_o; q_w; GLR
+    injection_point; naturalGLR
+    APIoil; sg_water; sg_gas; sg_gas_inj
+    molFracCO2; molFracH2S; molFracCO2_inj; molFracH2S_inj
+    pseudocrit_pressure_correlation::Function
+    pseudocrit_temp_correlation::Function
+    Z_correlation::Function
+    gas_viscosity_correlation::Function
+    solutionGORcorrelation::Function
+    oilVolumeFactor_correlation::Function
+    waterVolumeFactor_correlation::Function
+    dead_oil_viscosity_correlation::Function
+    live_oil_viscosity_correlation::Function
+    frictionfactor::Function
+
+    function WellModel(;wellbore, roughness, valves = missing, temperatureprofile = missing,
+                        temperature_method = "linear", WHT = missing, geothermal_gradient = missing, BHT = missing, casing_temp_factor = 0.85,
+                        pressurecorrelation = BeggsAndBrill, outlet_referenced = true,
+                        WHP, CHP = missing, dp_est, dp_est_inj = 0.1 * dp_est, error_tolerance = 0.1, error_tolerance_inj = 0.05,
+                        q_o, q_w, GLR, injection_point = missing, naturalGLR = missing,
+                        APIoil, sg_water, sg_gas, sg_gas_inj = sg_gas,
+                        molFracCO2 = 0.0, molFracH2S = 0.0, molFracCO2_inj = molFracCO2, molFracH2S_inj = molFracH2S,
+                        pseudocrit_pressure_correlation = HankinsonWithWichertPseudoCriticalPressure,
+                        pseudocrit_temp_correlation = HankinsonWithWichertPseudoCriticalTemp,
+                        Z_correlation = KareemEtAlZFactor, gas_viscosity_correlation = LeeGasViscosity,
+                        solutionGORcorrelation = StandingSolutionGOR, oilVolumeFactor_correlation = StandingOilVolumeFactor,
+                        waterVolumeFactor_correlation = GouldWaterVolumeFactor,
+                        dead_oil_viscosity_correlation = GlasoDeadOilViscosity, live_oil_viscosity_correlation = ChewAndConnallySaturatedOilViscosity,
+                        frictionfactor = SerghideFrictionFactor)
+
+        new(wellbore, roughness, valves, temperatureprofile, temperature_method, WHT, geothermal_gradient, BHT,
+            pressurecorrelation, outlet_referenced, casing_temp_factor, WHP, CHP, dp_est, dp_est_inj, error_tolerance, error_tolerance_inj,
+            q_o, q_w, GLR, injection_point, naturalGLR, APIoil, sg_water, sg_gas, sg_gas_inj, molFracCO2, molFracH2S, molFracCO2_inj, molFracH2S_inj,
+            pseudocrit_pressure_correlation, pseudocrit_temp_correlation, Z_correlation, gas_viscosity_correlation, solutionGORcorrelation,
+            oilVolumeFactor_correlation, waterVolumeFactor_correlation, dead_oil_viscosity_correlation, live_oil_viscosity_correlation, frictionfactor)
+    end
+
+end
+
+function Base.show(io::IO, model::WellModel)
+
+    fields = fieldnames(WellModel)
+    values = map(f -> getfield(model, f), fields)
+    msg = String.(fields) .* " : " .* string.(values) .* "\n"
+
+    print(io, msg)
+end
+
+macro @run(input, func)
+
+    return :( begin
+    fields = fieldnames(typeof($input))
+    values = map(f -> getfield($input, f), fields)
+
+    args = (;(f=>v for (f,v) in zip(fields,values))...) #splat and append to convert to NamedTuple
+
+    $func(;args...)
+
+    end)
+end
+#TODO: you need an @pressuredrop macro or similar that strips all the fields from a wellmodel struct and calls the function
+#this will also prevent the requirement of rewriting all your existing tests? maybe doesn't need to be a macro.
+#KEY poitn of this todo is to generate a kwargs-type namedtuple from the model and pass that to the traverse functions
+#see https://stackoverflow.com/questions/41687418/how-to-get-fields-of-a-julia-object
+#except you can't do the above unless your function accepts extra kwargs...but maybe that is okay?
+#yes, it is...and you can use that approach to every single named-arg to provide complete pass-through. brilliant. documentation remains the same.
+
+
+#TODO: add testing for the above for a master wrapper
 
 
 #%% core functions
@@ -116,6 +201,7 @@ function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_init
 end
 
 
+
 """
 traverse_topdown(;<named arguments>)
 
@@ -167,7 +253,8 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
                             pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp,
                             Z_correlation::Function = KareemEtAlZFactor, gas_viscosity_correlation::Function = LeeGasViscosity, solutionGORcorrelation::Function = StandingSolutionGOR,
                             oilVolumeFactor_correlation::Function = StandingOilVolumeFactor, waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor,
-                            dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity, frictionfactor::Function = SerghideFrictionFactor)
+                            dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity, frictionfactor::Function = SerghideFrictionFactor,
+                            kwargs...) #catch extra arguments from a WellModel for convenience
 
     nsegments = length(wellbore.md)
 
@@ -216,16 +303,35 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
 end
 
 
+"""
+traverse_topdown(;model::WellModel)
+
+calculate top-down traverse from a WellModel object. Requires the following fields to be defined in the model:
+
+...
+"""
+function traverse_topdown(model::WellModel)
+
+    @run model traverse_topdown
+end
+
+
+"""
+BHP_summary(pressures, well)
+
+Print the summary for a bottomhole pressure traverse of a well.
+"""
 function BHP_summary(pressures, well)
     println("Flowing bottomhole pressure of $(round(pressures[end], digits = 1)) psia at $(well.md[end])' MD.",
         "\nAverage gradient $(round(pressures[end]/well.md[end], digits = 3)) psi/ft (MD), $(round(pressures[end]/well.tvd[end], digits = 3)) psi/ft (TVD).")
 end
 
 
+#TODO: update this documentation to reflect using a WellModel and mutating temps
 """
-pressure_and_temp(;<named arguments>)
+pressure_and_temp(;model::WellModel)
 
-Develop pressure traverse in psia and temperature profile in °F from wellhead down to datum.
+Develop pressure traverse in psia and temperature profile in °F from wellhead down to datum for a WellModel object. Requires the following fields to be defined in the model:
 
 Returns a pressure profile as an Array{Float64,1} and a temperature profile as an Array{Float64,1}, referenced to the measured depths in the original Wellbore object.
 
@@ -275,79 +381,59 @@ All arguments are named keyword arguments.
 - `frictionfactor::Function = SerghideFrictionFactor`: correlation function for Darcy-Weisbach friction factor
 - `outlet_referenced = true`: whether to use outlet pressure (WHP) or inlet pressure (BHP) for
 """
-function pressure_and_temp(;well::Wellbore, roughness, temperature_method = "linear", WHT = missing, geothermal_gradient = missing, BHT,
-                            pressurecorrelation::Function = BeggsAndBrill,
-                            WHP, dp_est, error_tolerance = 0.1,
-                            q_o, q_w, GLR, injection_point = missing, naturalGLR = missing,
-                            APIoil, sg_water, sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
-                            pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp,
-                            Z_correlation::Function = KareemEtAlZFactor, gas_viscosity_correlation::Function = LeeGasViscosity, solutionGORcorrelation::Function = StandingSolutionGOR,
-                            oilVolumeFactor_correlation::Function = StandingOilVolumeFactor, waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor,
-                            dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity, frictionfactor::Function = SerghideFrictionFactor,
-                            outlet_referenced = true)
+function pressure_and_temp!(m::WellModel)
 
-    if temperature_method == "linear"
-        @assert !(ismissing(WHT)) "Must specific a wellhead temperature to utilize linear temperature method."
-        temps = linearmethod(WHT = WHT, BHT = BHT, well = well)
-    elseif temperature_method == "Shiu"
-        @assert !(ismissing(geothermal_gradient)) "Must specify a geothermal gradient to utilize Shiu/Ramey temperature method.\nRefer to published geothermal gradient maps for your region to establish a sensible default."
-        temps = Shiu_wellboretemp(BHT = BHT, geothermal_gradient = geothermal_gradient, well = well, q_o = q_o, q_w = q_w, GLR = GLR, APIoil = APIoil, sg_water = sg_water, sg_gas = sg_gas, WHP = WHP)
+    if m.temperature_method == "linear"
+        @assert !(any(ismissing.((m.WHT,m.BHT)))) "Must specific a wellhead temperature & BHT to utilize linear temperature method."
+        m.temperatureprofile = @run m linear_wellboretemp
+    elseif m.temperature_method == "Shiu"
+        @assert !(any(ismissing.((BHT,geothermal_gradient)))) "Must specify a geothermal gradient & BHT to utilize Shiu/Ramey temperature method.\nRefer to published geothermal gradient maps for your region to establish a sensible default."
+        m.temperatureprofile = @run m Shiu_wellboretemp
     else
         throw(ArgumentError("Invalid temperature method. Use one of (\"Shiu\", \"linear\")."))
     end
 
-    pressures = traverse_topdown(wellbore = well, roughness = roughness, temperatureprofile = temps,
-                                pressurecorrelation = pressurecorrelation,
-                                outlet_pressure = WHP, dp_est = dp_est, error_tolerance = error_tolerance,
-                                q_o = q_o, q_w = q_w, GLR = GLR, APIoil = APIoil, sg_water = sg_water, sg_gas = sg_gas, molFracCO2 = molFracCO2, molFracH2S = molFracH2S,
-                                pseudocrit_pressure_correlation = pseudocrit_pressure_correlation, pseudocrit_temp_correlation = HankinsonWithWichertPseudoCriticalTemp,
-                                Z_correlation = Z_correlation, gas_viscosity_correlation = gas_viscosity_correlation, solutionGORcorrelation = solutionGORcorrelation,
-                                oilVolumeFactor_correlation = oilVolumeFactor_correlation, waterVolumeFactor_correlation = waterVolumeFactor_correlation,
-                                dead_oil_viscosity_correlation = dead_oil_viscosity_correlation, live_oil_viscosity_correlation = live_oil_viscosity_correlation, frictionfactor = frictionfactor)
-
+    pressures = @run m traverse_topdown
     BHP_summary(pressures, well)
 
-    return pressures, temps
+    return pressures
 end
+#TODO: update test
 
 
-#convenience wrapper
-#TODO: finish these wrappers
-function pressures_and_temp(;well::Wellbore, roughness, temperature_method = "linear", WHT = missing, geothermal_gradient = missing, BHT,
-                            pressurecorrelation::Function = BeggsAndBrill,
-                            WHP, dp_est, error_tolerance = 0.1,
-                            q_o, q_w, GLR, injection_point = missing, naturalGLR = missing,
-                            APIoil, sg_water, sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
-                            pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp,
-                            Z_correlation::Function = KareemEtAlZFactor, gas_viscosity_correlation::Function = LeeGasViscosity, solutionGORcorrelation::Function = StandingSolutionGOR,
-                            oilVolumeFactor_correlation::Function = StandingOilVolumeFactor, waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor,
-                            dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity, frictionfactor::Function = SerghideFrictionFactor,
-                            outlet_referenced = true,
-                            casing_temp_factor = 0.85,
-                            CHP, dp_est_inj,
-                            sg_gas_inj = sg_gas, molFracCO2_inj = molFracCO2, molFracH2S_inj = molFracH2S)
+"""
+"""
+function pressures_and_temp(m::WellModel)
 
-    tubing_pressures, tubing_temps = pressure_and_temp(;well = well, roughness = roughness, temperature_method = temperature_method, WHT = missing, geothermal_gradient = missing, BHT,
-                            pressurecorrelation::Function = BeggsAndBrill,
-                            WHP, dp_est, error_tolerance = 0.1,
-                            q_o, q_w, GLR, injection_point = missing, naturalGLR = missing,
-                            APIoil, sg_water, sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
-                            pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp,
-                            Z_correlation::Function = KareemEtAlZFactor, gas_viscosity_correlation::Function = LeeGasViscosity, solutionGORcorrelation::Function = StandingSolutionGOR,
-                            oilVolumeFactor_correlation::Function = StandingOilVolumeFactor, waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor,
-                            dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity, frictionfactor::Function = SerghideFrictionFactor,
-                            outlet_referenced = true)
+    tubing_pressures = @run m traverse_topdown
+    casing_pressures = casing_traverse_topdown(m)
 
-    casing_pressures = casing_traverse_topdown(wellbore = wellbore, temperatureprofile = casing_temp_factor * tubing_temps,
-                                        CHP = CHP, dp_est = dp_est_inj, error_tolerance = error_tolerance,
-                                        sg_gas = sg_gas_inj, molFracCO2 = molFracCO2_inj, molFracH2S = molFracH2S_inj,
-                                        pseudocrit_pressure_correlation = pseudocrit_pressure_correlation, pseudocrit_temp_correlation = pseudocrit_temp_correlation,
-                                        Z_correlation = Z_correlation)
-
-    return tubing_pressures, casing_pressures, tubing_temps
+    return tubing_pressures, casing_pressures
 end
-# TODO:wrapper to return tubing, casing pressures & temps, as well as recalculate with auto-calced injection point
+#TODO: add test
 
-# TODO: modify every wrapper to take and return psig!! including in valvecalcs.
+
+#TODO: docs
+"""
+"""
+function gaslift_model!(m::WellModel, find_injectionpoint::Bool = false, dp_min = 100)
+
+    tubing_pressures = @run m pressure_and_temp!
+    casing_pressures = casing_traverse_topdown(m)
+    valvedata, injection_depth = valve_calcs(m.valves, m.well, m.sg_gas_inj, tubing_pressures, casing_pressures, m.temperatureprofile, m.temperatureprofile .* casing_temp_factor,
+                            dp_min)
+
+    if find_injectionpoint
+        m.injection_point = injection_depth
+        tubing_pressures = @run m traverse_topdown
+        casing_pressures = casing_traverse_topdown(m)
+        valvedata, _ = valve_calcs(m.valves, m.well, m.sg_gas_inj, tubing_pressures, casing_pressures, m.temperatureprofile, m.temperatureprofile .* casing_temp_factor,
+                                dp_min)
+    end
+
+    return tubing_pressures, casing_pressures, valvedata
+end
+#TODO: test
+
 
 end #module PressureDrop

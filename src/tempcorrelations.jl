@@ -65,7 +65,7 @@ Linear temperature profile from a wellhead temperature and bottomhole temperatur
 
 Interpolation is based on true vertical depth of the wellbore, not md.
 """
-function linear_wellboretemp(;WHT, BHT, well::Wellbore)
+function linear_wellboretemp(;WHT, BHT, wellbore::Wellbore)
     temp_slope = (BHT - WHT) / maximum(well.tvd)
 
     return [WHT + depth * temp_slope for depth in well.tvd]
@@ -89,7 +89,7 @@ Wrapper to compute temperature profile for a Wellbore object using Ramey correla
 - `sg_gas`: gas specific gravity
 - `WHP`: wellhead/outlet absolute pressure in psia
 """
-function Shiu_wellboretemp(;BHT, geothermal_gradient = 1.0, well::Wellbore, q_o, q_w, GLR, APIoil, sg_water, sg_gas, WHP)
+function Shiu_wellboretemp(;BHT, geothermal_gradient = 1.0, wellbore::Wellbore, q_o, q_w, GLR, APIoil, sg_water, sg_gas, WHP)
 
     id_avg = sum(well.id)/length(well.id)
     A = Shiu_Beggs_relaxationfactor(q_o, q_w, GLR, APIoil, sg_water, sg_gas, id_avg, WHP) #use average inner diameter to calculate relaxation factor

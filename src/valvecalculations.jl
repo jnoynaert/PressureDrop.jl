@@ -1,6 +1,3 @@
-using PrettyTables
-
-
 """
 ThornhillCraver_gaspassage_simplified(P_td, P_cd, T_cd, portsize_64ths)
 
@@ -157,7 +154,7 @@ function valve_calcs(valves::GasliftValves, well::Wellbore, sg_gas, tubing_press
 
     # returns PSOs in psig to avoid confusion
     # NOTE: plot_valves in plottingfunctions.jl depends on the column order of this table for PVO/PVC
-    valvetable = hcat(GLV_numbers, valves.md, interp_values[:,5], PSO .- 14.65, PSC .- 14.65, valves.port, valves.R, PPEF, valves.PTRO,
+    valvedata = hcat(GLV_numbers, valves.md, interp_values[:,5], PSO .- 14.65, PSC .- 14.65, valves.port, valves.R, PPEF, valves.PTRO,
                 P_td, P_cd, PVO, PVC, T_td, T_cd, T_C, T_C * one_inch_coefficient, T_C * one_pt_five_inch_coefficient)
 
     #lowest valve where PVO <= CP && PVC > CP && R-value != 0
@@ -172,7 +169,7 @@ function valve_calcs(valves::GasliftValves, well::Wellbore, sg_gas, tubing_press
     end
     injection_depth = valves.md[active_valve_row]
 
-    return valvetable, injection_depth
+    return valvedata, injection_depth
 end
 
 

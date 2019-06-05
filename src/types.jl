@@ -33,6 +33,10 @@ struct GasliftValves
 end
 
 
+#printing for gas lift valves
+Base.show(io::IO, valves::GasliftValves) = print(io, "Valve design with $(length(valves.md)) valves and bottom valve at $(valves.md[end])' MD."
+
+
 """
 struct Wellbore: type to define a flow path as an input for pressure drop calculations
 
@@ -87,8 +91,10 @@ struct Wellbore
     end
 end #struct Wellbore
 
+
 #convenience constructor for uniform tubulars
 Wellbore(md, inc, tvd, id::Float64, allow_negatives::Bool = false) = Wellbore(md, inc, tvd, repeat([id], inner = length(md)), allow_negatives)
+
 
 #convenience constructors to add reference depths for valves so that they can be used as injection points
 #TODO: add an error message to the injection point logic that makes it clear how to fix the problem if they don't use this constructor and you get an injection point that doesn't match the wellbore
@@ -120,4 +126,6 @@ end
 
 #Printing for Wellbore structs
 Base.show(io::IO, well::Wellbore) = print(io,
-    "Wellbore with $(length(well.md)) points.\nEnds at $(well.md[end])' MD / $(well.tvd[end])' TVD. \nMax inclination $(maximum(well.inc))°. Average ID $(round(sum(well.id)/length(well.id), digits = 3)) in.")
+    "Wellbore with $(length(well.md)) points.\n",
+    "Ends at $(well.md[end])' MD / $(well.tvd[end])' TVD.\n",
+    "Max inclination $(maximum(well.inc))°. Average ID $(round(sum(well.id)/length(well.id), digits = 3)) in.")

@@ -36,6 +36,10 @@ julia> plot_pressureandtemp(example_well, pressures, temps) #expect a long time 
 ![example plot](examples/exampleplot.png)
 
 
+## Core functions
+
+TODO: list the key output functions with comments on their usage
+
 # Supported pressure correlations
 
 - Beggs and Brill, with the Payne correction factors. Best for inclined pipe.
