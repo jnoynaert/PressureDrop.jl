@@ -7,6 +7,7 @@ using Requires
 import Base.show #to export type printing methods
 
 export  Wellbore, GasliftValves, WellModel, read_survey, read_valves,
+        pressure_atmospheric,
         traverse_topdown, casing_traverse_topdown, pressure_and_temp!, pressures_and_temp!, gaslift_model!,
         plot_pressure, plot_pressures, plot_temperature, plot_pressureandtemp, plot_gaslift,
         valve_table, estimate_valve_Rvalue,

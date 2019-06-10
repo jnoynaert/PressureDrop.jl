@@ -147,7 +147,7 @@ function valve_calcs(valves::GasliftValves, well::Wellbore, sg_gas, tubing_press
     valve_temps = 0.7 .* T_cd .+ 0.3 .* T_td # Faustinelli, J.G. 1997
 
     P_bd = domepressure_downhole.(valves.PTRO, valves.R, valve_temps) #dome/bellows pressure at depth; in psia equals valve closing pressure at depth
-    PVC = P_bd - pressure_atmospheric #convert to psig
+    PVC = P_bd .- pressure_atmospheric #convert to psig
 
     PVO = (P_bd .- ((P_td .+ pressure_atmospheric) .* valves.R)) ./ (1 .- valves.R) #valve opening pressure at depth
     PVO = PVO .- pressure_atmospheric #convert to psig

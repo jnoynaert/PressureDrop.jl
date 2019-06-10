@@ -51,7 +51,7 @@ end
 #%% general parameters
 dp_est = 10 #psi
 error_tolerance = 0.1 #psi
-outlet_pressure = 220 #WHP in psi
+outlet_pressure = 220 - 14.65 #WHP in psig
 oil_API = 35
 sg_gas = 0.65
 CO2 = 0.005
@@ -90,6 +90,7 @@ temp_profiles = NamedTuple{scenarios}(temps) #temp profiles labelled by scenario
 examplepath = joinpath(testpath,"Perform_BandB_with_Palmer_correction.csv")
 test_example = load_example(examplepath, length(scenarios)+1)
 matched_example = match_example(testwell, test_example)
+matched_example[:,2:end] = matched_example[:,2:end] .- 14.65 #convert to psig
 
 # generate test data -- map across all examples
 corr = BeggsAndBrill
@@ -128,6 +129,7 @@ end #testset for B&B scenarios
 examplepath = joinpath(testpath,"Perform_HandB_with_GriffithWallis.csv")
 test_example = load_example(examplepath, length(scenarios)+1)
 matched_example = match_example(testwell, test_example)
+matched_example[:,2:end] = matched_example[:,2:end] .- 14.65 #convert to psig
 
 # generate test data -- map across all examples
 corr = HagedornAndBrown
