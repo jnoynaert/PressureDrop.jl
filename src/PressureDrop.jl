@@ -207,7 +207,7 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
                 inj_index += 1
             end
 
-            @info """Specified injection point at $injection_point not explicitly included in wellbore. Using $(wellbore.md[inj_index]) as an approximate match.
+            @info """Specified injection point at $injection_point' MD not explicitly included in wellbore. Using $(round(wellbore.md[inj_index],digits=1))' MD as an approximate match.
             Use the Wellbore constructor with a set of gas lift valves to add precise injection points."""
         end
 
