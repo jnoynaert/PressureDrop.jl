@@ -24,3 +24,24 @@ temps = model.temperatureprofile
 end #testset for pressure & temp wrapper
 
 #TODO: add a wrapper test that also checks read_valves
+
+#=
+end to end GL test:
+segments = 100
+MDs = range(0, 5000, length = segments) |> collect
+incs = repeat([0], inner = segments)
+TVDs = range(0, 5000, length = segments) |> collect
+
+well = Wellbore(MDs, incs, TVDs, 2.441)
+
+valves = GasliftValves([1813,2375,2885,3395], [1005,990,975,960], [0.073,0.073,0.073,0.073], [16,16,16,16])
+
+model = WellModel(wellbore = well, roughness = 0.0006, valves = valves,
+                    temperature_method = "Shiu", geothermal_gradient = 1.0, BHT = 200,
+                    pressurecorrelation = HagedornAndBrown, WHP = 350 - pressure_atmospheric, dp_est = 25,
+                    q_o = 100, q_w = 500, GLR = 1200, APIoil = 35, sg_water = 1.1, sg_gas = 0.8, CHP = 1000, naturalGLR = 600)
+
+tubing_pressures, casing_pressures, valvedata = gaslift_model!(model, find_injectionpoint = true, dp_min = 100)
+
+plot_gaslift(model.wellbore, tubing_pressures, casing_pressures, model.temperatureprofile, valvedata, nothing)
+=#

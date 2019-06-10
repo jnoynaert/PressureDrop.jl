@@ -74,7 +74,7 @@ function plot_pressureandtemp(well::Wellbore, tubing_pressures, casing_pressures
 
         pressure = plot(layer(x = tubing_pressures, y = well.md, Geom.path, Theme(default_color = "deepskyblue")),
                         layer(x = casing_pressures, y = well.md, Geom.path, Theme(default_color = "mediumspringgreen")),
-                        layer(yintercept = valvedepths, Geom.hline(color = "black")),
+                        layer(yintercept = valvedepths, Geom.hline(color = "black", style = :dash)),
                 Scale.x_continuous(format = :plain),
                 Guide.xlabel("psia"),
                 Scale.y_continuous(format = :plain),
@@ -104,12 +104,14 @@ Plot pressure & temperature profiles for a given wellbore using the pressure & t
 
 See `traverse_topdown`,`pressure_and_temp`, `linear_wellboretemp`, `Shiu_wellboretemp`.
 """
-function plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps, ctitle = nothing, valvedata)
+function plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps, valvedata, ctitle = nothing)
 
-        pressure = plot(layer(x = vcat(valvedata[:[12,13]]), Theme(default_color = "mediumpurple3")), #PVC and PVO
+        valvedepths = valvedata[:,2]
+
+        pressure = plot(layer(x = [valvedata[:,12];valvedata[:,13]], y = [valvedepths;valvedepths], Theme(default_color = "mediumpurple3")), #PVC and PVO
                         layer(x = tubing_pressures, y = well.md, Geom.path, Theme(default_color = "deepskyblue")),
                         layer(x = casing_pressures, y = well.md, Geom.path, Theme(default_color = "mediumspringgreen")),
-                        layer(yintercept = valvedepths, Geom.hline(color = "black")),
+                        layer(yintercept = valvedepths, Geom.hline(color = "black", style = :dash)),
 
                 Scale.x_continuous(format = :plain),
                 Guide.xlabel("psia"),
@@ -131,3 +133,8 @@ function plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps,
         hstack(compose(context(0, 0, 0.75, 1), render(pressure)),
                 compose(context(0.75, 1, 0.25, 1), render(temp)))
 end
+
+"""
+"""
+#TODO:docs
+#function plot_gaslift(#TODO: take model)

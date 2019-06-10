@@ -47,15 +47,15 @@ end
 macro run(input, func)
 
     return quote
-    local var = $(esc(input)) #resolve using the macro call environment
-    local fn = $(esc(func))
+        local var = $(esc(input)) #resolve using the macro call environment
+        local fn = $(esc(func))
 
-    fields = fieldnames(typeof(var))
-    values = map(f -> getfield(var, f), fields)
+        fields = fieldnames(typeof(var))
+        values = map(f -> getfield(var, f), fields)
 
-    args = (;(f=>v for (f,v) in zip(fields,values))...) #splat and append to convert to NamedTuple that can be passed as kwargs
+        args = (;(f=>v for (f,v) in zip(fields,values))...) #splat and append to convert to NamedTuple that can be passed as kwargs
 
-    fn(;args...)
+        fn(;args...)
 
     end
 end
@@ -202,12 +202,12 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
     if !ismissing(injection_point) && !ismissing(naturalGLR)
         inj_index = searchsortedlast(wellbore.md, injection_point)
 
-        if well.md[inj_index] != injection_point
+        if wellbore.md[inj_index] != injection_point
             if (injection_point - wellbore.md[inj_index]) > (wellbore.md[inj_index+1] - injection_point) #choose closest point
                 inj_index += 1
             end
 
-            @info """Specified injection point at $injection_point not explicitly included in wellbore. Using $(well.md[inj_index]) as an approximate match.
+            @info """Specified injection point at $injection_point not explicitly included in wellbore. Using $(wellbore.md[inj_index]) as an approximate match.
             Use the Wellbore constructor with a set of gas lift valves to add precise injection points."""
         end
 
@@ -332,7 +332,7 @@ function pressure_and_temp!(m::WellModel)
         throw(ArgumentError("Invalid temperature method. Use one of (\"Shiu\", \"linear\")."))
     end
 
-    pressures = @run m traverse_topdown
+    pressures = traverse_topdown(m)
     BHP_summary(pressures, m.wellbore)
 
     return pressures
@@ -344,7 +344,7 @@ end
 """
 function pressures_and_temp!(m::WellModel)
 
-    tubing_pressures = @run m traverse_topdown
+    tubing_pressures = pressure_and_temp!(m)
     casing_pressures = casing_traverse_topdown(m)
 
     return tubing_pressures, casing_pressures
@@ -355,18 +355,18 @@ end
 #TODO: docs
 """
 """
-function gaslift_model!(m::WellModel, find_injectionpoint::Bool = false, dp_min = 100)
+function gaslift_model!(m::WellModel; find_injectionpoint::Bool = false, dp_min = 100)
 
-    tubing_pressures = @run m pressure_and_temp!
-    casing_pressures = casing_traverse_topdown(m)
-    valvedata, injection_depth = valve_calcs(m.valves, m.well, m.sg_gas_inj, tubing_pressures, casing_pressures, m.temperatureprofile, m.temperatureprofile .* casing_temp_factor,
+    tubing_pressures, casing_pressures = pressures_and_temp!(m);
+    valvedata, injection_depth = valve_calcs(m.valves, m.wellbore, m.sg_gas_inj, tubing_pressures, casing_pressures, m.temperatureprofile, m.temperatureprofile .* m.casing_temp_factor,
                             dp_min)
 
+    #currently doesn't account for changing temp profile
     if find_injectionpoint
         m.injection_point = injection_depth
-        tubing_pressures = @run m traverse_topdown
+        tubing_pressures = traverse_topdown(m)
         casing_pressures = casing_traverse_topdown(m)
-        valvedata, _ = valve_calcs(m.valves, m.well, m.sg_gas_inj, tubing_pressures, casing_pressures, m.temperatureprofile, m.temperatureprofile .* casing_temp_factor,
+        valvedata, _ = valve_calcs(m.valves, m.wellbore, m.sg_gas_inj, tubing_pressures, casing_pressures, m.temperatureprofile, m.temperatureprofile .* m.casing_temp_factor,
                                 dp_min)
     end
 

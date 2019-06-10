@@ -186,7 +186,7 @@ end
 #TODO: add doc
 """
 """
-function valve_table(valvedata, injection_depth)
+function valve_table(valvedata, injection_depth = nothing)
     header = ["GLV" "MD" "TVD" "PSO" "PSC" "Port" "R" "PPEF" "PTRO" "TP" "CP" "PVO" "PVC" "T_td" "T_cd" "Q_o" "Q_1.5" "Q_1";
                 "" "ft" "ft" "psig" "psig" "64ths" "" "%" "psig" "psig" "psig" "psig" "psig" "°F" "°F" "mcf/d" "mcf/d" "mcf/d"]
 

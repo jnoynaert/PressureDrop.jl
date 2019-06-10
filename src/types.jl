@@ -188,7 +188,10 @@ function Base.show(io::IO, model::WellModel)
 
     fields = fieldnames(WellModel)
     values = map(f -> getfield(model, f), fields) |> list -> map(x -> !(x isa Array) ? string(x) : "$(length(x)) points from $(maximum(x)) to $(minimum(x)).", list)
-    msg = string.(fields) .* " : " .* values .* "\n"
+    msg = string.(fields) .* " : " .* values
 
-    print(io, msg)
+    println(io, "Well model: ")
+    for item in msg
+        println(io, item)
+    end
 end
