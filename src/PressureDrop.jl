@@ -60,9 +60,14 @@ macro run(input, func)
 end
 
 
+const pressure_atmospheric = 14.7 #used to adjust calculations between psia & psig
+
+
 #%% core functions
 """
 calculate_pressuresegment_topdown(<arguments>)
+
+Pressure inputs are in **psia**.
 
 Helper function to calculate the pressure drop for a single pipe segment, using an outlet-referenced approach.
 
@@ -72,7 +77,6 @@ Method:
 3. Compares the original and new pressure drop estimates to validate the stability of the estimate.
 4. Iterate through steps 1-3 until a stable estimate is found (indicated by obtaining a difference between pre- and post-PVT that is within the given error tolerance).
 
-See traverse_topdown for a full enumeration of arguments.
 """
 function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_initial, dp_est, t_avg,
                                             md_initial, md_end, tvd_initial, tvd_end, inclination, id, roughness,
@@ -151,7 +155,7 @@ All arguments are named keyword arguments.
 - `wellbore::Wellbore`: Wellbore object that defines segmentation/mesh, with md, tvd, inclination, and hydraulic diameter
 - `roughness`: pipe wall roughness in inches
 - `temperatureprofile::Array{Float64, 1}`: temperature profile (in °F) as an array with **matching entries for each pipe segment defined in the Wellbore input**
-- `WHP`: absolute outlet pressure (wellhead pressure) in **psia**
+- `WHP`: absolute outlet pressure (wellhead pressure) in **psig**
 - `dp_est`: estimated starting pressure differential (in psi) to use for all segments--impacts convergence time
 - `q_o`: oil rate in stocktank barrels/day
 - `q_w`: water rate in stb/d
@@ -187,6 +191,8 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
                             oilVolumeFactor_correlation::Function = StandingOilVolumeFactor, waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor,
                             dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity, frictionfactor::Function = SerghideFrictionFactor,
                             kwargs...) #catch extra arguments from a WellModel for convenience
+
+    WHP += pressure_atmospheric
 
     nsegments = length(wellbore.md)
 
@@ -231,7 +237,7 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
         pressures[i] = pressure_initial
     end
 
-    return pressures
+    return pressures .- pressure_atmospheric
 end
 
 
@@ -254,7 +260,7 @@ BHP_summary(pressures, well)
 Print the summary for a bottomhole pressure traverse of a well.
 """
 function BHP_summary(pressures, well)
-    println("Flowing bottomhole pressure of $(round(pressures[end], digits = 1)) psia at $(well.md[end])' MD.",
+    println("Flowing bottomhole pressure of $(round(pressures[end], digits = 1)) psig at $(well.md[end])' MD.",
         "\nAverage gradient $(round(pressures[end]/well.md[end], digits = 3)) psi/ft (MD), $(round(pressures[end]/well.tvd[end], digits = 3)) psi/ft (TVD).")
 end
 
@@ -286,7 +292,7 @@ All arguments are named keyword arguments.
 - `WHT = missing`: wellhead temperature in °F; required for `temperature_method = "linear"`
 - `geothermal_gradient = missing`: geothermal gradient in °F per 100 ft; required for `temperature_method = "Shiu"`
 - `BHT` = bottomhole temperature in °F
-- `WHP`: absolute outlet pressure (wellhead pressure) in **psia**
+- `WHP`: absolute outlet pressure (wellhead pressure) in **psig**
 - `dp_est`: estimated starting pressure differential (in psi) to use for all segments--impacts convergence time
 - `q_o`: oil rate in stocktank barrels/day
 - `q_w`: water rate in stb/d

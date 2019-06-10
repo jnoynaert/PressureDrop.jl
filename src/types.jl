@@ -132,6 +132,7 @@ Base.show(io::IO, well::Wellbore) = print(io,
 
 
 #model struct. ONLY applies to wrapper functions.
+#TODO: docs
 """
 Makes it easier to iterate well models
 """
