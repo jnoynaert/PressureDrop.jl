@@ -1,5 +1,5 @@
 # Pressure correlations for PressureDrop package.
-
+# note that all of these work in psia, but the user-facing wrappers for traverses take psig.
 
 #%% Helper functions
 

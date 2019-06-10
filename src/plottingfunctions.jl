@@ -1,6 +1,8 @@
 using .Gadfly
 using Compose: compose, context
 
+#TODO: include wrappers to pull the critical pieces from a wellmodel
+
 """
 plot_pressure(well::Wellbore, pressures, ctitle = nothing)
 

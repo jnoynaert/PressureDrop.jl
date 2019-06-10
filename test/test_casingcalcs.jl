@@ -18,7 +18,7 @@ end
     testwell = Wellbore(md, inc, tvd, id)
 
     pressures = casing_traverse_topdown(wellbore = testwell, temperatureprofile = temps,
-                                        CHP = 300, sg_gas = 0.7, dp_est = 10)
+                                        CHP = 300 - pressure_atmospheric, sg_gas = 0.7, dp_est = 10)
 
-    @test pressures[end] ≈ 332.7 atol = 5
+    @test pressures[end] ≈ (332.7 - pressure_atmospheric) atol = 5
 end
