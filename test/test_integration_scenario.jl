@@ -77,7 +77,7 @@ testwell = read_survey(path = surveypath, id = id)
 function create_temps(scenario)
         WHT = parameters[:WHT][scenario]
 
-        return linear_wellboretemp(WHT = WHT, BHT = BHT, well = testwell)
+        return linear_wellboretemp(WHT = WHT, BHT = BHT, wellbore = testwell)
 end
 
 temps = [create_temps(s) for s in scenarios]
@@ -105,7 +105,7 @@ for (index, scenario) in enumerate(scenarios)
     test_results[:,index+1] = traverse_topdown(wellbore = testwell, roughness = roughness, temperatureprofile = temp_profiles[scenario],
                              pressurecorrelation = corr, dp_est = dp_est, error_tolerance = error_tolerance,
                              q_o = q_o, q_w = q_w, GLR = GLR, APIoil = oil_API, sg_water = sg_water, sg_gas = sg_gas,
-                             outlet_pressure = outlet_pressure, molFracCO2 = CO2)
+                             WHP = outlet_pressure, molFracCO2 = CO2)
 end
 
 # compare test data
@@ -143,7 +143,7 @@ for (index, scenario) in enumerate(scenarios)
     test_results[:,index+1] = traverse_topdown(wellbore = testwell, roughness = roughness, temperatureprofile = temp_profiles[scenario],
                              pressurecorrelation = corr, dp_est = dp_est, error_tolerance = error_tolerance,
                              q_o = q_o, q_w = q_w, GLR = GLR, APIoil = oil_API, sg_water = sg_water, sg_gas = sg_gas,
-                             outlet_pressure = outlet_pressure, molFracCO2 = CO2)
+                             WHP = outlet_pressure, molFracCO2 = CO2)
 end
 
 # compare test data

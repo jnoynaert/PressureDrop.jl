@@ -34,7 +34,7 @@ end
 
 
 #printing for gas lift valves
-Base.show(io::IO, valves::GasliftValves) = print(io, "Valve design with $(length(valves.md)) valves and bottom valve at $(valves.md[end])' MD."
+Base.show(io::IO, valves::GasliftValves) = print(io, "Valve design with $(length(valves.md)) valves and bottom valve at $(valves.md[end])' MD.")
 
 
 """
@@ -129,3 +129,65 @@ Base.show(io::IO, well::Wellbore) = print(io,
     "Wellbore with $(length(well.md)) points.\n",
     "Ends at $(well.md[end])' MD / $(well.tvd[end])' TVD.\n",
     "Max inclination $(maximum(well.inc))°. Average ID $(round(sum(well.id)/length(well.id), digits = 3)) in.")
+
+
+#model struct. ONLY applies to wrapper functions.
+"""
+Makes it easier to iterate well models
+"""
+mutable struct WellModel
+
+    wellbore::Wellbore; roughness
+    valves::Union{GasliftValves, Missing}
+    temperatureprofile::Union{Array{T,1}, Missing} where T <: Real
+    temperature_method; WHT; geothermal_gradient; BHT; casing_temp_factor
+    pressurecorrelation::Function; outlet_referenced::Bool
+    WHP; CHP; dp_est; dp_est_inj; error_tolerance; error_tolerance_inj
+    q_o; q_w; GLR
+    injection_point; naturalGLR
+    APIoil; sg_water; sg_gas; sg_gas_inj
+    molFracCO2; molFracH2S; molFracCO2_inj; molFracH2S_inj
+    pseudocrit_pressure_correlation::Function
+    pseudocrit_temp_correlation::Function
+    Z_correlation::Function
+    gas_viscosity_correlation::Function
+    solutionGORcorrelation::Function
+    oilVolumeFactor_correlation::Function
+    waterVolumeFactor_correlation::Function
+    dead_oil_viscosity_correlation::Function
+    live_oil_viscosity_correlation::Function
+    frictionfactor::Function
+
+    function WellModel(;wellbore, roughness, valves = missing, temperatureprofile = missing,
+                        temperature_method = "linear", WHT = missing, geothermal_gradient = missing, BHT = missing, casing_temp_factor = 0.85,
+                        pressurecorrelation = BeggsAndBrill, outlet_referenced = true,
+                        WHP, CHP = missing, dp_est, dp_est_inj = 0.1 * dp_est, error_tolerance = 0.1, error_tolerance_inj = 0.05,
+                        q_o, q_w, GLR, injection_point = missing, naturalGLR = missing,
+                        APIoil, sg_water, sg_gas, sg_gas_inj = sg_gas,
+                        molFracCO2 = 0.0, molFracH2S = 0.0, molFracCO2_inj = molFracCO2, molFracH2S_inj = molFracH2S,
+                        pseudocrit_pressure_correlation = HankinsonWithWichertPseudoCriticalPressure,
+                        pseudocrit_temp_correlation = HankinsonWithWichertPseudoCriticalTemp,
+                        Z_correlation = KareemEtAlZFactor, gas_viscosity_correlation = LeeGasViscosity,
+                        solutionGORcorrelation = StandingSolutionGOR, oilVolumeFactor_correlation = StandingOilVolumeFactor,
+                        waterVolumeFactor_correlation = GouldWaterVolumeFactor,
+                        dead_oil_viscosity_correlation = GlasoDeadOilViscosity, live_oil_viscosity_correlation = ChewAndConnallySaturatedOilViscosity,
+                        frictionfactor = SerghideFrictionFactor)
+
+        new(wellbore, roughness, valves, temperatureprofile, temperature_method, WHT, geothermal_gradient, BHT, casing_temp_factor,
+            pressurecorrelation, outlet_referenced, WHP, CHP, dp_est, dp_est_inj, error_tolerance, error_tolerance_inj,
+            q_o, q_w, GLR, injection_point, naturalGLR, APIoil, sg_water, sg_gas, sg_gas_inj, molFracCO2, molFracH2S, molFracCO2_inj, molFracH2S_inj,
+            pseudocrit_pressure_correlation, pseudocrit_temp_correlation, Z_correlation, gas_viscosity_correlation, solutionGORcorrelation,
+            oilVolumeFactor_correlation, waterVolumeFactor_correlation, dead_oil_viscosity_correlation, live_oil_viscosity_correlation, frictionfactor)
+    end
+
+end
+
+#Printing for model structs
+function Base.show(io::IO, model::WellModel)
+
+    fields = fieldnames(WellModel)
+    values = map(f -> getfield(model, f), fields) |> list -> map(x -> !(x isa Array) ? string(x) : "$(length(x)) points from $(maximum(x)) to $(minimum(x)).", list)
+    msg = string.(fields) .* " : " .* values .* "\n"
+
+    print(io, msg)
+end

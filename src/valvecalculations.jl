@@ -1,3 +1,5 @@
+using PrettyTables
+
 """
 ThornhillCraver_gaspassage_simplified(P_td, P_cd, T_cd, portsize_64ths)
 

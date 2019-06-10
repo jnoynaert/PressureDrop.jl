@@ -2,12 +2,12 @@
 
 module PressureDrop
 
-using Requires, PrettyTables
+using Requires
 
 import Base.show #to export type printing methods
 
-export  Wellbore, GasliftValves, WellModel,
-        traverse_topdown, casing_traverse_topdown, read_survey, pressure_and_temp,
+export  Wellbore, GasliftValves, WellModel, read_survey, read_valves,
+        traverse_topdown, casing_traverse_topdown, pressure_and_temp!, pressures_and_temp!, gaslift_model!,
         plot_pressure, plot_pressures, plot_temperature, plot_pressureandtemp, plot_gaslift,
         valve_table, estimate_valve_Rvalue,
         BeggsAndBrill,
@@ -28,8 +28,6 @@ export  Wellbore, GasliftValves, WellModel,
         SerghideFrictionFactor,
         ChenFrictionFactor
 
-
-#%% setup
 include("types.jl")
 include("utilities.jl")
 include("pvtproperties.jl")
@@ -44,88 +42,22 @@ function __init__()
 end
 
 
-#%% TODO: Don't kill traverses. Leave as is and make a "mapper wrapper" to convert struct to args for people who just want a traverse
-#model struct. ONLY applies to wrapper functions.
-"""
-Makes it easier to iterate well models
-"""
-mutable struct WellModel
+#strip args from a struct and pass as kwargs to a function
+macro run(input, func)
 
-    wellbore::Wellbore; roughness
-    valves::Union{GasliftValves, missing}
-    temperatureprofile::Union{Array{Real,1}, missing}
-    temperature_method; WHT; geothermal_gradient; BHT; casing_temp_factor
-    pressurecorrelation::Function; outlet_referenced::Bool
-    WHP; CHP; dp_est; dp_est_inj; error_tolerance; error_tolerance_inj
-    q_o; q_w; GLR
-    injection_point; naturalGLR
-    APIoil; sg_water; sg_gas; sg_gas_inj
-    molFracCO2; molFracH2S; molFracCO2_inj; molFracH2S_inj
-    pseudocrit_pressure_correlation::Function
-    pseudocrit_temp_correlation::Function
-    Z_correlation::Function
-    gas_viscosity_correlation::Function
-    solutionGORcorrelation::Function
-    oilVolumeFactor_correlation::Function
-    waterVolumeFactor_correlation::Function
-    dead_oil_viscosity_correlation::Function
-    live_oil_viscosity_correlation::Function
-    frictionfactor::Function
+    return quote
+    local var = $(esc(input)) #resolve using the macro call environment
+    local fn = $(esc(func))
 
-    function WellModel(;wellbore, roughness, valves = missing, temperatureprofile = missing,
-                        temperature_method = "linear", WHT = missing, geothermal_gradient = missing, BHT = missing, casing_temp_factor = 0.85,
-                        pressurecorrelation = BeggsAndBrill, outlet_referenced = true,
-                        WHP, CHP = missing, dp_est, dp_est_inj = 0.1 * dp_est, error_tolerance = 0.1, error_tolerance_inj = 0.05,
-                        q_o, q_w, GLR, injection_point = missing, naturalGLR = missing,
-                        APIoil, sg_water, sg_gas, sg_gas_inj = sg_gas,
-                        molFracCO2 = 0.0, molFracH2S = 0.0, molFracCO2_inj = molFracCO2, molFracH2S_inj = molFracH2S,
-                        pseudocrit_pressure_correlation = HankinsonWithWichertPseudoCriticalPressure,
-                        pseudocrit_temp_correlation = HankinsonWithWichertPseudoCriticalTemp,
-                        Z_correlation = KareemEtAlZFactor, gas_viscosity_correlation = LeeGasViscosity,
-                        solutionGORcorrelation = StandingSolutionGOR, oilVolumeFactor_correlation = StandingOilVolumeFactor,
-                        waterVolumeFactor_correlation = GouldWaterVolumeFactor,
-                        dead_oil_viscosity_correlation = GlasoDeadOilViscosity, live_oil_viscosity_correlation = ChewAndConnallySaturatedOilViscosity,
-                        frictionfactor = SerghideFrictionFactor)
+    fields = fieldnames(typeof(var))
+    values = map(f -> getfield(var, f), fields)
 
-        new(wellbore, roughness, valves, temperatureprofile, temperature_method, WHT, geothermal_gradient, BHT,
-            pressurecorrelation, outlet_referenced, casing_temp_factor, WHP, CHP, dp_est, dp_est_inj, error_tolerance, error_tolerance_inj,
-            q_o, q_w, GLR, injection_point, naturalGLR, APIoil, sg_water, sg_gas, sg_gas_inj, molFracCO2, molFracH2S, molFracCO2_inj, molFracH2S_inj,
-            pseudocrit_pressure_correlation, pseudocrit_temp_correlation, Z_correlation, gas_viscosity_correlation, solutionGORcorrelation,
-            oilVolumeFactor_correlation, waterVolumeFactor_correlation, dead_oil_viscosity_correlation, live_oil_viscosity_correlation, frictionfactor)
+    args = (;(f=>v for (f,v) in zip(fields,values))...) #splat and append to convert to NamedTuple that can be passed as kwargs
+
+    fn(;args...)
+
     end
-
 end
-
-function Base.show(io::IO, model::WellModel)
-
-    fields = fieldnames(WellModel)
-    values = map(f -> getfield(model, f), fields)
-    msg = String.(fields) .* " : " .* string.(values) .* "\n"
-
-    print(io, msg)
-end
-
-macro @run(input, func)
-
-    return :( begin
-    fields = fieldnames(typeof($input))
-    values = map(f -> getfield($input, f), fields)
-
-    args = (;(f=>v for (f,v) in zip(fields,values))...) #splat and append to convert to NamedTuple
-
-    $func(;args...)
-
-    end)
-end
-#TODO: you need an @pressuredrop macro or similar that strips all the fields from a wellmodel struct and calls the function
-#this will also prevent the requirement of rewriting all your existing tests? maybe doesn't need to be a macro.
-#KEY poitn of this todo is to generate a kwargs-type namedtuple from the model and pass that to the traverse functions
-#see https://stackoverflow.com/questions/41687418/how-to-get-fields-of-a-julia-object
-#except you can't do the above unless your function accepts extra kwargs...but maybe that is okay?
-#yes, it is...and you can use that approach to every single named-arg to provide complete pass-through. brilliant. documentation remains the same.
-
-
-#TODO: add testing for the above for a master wrapper
 
 
 #%% core functions
@@ -219,7 +151,7 @@ All arguments are named keyword arguments.
 - `wellbore::Wellbore`: Wellbore object that defines segmentation/mesh, with md, tvd, inclination, and hydraulic diameter
 - `roughness`: pipe wall roughness in inches
 - `temperatureprofile::Array{Float64, 1}`: temperature profile (in °F) as an array with **matching entries for each pipe segment defined in the Wellbore input**
-- `outlet_pressure`: absolute outlet pressure (wellhead pressure) in **psia**
+- `WHP`: absolute outlet pressure (wellhead pressure) in **psia**
 - `dp_est`: estimated starting pressure differential (in psi) to use for all segments--impacts convergence time
 - `q_o`: oil rate in stocktank barrels/day
 - `q_w`: water rate in stb/d
@@ -247,7 +179,7 @@ All arguments are named keyword arguments.
 """
 function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Array{Float64, 1},
                             pressurecorrelation::Function = BeggsAndBrill,
-                            outlet_pressure, dp_est, error_tolerance = 0.1,
+                            WHP, dp_est, error_tolerance = 0.1,
                             q_o, q_w, GLR, injection_point = missing, naturalGLR = missing,
                             APIoil, sg_water, sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
                             pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp,
@@ -282,7 +214,7 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
 
 
     pressures = Array{Float64, 1}(undef, nsegments)
-    pressure_initial = pressures[1] = outlet_pressure
+    pressure_initial = pressures[1] = WHP
 
     @inbounds for i in 2:nsegments
         dp_calc = calculate_pressuresegment_topdown(pressurecorrelation, pressure_initial, dp_est,
@@ -384,17 +316,17 @@ All arguments are named keyword arguments.
 function pressure_and_temp!(m::WellModel)
 
     if m.temperature_method == "linear"
-        @assert !(any(ismissing.((m.WHT,m.BHT)))) "Must specific a wellhead temperature & BHT to utilize linear temperature method."
+        @assert !(any(ismissing.((m.WHT, m.BHT)))) "Must specific a wellhead temperature & BHT to utilize linear temperature method."
         m.temperatureprofile = @run m linear_wellboretemp
     elseif m.temperature_method == "Shiu"
-        @assert !(any(ismissing.((BHT,geothermal_gradient)))) "Must specify a geothermal gradient & BHT to utilize Shiu/Ramey temperature method.\nRefer to published geothermal gradient maps for your region to establish a sensible default."
+        @assert !(any(ismissing.((m.BHT, m.geothermal_gradient)))) "Must specify a geothermal gradient & BHT to utilize Shiu/Ramey temperature method.\nRefer to published geothermal gradient maps for your region to establish a sensible default."
         m.temperatureprofile = @run m Shiu_wellboretemp
     else
         throw(ArgumentError("Invalid temperature method. Use one of (\"Shiu\", \"linear\")."))
     end
 
     pressures = @run m traverse_topdown
-    BHP_summary(pressures, well)
+    BHP_summary(pressures, m.wellbore)
 
     return pressures
 end
@@ -403,7 +335,7 @@ end
 
 """
 """
-function pressures_and_temp(m::WellModel)
+function pressures_and_temp!(m::WellModel)
 
     tubing_pressures = @run m traverse_topdown
     casing_pressures = casing_traverse_topdown(m)

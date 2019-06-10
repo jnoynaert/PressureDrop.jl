@@ -56,7 +56,7 @@ test_temp = collect(range(85, 160, length = length(testwell.md)))
 pressure_values = traverse_topdown(wellbore = testwell, roughness = 0.0006, temperatureprofile = test_temp,
                                     pressurecorrelation = BeggsAndBrill, dp_est = 10, error_tolerance = 0.1,
                                     q_o = 400, q_w = 500, GLR = 2000, APIoil = 36, sg_water = 1.05, sg_gas = 0.75,
-                                    outlet_pressure = 150)
+                                    WHP = 150)
 
 ihs_data = joinpath(dirname(dirname(pathof(PressureDrop))), "test/testdata/Cleveland_6/Perform_results_cleveland_6_long.csv")
 ihs_pressures = [parse.(Float64, split(line, ',', keepempty = false)) for line in readlines(ihs_data)[2:end]] |>
@@ -65,6 +65,12 @@ ihs_pressures = [parse.(Float64, split(line, ',', keepempty = false)) for line i
 
 @test ihs_pressures[end, 2] ≈ pressure_values[end] atol = 25
 
+model = WellModel(wellbore = testwell, roughness = 0.0006, temperatureprofile = test_temp,
+                    pressurecorrelation = BeggsAndBrill, dp_est = 10, error_tolerance = 0.1,
+                    q_o = 400, q_w = 500, GLR = 2000, APIoil = 36, sg_water = 1.05, sg_gas = 0.75,
+                    WHP = 150)
+
+@test ihs_pressures[end, 2] ≈ traverse_topdown(model)[end] atol = 25
 
 #= view results
 ihs_temps = "C:/pressuredrop.git/test/testdata/Cleveland_6/Perform_temps_cleveland_6_long.csv"

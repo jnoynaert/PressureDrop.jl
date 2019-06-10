@@ -59,16 +59,18 @@ end
 
 
 """
-linear_wellboretemp(;WHT, BHT, well::Wellbore)
+linear_wellboretemp(;WHT, BHT, wellbore::Wellbore)
 
 Linear temperature profile from a wellhead temperature and bottomhole temperature in °F for a Wellbore object.
 
 Interpolation is based on true vertical depth of the wellbore, not md.
 """
-function linear_wellboretemp(;WHT, BHT, wellbore::Wellbore)
-    temp_slope = (BHT - WHT) / maximum(well.tvd)
+function linear_wellboretemp(;WHT, BHT, wellbore::Wellbore,
+                            kwargs...) #catch extra arguments from a WellModel for convenience
 
-    return [WHT + depth * temp_slope for depth in well.tvd]
+    temp_slope = (BHT - WHT) / maximum(wellbore.tvd)
+
+    return [WHT + depth * temp_slope for depth in wellbore.tvd]
 end
 
 
@@ -80,7 +82,7 @@ Wrapper to compute temperature profile for a Wellbore object using Ramey correla
 # Arguments
 - `BHT`: bottomhole temperature in °F
 - `geothermal_gradient = 1.0`: geothermal gradient in °F per 100 feet
-- `well::Wellbore`: Wellbore object to use as reference for segmentation, inclination, and
+- `wellbore::Wellbore`: Wellbore object to use as reference for segmentation, inclination, and
 - `q_o`: oil rate in stb/d
 - `q_w`: water rate in stb/d
 - `GLR`: gas:liquid ratio in scf/day
@@ -89,12 +91,13 @@ Wrapper to compute temperature profile for a Wellbore object using Ramey correla
 - `sg_gas`: gas specific gravity
 - `WHP`: wellhead/outlet absolute pressure in psia
 """
-function Shiu_wellboretemp(;BHT, geothermal_gradient = 1.0, wellbore::Wellbore, q_o, q_w, GLR, APIoil, sg_water, sg_gas, WHP)
+function Shiu_wellboretemp(;BHT, geothermal_gradient = 1.0, wellbore::Wellbore, q_o, q_w, GLR, APIoil, sg_water, sg_gas, WHP,
+                            kwargs...) #catch extra arguments from a WellModel for convenience
 
-    id_avg = sum(well.id)/length(well.id)
+    id_avg = sum(wellbore.id)/length(wellbore.id)
     A = Shiu_Beggs_relaxationfactor(q_o, q_w, GLR, APIoil, sg_water, sg_gas, id_avg, WHP) #use average inner diameter to calculate relaxation factor
-    TD = maximum(well.tvd)
-    depths = TD .- well.tvd
+    TD = maximum(wellbore.tvd)
+    depths = TD .- wellbore.tvd
     temp_profile = [Ramey_temp(z, BHT, A, geothermal_gradient) for z in depths]
 
     return temp_profile
