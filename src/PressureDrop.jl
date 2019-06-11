@@ -357,6 +357,10 @@ end
 """
 function gaslift_model!(m::WellModel; find_injectionpoint::Bool = false, dp_min = 100)
 
+    if find_injectionpoint
+        m.injection_point = m.wellbore.md[end]
+    end
+
     tubing_pressures, casing_pressures = pressures_and_temp!(m);
     valvedata, injection_depth = valve_calcs(m.valves, m.wellbore, m.sg_gas_inj, tubing_pressures, casing_pressures, m.temperatureprofile, m.temperatureprofile .* m.casing_temp_factor,
                             dp_min)
