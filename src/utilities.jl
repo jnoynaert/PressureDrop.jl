@@ -80,7 +80,7 @@ function read_valves(;path::String, delim::Char = ',', skiplines::Int64 = 1)
         close(filestream)
     end
 
-    return GasliftValves(md, PTRO, R, port) #constructor will parse to appropriate types
+    return GasliftValves(output[:,1], output[:,2], output[:,3], output[:,4]) #constructor will parse appropriately
 end
 
 

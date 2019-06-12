@@ -1,6 +1,11 @@
 using Test
 using PressureDrop
 
+const test_plots = false
+
+if test_plots
+    using Gadfly
+end
 
 include("test_types.jl")
 include("test_utilities.jl")

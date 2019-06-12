@@ -29,6 +29,8 @@ export  Wellbore, GasliftValves, WellModel, read_survey, read_valves,
         SerghideFrictionFactor,
         ChenFrictionFactor
 
+const pressure_atmospheric = 14.7 #used to adjust calculations between psia & psig
+
 include("types.jl")
 include("utilities.jl")
 include("pvtproperties.jl")
@@ -37,13 +39,13 @@ include("pressurecorrelations.jl")
 include("tempcorrelations.jl")
 include("casingcalculations.jl")
 
-
+#lazy loading for Gadfly:
 function __init__()
     @require Gadfly = "c91e804a-d5a3-530f-b6f0-dfbca275c004" include("plottingfunctions.jl")
 end
 
 
-#strip args from a struct and pass as kwargs to a function
+#strip args from a struct and pass as kwargs to a function:
 macro run(input, func)
 
     return quote
@@ -59,9 +61,6 @@ macro run(input, func)
 
     end
 end
-
-
-const pressure_atmospheric = 14.7 #used to adjust calculations between psia & psig
 
 
 #%% core functions

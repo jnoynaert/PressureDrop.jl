@@ -14,7 +14,7 @@ struct GasliftValves
     R::Array{Float64,1}
     port::Array{Int8,1}
 
-    function GasliftValves(md::Array{T} where T <: Real, PTRO::Array{T} where T <: Real, R::Array{T} where T <: AbstractFloat, port::Array{T} where T <: Int)
+    function GasliftValves(md::Array{T} where T <: Real, PTRO::Array{T} where T <: Real, R::Array{T} where T <: AbstractFloat, port::Array{T} where T <: Union{Real, Int})
 
         ports = try
             convert(Array{Int8,1}, port)

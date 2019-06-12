@@ -23,9 +23,9 @@ temps = model.temperatureprofile
 
 end #testset for pressure & temp wrapper
 
-#TODO: redo this using read_valves (as another implicit check) and use as an end-to-end test:
-#=
-end to end GL test:
+
+@testset "Gas lift wrappers" begin
+
 segments = 100
 MDs = range(0, 5000, length = segments) |> collect
 incs = repeat([0], inner = segments)
@@ -33,14 +33,28 @@ TVDs = range(0, 5000, length = segments) |> collect
 
 well = Wellbore(MDs, incs, TVDs, 2.441)
 
-valves = GasliftValves([1813,2375,2885,3395], [1005,990,975,960], [0.073,0.073,0.073,0.073], [16,16,16,16])
+testpath = joinpath(dirname(dirname(pathof(PressureDrop))), "test/testdata")
+valvepath = joinpath(testpath, "valvedata_wrappers_1.csv")
+valves = read_valves(path = valvepath, delim = ',', skiplines = 1) #implicit read_valves test
 
-model = WellModel(wellbore = well, roughness = 0.0006, valves = valves,
+model = WellModel(wellbore = well, roughness = 0.0, valves = valves,
                     temperature_method = "Shiu", geothermal_gradient = 1.0, BHT = 200,
                     pressurecorrelation = HagedornAndBrown, WHP = 350 - pressure_atmospheric, dp_est = 25,
-                    q_o = 100, q_w = 500, GLR = 1200, APIoil = 35, sg_water = 1.1, sg_gas = 0.8, CHP = 1000, naturalGLR = 1)
+                    q_o = 100, q_w = 500, GLR = 1200, APIoil = 35, sg_water = 1.0, sg_gas = 0.8, CHP = 1000, naturalGLR = 0)
 
 tubing_pressures, casing_pressures, valvedata = gaslift_model!(model, find_injectionpoint = true, dp_min = 100)
 
-plot_gaslift(model.wellbore, tubing_pressures, casing_pressures, model.temperatureprofile, valvedata, nothing)
-=#
+
+Δmds = [MDs[i] - MDs[i-1] for i in 81:length(MDs)]
+ΔPs = [tubing_pressures[i] - tubing_pressures[i-1] for i in 81:length(MDs)]
+gradients = ΔPs ./ Δmds
+mean(x) = sum(x) / length(x)
+
+@test mean(gradients) ≈ 0.433 atol = 0.015 #water gradient plus friction
+
+#%% implicit plot test
+if test_plots
+    plot_gaslift(model.wellbore, tubing_pressures, casing_pressures, model.temperatureprofile, valvedata, nothing)
+end
+
+end #testset for gas lift wrappers
