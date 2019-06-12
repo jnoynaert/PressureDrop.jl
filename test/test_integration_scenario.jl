@@ -51,7 +51,7 @@ end
 #%% general parameters
 dp_est = 10 #psi
 error_tolerance = 0.1 #psi
-outlet_pressure = 220 #WHP in psi
+outlet_pressure = 220 - 14.65 #WHP in psig
 oil_API = 35
 sg_gas = 0.65
 CO2 = 0.005
@@ -77,7 +77,7 @@ testwell = read_survey(path = surveypath, id = id)
 function create_temps(scenario)
         WHT = parameters[:WHT][scenario]
 
-        return linear_wellboretemp(WHT = WHT, BHT = BHT, well = testwell)
+        return linear_wellboretemp(WHT = WHT, BHT = BHT, wellbore = testwell)
 end
 
 temps = [create_temps(s) for s in scenarios]
@@ -90,6 +90,7 @@ temp_profiles = NamedTuple{scenarios}(temps) #temp profiles labelled by scenario
 examplepath = joinpath(testpath,"Perform_BandB_with_Palmer_correction.csv")
 test_example = load_example(examplepath, length(scenarios)+1)
 matched_example = match_example(testwell, test_example)
+matched_example[:,2:end] = matched_example[:,2:end] .- 14.65 #convert to psig
 
 # generate test data -- map across all examples
 corr = BeggsAndBrill
@@ -105,7 +106,7 @@ for (index, scenario) in enumerate(scenarios)
     test_results[:,index+1] = traverse_topdown(wellbore = testwell, roughness = roughness, temperatureprofile = temp_profiles[scenario],
                              pressurecorrelation = corr, dp_est = dp_est, error_tolerance = error_tolerance,
                              q_o = q_o, q_w = q_w, GLR = GLR, APIoil = oil_API, sg_water = sg_water, sg_gas = sg_gas,
-                             outlet_pressure = outlet_pressure, molFracCO2 = CO2)
+                             WHP = outlet_pressure, molFracCO2 = CO2)
 end
 
 # compare test data
@@ -128,6 +129,7 @@ end #testset for B&B scenarios
 examplepath = joinpath(testpath,"Perform_HandB_with_GriffithWallis.csv")
 test_example = load_example(examplepath, length(scenarios)+1)
 matched_example = match_example(testwell, test_example)
+matched_example[:,2:end] = matched_example[:,2:end] .- 14.65 #convert to psig
 
 # generate test data -- map across all examples
 corr = HagedornAndBrown
@@ -143,7 +145,7 @@ for (index, scenario) in enumerate(scenarios)
     test_results[:,index+1] = traverse_topdown(wellbore = testwell, roughness = roughness, temperatureprofile = temp_profiles[scenario],
                              pressurecorrelation = corr, dp_est = dp_est, error_tolerance = error_tolerance,
                              q_o = q_o, q_w = q_w, GLR = GLR, APIoil = oil_API, sg_water = sg_water, sg_gas = sg_gas,
-                             outlet_pressure = outlet_pressure, molFracCO2 = CO2)
+                             WHP = outlet_pressure, molFracCO2 = CO2)
 end
 
 # compare test data

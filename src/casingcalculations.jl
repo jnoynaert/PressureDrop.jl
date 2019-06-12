@@ -5,6 +5,8 @@ Helper function to calculate the pressure drop for a single casing segment conta
 
 Assumes no friction or entrained liquid -- uses density only.
 
+Pressure inputs are in **psia**.
+
 See `casing_traverse_topdown`.
 """
 function casing_pressuresegment_topdown(p_initial, dp_est, t_avg,
@@ -44,6 +46,8 @@ Develops pressure traverse from casing head down to datum in psia, returning a p
 
 Uses only density and is only applicable to pure gas injection, i.e. assumes no friction loss and no liquid entrained in gas stream (reasonable assumptions for relatively dry gas taken through several compression stages and injected through relatively large casing).
 
+Pressure inputs are in **psig**.
+
 # Arguments
 
 All arguments are named keyword arguments.
@@ -51,7 +55,7 @@ All arguments are named keyword arguments.
 ## Required
 - `wellbore::Wellbore`: Wellbore object that defines segmentation/mesh, with md, tvd, inclination, and hydraulic diameter
 - `temperatureprofile::Array{Float64, 1}`: temperature profile (in °F) as an array with **matching entries for each pipe segment defined in the Wellbore input**
-- `CHP`: casing head pressure, i.e. absolute surface injection pressure in **psia**
+- `CHP`: casing head pressure, i.e. absolute surface injection pressure in **psig**
 - `dp_est`: estimated starting pressure differential (in psi) to use for all segments--impacts convergence time
 - `sg_gas`: specific gravity of produced gas
 
@@ -67,6 +71,8 @@ function casing_traverse_topdown(;wellbore::Wellbore, temperatureprofile::Array{
                                     sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
                                     pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp,
                                     Z_correlation::Function = KareemEtAlZFactor)
+
+    CHP += pressure_atmospheric
 
     nsegments = length(wellbore.md)
 
@@ -87,7 +93,20 @@ function casing_traverse_topdown(;wellbore::Wellbore, temperatureprofile::Array{
         pressures[i] = pressure_initial
     end
 
-    return pressures
+    return pressures .- pressure_atmospheric
 end
 
-# future addition of friction version should be added via multiple dispatch rather than branching logic
+
+"""
+Remaps casing traverse to work with WellModels
+"""
+function casing_traverse_topdown(m::WellModel)
+
+    casing_traverse_topdown(;wellbore = m.wellbore, temperatureprofile = m.temperatureprofile .* m.casing_temp_factor,
+                                        CHP = m.CHP, dp_est = m.dp_est_inj, error_tolerance = m.error_tolerance_inj,
+                                        sg_gas = m.sg_gas_inj, molFracCO2 = m.molFracCO2_inj, molFracH2S = m.molFracH2S_inj,
+                                        pseudocrit_pressure_correlation = m.pseudocrit_pressure_correlation,
+                                        pseudocrit_temp_correlation = m.pseudocrit_temp_correlation,
+                                        Z_correlation = m.Z_correlation)
+end
+# TODO: test

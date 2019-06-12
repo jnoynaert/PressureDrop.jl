@@ -80,25 +80,25 @@ function read_valves(;path::String, delim::Char = ',', skiplines::Int64 = 1)
         close(filestream)
     end
 
-    return GasliftValves(md, PTRO, R, port) #constructor will parse to appropriate types
+    return GasliftValves(output[:,1], output[:,2], output[:,3], output[:,4]) #constructor will parse appropriately
 end
 
 
 """
-interpolate(well::Wellbore, property::Array{Real,1}, point)
+interpolate(ref_array, property::Array{Real,1}, point)
 
 Interpolate between points without any bounds checking.
 """
-function interpolate(well::Wellbore, property::Array{T,1} where T <: Real, point)
+function interpolate(ref_array::Array{T,1} where T <: Real, property::Array{T,1} where T <: Real, point)
 
-    index_above = searchsortedlast(well.md, point)
+    index_above = searchsortedlast(ref_array, point)
     index_below = index_above + 1
-    x1 = well.md[index_above]
+    x1 = ref_array[index_above]
 
     if x1 == point
         interpolated_value = property[index_above]
     else
-        x2 = well.md[index_below]
+        x2 = ref_array[index_below]
         y1, y2 = property[index_above], property[index_below]
         interpolated_value = y1 + (y2 - y1)/(x2 - x1) * (point - x1)
     end
@@ -124,7 +124,7 @@ function interpolate_all(well::Wellbore, properties::Array{Array{T,1},1} where T
 
     results = Array{Float64, 2}(undef, length(points), length(properties))
     for (index, property) in enumerate(properties)
-        results[:, index] = map(pt -> interpolate(well, property, pt), points)
+        results[:, index] = map(pt -> interpolate(well.md, property, pt), points)
     end
 
     return results

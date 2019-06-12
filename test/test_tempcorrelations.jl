@@ -10,7 +10,7 @@ sg_water = 1
 GLR = 1.762 * 1000^2 / (2219 + 11)
 sg_gas = 0.7
 id = 2.992
-whp = 150 + 14.7
+whp = 150 #psig
 A = Shiu_Beggs_relaxationfactor(q_o, q_w, GLR, APIoil, sg_water, sg_gas, id, whp)
 
 @test A ≈ 2089 atol = 1

@@ -1,5 +1,5 @@
 # Pressure correlations for PressureDrop package.
-
+# note that all of these work in psia, but the user-facing wrappers for traverses take psig.
 
 #%% Helper functions
 
@@ -372,7 +372,7 @@ GriffithWallisPressureDrop(v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, md, tvd, fr
 
 Helper function for H&B correlation -- compute Griffith pressure drop for bubble flow regime.
 """
-function GriffithWallisPressureDrop(v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, md, tvd, frictionfactor::Function, uphill_flow,  roughness)
+function GriffithWallisPressureDrop(id, v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, λ_l, md, tvd, frictionfactor::Function, uphill_flow,  roughness)
     v_s = 0.8 #assumed slip velocity of 0.8 ft/s -- probably assumes gas in oil bubbles with no water cut or vice versa?
     ε_l = 1 - 0.5 * (1 + v_m / v_s - sqrt((1 + v_m/v_s)^2 - 4*v_sg/v_s))
 
@@ -447,7 +447,7 @@ function HagedornAndBrown(md, tvd, inclination, id,
     if GriffithWallisCorrection
         L_B = max(1.071 - 0.2218 * v_m^2 / id, 0.13) #Griffith bubble flow boundary
         if λ_g <  L_B
-            dpdl = GriffithWallisPressureDrop(v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, md, tvd, frictionfactor, uphill_flow, roughness)
+            dpdl = GriffithWallisPressureDrop(id, v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, λ_l, md, tvd, frictionfactor, uphill_flow, roughness)
         else
             dpdl = HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, frictionfactor, uphill_flow, roughness)
         end

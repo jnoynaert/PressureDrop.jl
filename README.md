@@ -36,13 +36,17 @@ julia> plot_pressureandtemp(example_well, pressures, temps) #expect a long time 
 ![example plot](examples/exampleplot.png)
 
 
+## Core functions
+
+TODO: list the key output functions with comments on their usage
+
 # Supported pressure correlations
 
 - Beggs and Brill, with the Payne correction factors. Best for inclined pipe.
 - Hagedorn and Brown, with the Griffith and Wallis bubble flow adjustment.
 - Casing (injection) pressure drops using corrected density but neglecting friction.
 
-Neither correlation accounts for oil-water phase slip. Both assume **steady-state conditions**.
+These methods do not account for oil-water phase slip and assume **steady-state conditions**.
 
 # Performance
 

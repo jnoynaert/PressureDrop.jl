@@ -1,6 +1,8 @@
 using .Gadfly
 using Compose: compose, context
 
+#TODO: include wrappers to pull the critical pieces from a wellmodel
+
 """
 plot_pressure(well::Wellbore, pressures, ctitle = nothing)
 
@@ -19,6 +21,14 @@ function plot_pressure(well::Wellbore, pressures, ctitle = nothing)
                 Coord.cartesian(yflip = true))
 end
 
+
+"""
+"""
+#TODO: docs
+function plot_pressure(m::model, pressures, ctitle = nothing)
+
+        plot_pressure(m.wellbore, pressures, ctitle)
+end
 
 """
 function plot_pressures(well::Wellbore, tubing_pressures, casing_pressures, ctitle = nothing, valvedepths = [])
@@ -42,6 +52,16 @@ end
 
 
 """
+"""
+function plot_pressures(m::WellModel, tubing_pressures, casing_pressures, ctitle = nothing)
+
+        valvedepths = m.valves === missing ? [] : m.valves.md
+
+        plot_pressures(m.wellbore, tubing_pressures, casing_pressures, ctitle, valvedepths)
+end
+
+
+"""
 plot_temperature(well::Wellbore, temps, ctitle = nothing)
 
 Plot temperature profile for a given wellbore using the pressure outputs from one of the pressure traverse functions.
@@ -60,7 +80,6 @@ function plot_temperature(well::Wellbore, temps, ctitle = nothing)
 end
 
 
-#TODO: also plot valve opening and closing pressures as points
 """
 plot_pressureandtemp(well::Wellbore, tubing_pressures, casing_pressures, temps, ctitle = nothing, valvedepths = [])
 
@@ -71,8 +90,8 @@ See `traverse_topdown`,`pressure_and_temp`, `linear_wellboretemp`, `Shiu_wellbor
 function plot_pressureandtemp(well::Wellbore, tubing_pressures, casing_pressures, temps, ctitle = nothing, valvedepths = [])
 
         pressure = plot(layer(x = tubing_pressures, y = well.md, Geom.path, Theme(default_color = "deepskyblue")),
-                        layer(x = casing_pressures, y = well.md, Geom.path, Theme(default_color = "springgreen")),
-                        layer(yintercept = valvedepths, Geom.hline(color = "black")),
+                        layer(x = casing_pressures, y = well.md, Geom.path, Theme(default_color = "mediumspringgreen")),
+                        layer(yintercept = valvedepths, Geom.hline(color = "black", style = :dash)),
                 Scale.x_continuous(format = :plain),
                 Guide.xlabel("psia"),
                 Scale.y_continuous(format = :plain),
@@ -92,4 +111,62 @@ function plot_pressureandtemp(well::Wellbore, tubing_pressures, casing_pressures
 
         hstack(compose(context(0, 0, 0.75, 1), render(pressure)),
                 compose(context(0.75, 1, 0.25, 1), render(temp)))
+end
+
+
+"""
+"""
+#TODO: docs
+plot_pressureandtemp(m::WellModel, tubing_pressures, casing_pressures, ctitle = nothing)
+
+        valvedepths = m.valves === missing ? [] : m.valves.md
+
+        plot_pressureandtemp(m.wellbore, tubing_pressures, casing_pressures, m.temperatureprofile, ctitle, valvedepths)
+end
+
+
+"""
+plot_pressureandtemp(well::Wellbore, tubing_pressures, casing_pressures, temps, ctitle = nothing, valvedepths = [])
+
+Plot pressure & temperature profiles for a given wellbore using the pressure & temperature outputs from the pressure traverse & temperature functions.
+
+See `traverse_topdown`,`pressure_and_temp`, `linear_wellboretemp`, `Shiu_wellboretemp`.
+"""
+function plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps, valvedata, ctitle = nothing)
+
+        valvedepths = valvedata[:,2]
+
+        pressure = plot(layer(x = [valvedata[:,12];valvedata[:,13]], y = [valvedepths;valvedepths], Geom.point, Theme(default_color = "mediumpurple3")), #PVC and PVO
+                        layer(x = tubing_pressures, y = well.md, Geom.path, Theme(default_color = "deepskyblue")),
+                        layer(x = casing_pressures, y = well.md, Geom.path, Theme(default_color = "mediumspringgreen")),
+                        layer(yintercept = valvedepths, Geom.hline(color = "black", style = :dash)),
+
+                Scale.x_continuous(format = :plain),
+                Guide.xlabel("psia"),
+                Scale.y_continuous(format = :plain),
+                Guide.ylabel("Measured Depth (ft)"),
+                Guide.title(ctitle),
+                Coord.cartesian(yflip = true),
+                Theme(plot_padding=[5mm, 0mm, 5mm, 5mm]))
+
+        temp = plot(x = temps, y = well.md, Geom.path, Theme(default_color = "red"),
+                Scale.x_continuous(format = :plain),
+                Guide.xlabel("°F"),
+                Scale.y_continuous(labels = nothing),
+                Guide.yticks(label = false),
+                Guide.ylabel(nothing),
+                Coord.cartesian(yflip = true),
+                Theme(default_color = "red", plot_padding=[5mm, 5mm, 5mm, 5mm]))
+
+        hstack(compose(context(0, 0, 0.75, 1), render(pressure)),
+                compose(context(0.75, 1, 0.25, 1), render(temp)))
+end
+
+
+"""
+"""
+#TODO:docs
+function plot_gaslift(m::WellModel, tubing_pressures, casing_pressures, valvedata, ctitle = nothing)
+
+        plot_gaslift(m.wellbore, tubing_pressures, casing_pressures, m.temperatureprofile, valvedata, ctitle)
 end

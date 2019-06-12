@@ -4,10 +4,12 @@ module PressureDrop
 
 using Requires
 
-import Base.show #to export Wellbore printing method
+import Base.show #to export type printing methods
 
-export  Wellbore, GasliftValves, traverse_topdown, casing_traverse_topdown, read_survey, pressure_and_temp,
-        plot_pressure, plot_gaslift_pressures, plot_temperature, plot_pressureandtemp, plot_gaslift,
+export  Wellbore, GasliftValves, WellModel, read_survey, read_valves,
+        pressure_atmospheric,
+        traverse_topdown, casing_traverse_topdown, pressure_and_temp!, pressures_and_temp!, gaslift_model!,
+        plot_pressure, plot_pressures, plot_temperature, plot_pressureandtemp, plot_gaslift,
         valve_table, estimate_valve_Rvalue,
         BeggsAndBrill,
         HagedornAndBrown,
@@ -27,78 +29,45 @@ export  Wellbore, GasliftValves, traverse_topdown, casing_traverse_topdown, read
         SerghideFrictionFactor,
         ChenFrictionFactor
 
+const pressure_atmospheric = 14.7 #used to adjust calculations between psia & psig
 
-"""
-struct Wellbore: object to define a flow path as an input for pressure drop calculations
-
-See `read_survey` for helper method to create a Wellbore object from deviation survey files.
-
-# Fields
-- `md::Array{Float64, 1}`: measured depth for each segment in feet
-- `inc::Array{Float64, 1}`: inclination from vertical for each segment in degrees, e.g. true vertical = 0°
-- `tvd::Array{Float64, 1}`: true vertical depth for each segment in feet
-- `id::Array{Float64, 1}`: inner diameter for each pip segment in inches
-
-# Constructors
-By default, negative depths are disallowed, and a 0 MD / 0 TVD point is added if not present, to allow graceful handling of outlet pressure definitions.
-To bypass both the error checking and convenience feature, pass `true` as the final argument to the constructor.
-
-`Wellbore(md, inc, tvd, id::Array{Float64, 1}, allow_negatives = false)`: defines a new Wellbore object from a survey with inner diameter defined for each segment. Lengths of each input array must be equal.
-
-`Wellbore(md, inc, tvd, id::Float64, allow_negatives = false)`: defines a new Wellbore object with a uniform ID along the entire flow path.
-"""
-struct Wellbore
-
-    md::Array{Float64, 1}
-    inc::Array{Float64, 1}
-    tvd::Array{Float64, 1}
-    id::Array{Float64, 1}
-
-    function Wellbore(md, inc, tvd, id::Array{Float64, 1}, allow_negatives = false)
-        lens = length.([md, inc, tvd, id])
-
-        if !allow_negatives
-            if minimum(md) < 0 || minimum(tvd) < 0
-                throw(ArgumentError("Survey contains negative measured or true vertical depths. Pass the `allow_negatives` constructor flag if this is intentional."))
-            end
-
-            #add the origin/outlet reference point if missing
-            if !(md[1] == tvd[1] == 0)
-                md = vcat(0, md)
-                inc = vcat(0, inc)
-                tvd = vcat(0, tvd)
-                id = vcat(id[1], id)
-            end
-        end
-
-        count(x -> x == lens[1], lens) == length(lens) ?
-            new(md, inc, tvd, id) :
-            throw(DimensionMismatch("Mismatched number of wellbore elements used in wellbore constructor."))
-    end
-end #struct Wellbore
-
-#convenience constructor for uniform tubulars
-Wellbore(md, inc, tvd, id::Float64, allow_negatives = false) = Wellbore(md, inc, tvd, repeat([id], inner = length(md)), allow_negatives)
-
-#Printing for Wellbore structs
-Base.show(io::IO, well::Wellbore) = print(io,
-    "Wellbore with $(length(well.md)) points.\nEnds at $(well.md[end])' MD / $(well.tvd[end])' TVD. \nMax inclination $(maximum(well.inc))°. Average ID $(round(sum(well.id)/length(well.id), digits = 3)) in.")
-
-
-include("pvtproperties.jl")
-include("pressurecorrelations.jl")
-include("casingcalculations.jl")
-include("tempcorrelations.jl")
+include("types.jl")
 include("utilities.jl")
+include("pvtproperties.jl")
+include("valvecalculations.jl")
+include("pressurecorrelations.jl")
+include("tempcorrelations.jl")
+include("casingcalculations.jl")
 
-
+#lazy loading for Gadfly:
 function __init__()
     @require Gadfly = "c91e804a-d5a3-530f-b6f0-dfbca275c004" include("plottingfunctions.jl")
 end
 
 
+#strip args from a struct and pass as kwargs to a function:
+macro run(input, func)
+
+    return quote
+        local var = $(esc(input)) #resolve using the macro call environment
+        local fn = $(esc(func))
+
+        fields = fieldnames(typeof(var))
+        values = map(f -> getfield(var, f), fields)
+
+        args = (;(f=>v for (f,v) in zip(fields,values))...) #splat and append to convert to NamedTuple that can be passed as kwargs
+
+        fn(;args...)
+
+    end
+end
+
+
+#%% core functions
 """
 calculate_pressuresegment_topdown(<arguments>)
+
+Pressure inputs are in **psia**.
 
 Helper function to calculate the pressure drop for a single pipe segment, using an outlet-referenced approach.
 
@@ -108,7 +77,6 @@ Method:
 3. Compares the original and new pressure drop estimates to validate the stability of the estimate.
 4. Iterate through steps 1-3 until a stable estimate is found (indicated by obtaining a difference between pre- and post-PVT that is within the given error tolerance).
 
-See traverse_topdown for a full enumeration of arguments.
 """
 function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_initial, dp_est, t_avg,
                                             md_initial, md_end, tvd_initial, tvd_end, inclination, id, roughness,
@@ -169,6 +137,7 @@ function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_init
 end
 
 
+
 """
 traverse_topdown(;<named arguments>)
 
@@ -186,16 +155,18 @@ All arguments are named keyword arguments.
 - `wellbore::Wellbore`: Wellbore object that defines segmentation/mesh, with md, tvd, inclination, and hydraulic diameter
 - `roughness`: pipe wall roughness in inches
 - `temperatureprofile::Array{Float64, 1}`: temperature profile (in °F) as an array with **matching entries for each pipe segment defined in the Wellbore input**
-- `outlet_pressure`: absolute outlet pressure (wellhead pressure) in **psia**
+- `WHP`: absolute outlet pressure (wellhead pressure) in **psig**
 - `dp_est`: estimated starting pressure differential (in psi) to use for all segments--impacts convergence time
 - `q_o`: oil rate in stocktank barrels/day
 - `q_w`: water rate in stb/d
-- `GLR`: producing gas:liquid ratio at standard conditions in scf/bbl
+- `GLR`: **total** wellhead gas:liquid ratio, inclusive of injection gas, in scf/bbl
 - `APIoil`: API gravity of the produced oil
 - `sg_water`: specific gravity of produced water
 - `sg_gas`: specific gravity of produced gas
 
 ## Optional
+- `injection_point = missing`: injection point in MD for gas lift, above which total GLR is used, and below which natural GLR is used
+- `naturalGLR = missing`: GLR to use below point of injection, in scf/bbl
 - `pressurecorrelation::Function = BeggsAndBrill: pressure correlation to use
 - `error_tolerance = 0.1`: error tolerance for each segment in psi
 - `molFracCO2 = 0.0`, `molFracH2S = 0.0`: produced gas fractions of hydrogen sulfide and CO2, [0,1]
@@ -212,19 +183,44 @@ All arguments are named keyword arguments.
 """
 function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Array{Float64, 1},
                             pressurecorrelation::Function = BeggsAndBrill,
-                            outlet_pressure, dp_est, error_tolerance = 0.1,
-                            q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
+                            WHP, dp_est, error_tolerance = 0.1,
+                            q_o, q_w, GLR, injection_point = missing, naturalGLR = missing,
+                            APIoil, sg_water, sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
                             pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp,
                             Z_correlation::Function = KareemEtAlZFactor, gas_viscosity_correlation::Function = LeeGasViscosity, solutionGORcorrelation::Function = StandingSolutionGOR,
                             oilVolumeFactor_correlation::Function = StandingOilVolumeFactor, waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor,
-                            dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity, frictionfactor::Function = SerghideFrictionFactor)
+                            dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity, frictionfactor::Function = SerghideFrictionFactor,
+                            kwargs...) #catch extra arguments from a WellModel for convenience
+
+    WHP += pressure_atmospheric
 
     nsegments = length(wellbore.md)
 
     @assert nsegments == length(temperatureprofile) "Number of wellbore segments does not match number of temperature points."
 
+    if !ismissing(injection_point) && !ismissing(naturalGLR)
+        inj_index = searchsortedlast(wellbore.md, injection_point)
+
+        if wellbore.md[inj_index] != injection_point
+            if (injection_point - wellbore.md[inj_index]) > (wellbore.md[inj_index+1] - injection_point) #choose closest point
+                inj_index += 1
+            end
+
+            @info """Specified injection point at $injection_point' MD not explicitly included in wellbore. Using $(round(wellbore.md[inj_index],digits=1))' MD as an approximate match.
+            Use the Wellbore constructor with a set of gas lift valves to add precise injection points."""
+        end
+
+        GLRs = vcat(repeat([GLR], inner = inj_index), repeat([naturalGLR], inner = nsegments - inj_index))
+    elseif !ismissing(injection_point) || !ismissing(naturalGLR)
+        @info "Both an injection point and natural GLR should be specified--ignoring partial specification."
+        GLRs = repeat([GLR], inner = nsegments)
+    else #no injection point
+        GLRs = repeat([GLR], inner = nsegments)
+    end
+
+
     pressures = Array{Float64, 1}(undef, nsegments)
-    pressure_initial = pressures[1] = outlet_pressure
+    pressure_initial = pressures[1] = WHP
 
     @inbounds for i in 2:nsegments
         dp_calc = calculate_pressuresegment_topdown(pressurecorrelation, pressure_initial, dp_est,
@@ -232,7 +228,7 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
                                                     wellbore.md[i-1], wellbore.md[i], wellbore.tvd[i-1], wellbore.tvd[i],
                                                     (wellbore.inc[i] + wellbore.inc[i-1])/2, #average inclination between survey points
                                                     wellbore.id[i], roughness,
-                                                    q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
+                                                    q_o, q_w, GLRs[i], APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
                                                     pseudocrit_pressure_correlation, pseudocrit_temp_correlation, Z_correlation,
                                                     gas_viscosity_correlation, solutionGORcorrelation, oilVolumeFactor_correlation, waterVolumeFactor_correlation,
                                                     dead_oil_viscosity_correlation, live_oil_viscosity_correlation, frictionfactor, error_tolerance)
@@ -241,15 +237,39 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
         pressures[i] = pressure_initial
     end
 
-    return pressures
+    return pressures .- pressure_atmospheric
 end
 
 
+"""
+traverse_topdown(;model::WellModel)
+
+calculate top-down traverse from a WellModel object. Requires the following fields to be defined in the model:
+
+...
+"""
+function traverse_topdown(model::WellModel)
+
+    @run model traverse_topdown
+end
+
 
 """
-pressure_and_temp(;<named arguments>)
+BHP_summary(pressures, well)
 
-Develop pressure traverse in psia and temperature profile in °F from wellhead down to datum.
+Print the summary for a bottomhole pressure traverse of a well.
+"""
+function BHP_summary(pressures, well)
+    println("Flowing bottomhole pressure of $(round(pressures[end], digits = 1)) psig at $(well.md[end])' MD.",
+        "\nAverage gradient $(round(pressures[end]/well.md[end], digits = 3)) psi/ft (MD), $(round(pressures[end]/well.tvd[end], digits = 3)) psi/ft (TVD).")
+end
+
+
+#TODO: update this documentation to reflect using a WellModel and mutating temps
+"""
+pressure_and_temp(;model::WellModel)
+
+Develop pressure traverse in psia and temperature profile in °F from wellhead down to datum for a WellModel object. Requires the following fields to be defined in the model:
 
 Returns a pressure profile as an Array{Float64,1} and a temperature profile as an Array{Float64,1}, referenced to the measured depths in the original Wellbore object.
 
@@ -269,19 +289,21 @@ All arguments are named keyword arguments.
 - `well::Wellbore`: Wellbore object that defines segmentation/mesh, with md, tvd, inclination, and hydraulic diameter
 - `roughness`: pipe wall roughness in inches
 - `temperature_method = "linear"`: temperature method to use; "Shiu" for Ramey method with Shiu relaxation factor, "linear" for linear interpolation
-- `WHT = nothing`: wellhead temperature in °F; required for `temperature_method = "linear"`
-- `geothermal_gradient = nothing`: geothermal gradient in °F per 100 ft; required for `temperature_method = "Shiu"`
+- `WHT = missing`: wellhead temperature in °F; required for `temperature_method = "linear"`
+- `geothermal_gradient = missing`: geothermal gradient in °F per 100 ft; required for `temperature_method = "Shiu"`
 - `BHT` = bottomhole temperature in °F
-- `WHP`: absolute outlet pressure (wellhead pressure) in **psia**
+- `WHP`: absolute outlet pressure (wellhead pressure) in **psig**
 - `dp_est`: estimated starting pressure differential (in psi) to use for all segments--impacts convergence time
 - `q_o`: oil rate in stocktank barrels/day
 - `q_w`: water rate in stb/d
-- `GLR`: producing gas:liquid ratio at standard conditions in scf/bbl
+- `GLR`: **total** wellhead gas:liquid ratio, inclusive of injection gas, in scf/bbl
 - `APIoil`: API gravity of the produced oil
 - `sg_water`: specific gravity of produced water
 - `sg_gas`: specific gravity of produced gas
 
 ## Optional
+- `injection_point = missing`: injection point in MD for gas lift, above which total GLR is used, and below which natural GLR is used
+- `naturalGLR = missing`: GLR to use below point of injection, in scf/bbl
 - `pressurecorrelation::Function = BeggsAndBrill: pressure correlation to use
 - `error_tolerance = 0.1`: error tolerance for each segment in psi
 - `molFracCO2 = 0.0`, `molFracH2S = 0.0`: produced gas fractions of hydrogen sulfide and CO2, [0,1]
@@ -297,48 +319,63 @@ All arguments are named keyword arguments.
 - `frictionfactor::Function = SerghideFrictionFactor`: correlation function for Darcy-Weisbach friction factor
 - `outlet_referenced = true`: whether to use outlet pressure (WHP) or inlet pressure (BHP) for
 """
-function pressure_and_temp(;well::Wellbore, roughness, temperature_method = "linear", WHT = nothing, geothermal_gradient = nothing, BHT,
-                            pressurecorrelation::Function = BeggsAndBrill,
-                            WHP, dp_est, error_tolerance = 0.1,
-                            q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
-                            pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp,
-                            Z_correlation::Function = KareemEtAlZFactor, gas_viscosity_correlation::Function = LeeGasViscosity, solutionGORcorrelation::Function = StandingSolutionGOR,
-                            oilVolumeFactor_correlation::Function = StandingOilVolumeFactor, waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor,
-                            dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity, frictionfactor::Function = SerghideFrictionFactor,
-                            outlet_referenced = true)
+function pressure_and_temp!(m::WellModel)
 
-    if temperature_method == "linear"
-        @assert WHT != nothing "Must specific a wellhead temperature to utilize linear temperature method."
-        temps = linearmethod(WHT = WHT, BHT = BHT, well = well)
-    elseif temperature_method == "Shiu"
-        @assert geothermal_gradient != nothing "Must specify a geothermal gradient to utilize Shiu/Ramey temperature method.\nRefer to published geothermal gradient maps for your region to establish a sensible default."
-        temps = Shiu_wellboretemp(BHT = BHT, geothermal_gradient = geothermal_gradient, well = well, q_o = q_o, q_w = q_w, GLR = GLR, APIoil = APIoil, sg_water = sg_water, sg_gas = sg_gas, WHP = WHP)
+    if m.temperature_method == "linear"
+        @assert !(any(ismissing.((m.WHT, m.BHT)))) "Must specific a wellhead temperature & BHT to utilize linear temperature method."
+        m.temperatureprofile = @run m linear_wellboretemp
+    elseif m.temperature_method == "Shiu"
+        @assert !(any(ismissing.((m.BHT, m.geothermal_gradient)))) "Must specify a geothermal gradient & BHT to utilize Shiu/Ramey temperature method.\nRefer to published geothermal gradient maps for your region to establish a sensible default."
+        m.temperatureprofile = @run m Shiu_wellboretemp
     else
         throw(ArgumentError("Invalid temperature method. Use one of (\"Shiu\", \"linear\")."))
     end
 
-    pressures = traverse_topdown(wellbore = well, roughness = roughness, temperatureprofile = temps,
-                                pressurecorrelation = pressurecorrelation,
-                                outlet_pressure = WHP, dp_est = dp_est, error_tolerance = error_tolerance,
-                                q_o = q_o, q_w = q_w, GLR = GLR, APIoil = APIoil, sg_water = sg_water, sg_gas = sg_gas, molFracCO2 = molFracCO2, molFracH2S = molFracH2S,
-                                pseudocrit_pressure_correlation = pseudocrit_pressure_correlation, pseudocrit_temp_correlation = HankinsonWithWichertPseudoCriticalTemp,
-                                Z_correlation = Z_correlation, gas_viscosity_correlation = gas_viscosity_correlation, solutionGORcorrelation = solutionGORcorrelation,
-                                oilVolumeFactor_correlation = oilVolumeFactor_correlation, waterVolumeFactor_correlation = waterVolumeFactor_correlation,
-                                dead_oil_viscosity_correlation = dead_oil_viscosity_correlation, live_oil_viscosity_correlation = live_oil_viscosity_correlation, frictionfactor = frictionfactor)
+    pressures = traverse_topdown(m)
+    BHP_summary(pressures, m.wellbore)
 
-    println("Flowing bottomhole pressure of $(round(pressures[end], digits = 1)) psia at $(well.md[end])' MD.",
-            "\nAverage gradient $(round(pressures[end]/well.md[end], digits = 3)) psi/ft (MD), $(round(pressures[end]/well.tvd[end], digits = 3)) psi/ft (TVD).")
-
-    return pressures, temps
+    return pressures
 end
+#TODO: update test
 
-#TODO: modify ALL tubing functions to allow injection points for tbg; take a natural GLR argument and injection depth argument that default to nothing so existing workflows don't break
-#^^require passing valves with wellbore creation to make new segments? <-- better option than making Wellbore mutable.
 
-# TODO:wrapper to also return casing pressure
+"""
+"""
+function pressures_and_temp!(m::WellModel)
 
-# TODO:wrapper to return tubing, casing pressures & temps, as well as recalculate with auto-calced injection point
+    tubing_pressures = pressure_and_temp!(m)
+    casing_pressures = casing_traverse_topdown(m)
 
-# TODO: modify every wrapper to take and return psig!! including in valvecalcs.
+    return tubing_pressures, casing_pressures
+end
+#TODO: add test
+
+
+#TODO: docs
+"""
+"""
+function gaslift_model!(m::WellModel; find_injectionpoint::Bool = false, dp_min = 100)
+
+    if find_injectionpoint
+        m.injection_point = m.wellbore.md[end]
+    end
+
+    tubing_pressures, casing_pressures = pressures_and_temp!(m);
+    valvedata, injection_depth = valve_calcs(m.valves, m.wellbore, m.sg_gas_inj, tubing_pressures, casing_pressures, m.temperatureprofile, m.temperatureprofile .* m.casing_temp_factor,
+                            dp_min)
+
+    #currently doesn't account for changing temp profile
+    if find_injectionpoint
+        m.injection_point = injection_depth
+        tubing_pressures = traverse_topdown(m)
+        casing_pressures = casing_traverse_topdown(m)
+        valvedata, _ = valve_calcs(m.valves, m.wellbore, m.sg_gas_inj, tubing_pressures, casing_pressures, m.temperatureprofile, m.temperatureprofile .* m.casing_temp_factor,
+                                dp_min)
+    end
+
+    return tubing_pressures, casing_pressures, valvedata
+end
+#TODO: test
+
 
 end #module PressureDrop
