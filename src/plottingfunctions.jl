@@ -1,7 +1,6 @@
 using .Gadfly
 using Compose: compose, context
 
-#TODO: include wrappers to pull the critical pieces from a wellmodel
 
 """
 plot_pressure(well::Wellbore, pressures, ctitle = nothing)
@@ -23,12 +22,21 @@ end
 
 
 """
+plot_pressure(m::WellModel, pressures, ctitle = nothing)
+
+Plot pressure profile for a given wellbore using the pressure outputs from one of the pressure traverse functions.
+
+The `wellbore` field must be defined in the passed WellModel.
+
+See `traverse_topdown` and `pressure_and_temp`.
 """
-#TODO: docs
-function plot_pressure(m::model, pressures, ctitle = nothing)
+function
+plot_pressure(m::WellModel, pressures, ctitle = nothing)
+
 
         plot_pressure(m.wellbore, pressures, ctitle)
 end
+
 
 """
 function plot_pressures(well::Wellbore, tubing_pressures, casing_pressures, ctitle = nothing, valvedepths = [])
@@ -52,6 +60,13 @@ end
 
 
 """
+plot_pressures(m::WellModel, tubing_pressures, casing_pressures, ctitle = nothing)
+
+Plot relevant gas lift pressures for a given wellbore and set of calculated pressures.
+
+The `wellbore` field must be defined in the passed WellModel, with the `valves` field optional.
+
+See `traverse_topdown`, `casing_traverse_topdown`, and `pressure_and_temp`.
 """
 function plot_pressures(m::WellModel, tubing_pressures, casing_pressures, ctitle = nothing)
 
@@ -115,9 +130,15 @@ end
 
 
 """
-"""
-#TODO: docs
 plot_pressureandtemp(m::WellModel, tubing_pressures, casing_pressures, ctitle = nothing)
+
+Plot pressure & temperature profiles for a given wellbore using the pressure & temperature outputs from the pressure traverse & temperature functions.
+
+The `wellbore` and `temperatureprofile` fields must be defined in the passed WellModel, with the `valves` field optional.
+
+See `traverse_topdown`,`pressure_and_temp`, `linear_wellboretemp`, `Shiu_wellboretemp`.
+"""
+function plot_pressureandtemp(m::WellModel, tubing_pressures, casing_pressures, ctitle = nothing)
 
         valvedepths = m.valves === missing ? [] : m.valves.md
 
@@ -126,11 +147,13 @@ end
 
 
 """
-plot_pressureandtemp(well::Wellbore, tubing_pressures, casing_pressures, temps, ctitle = nothing, valvedepths = [])
+plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps, valvedata, ctitle = nothing)
 
-Plot pressure & temperature profiles for a given wellbore using the pressure & temperature outputs from the pressure traverse & temperature functions.
+Plot pressure & temperature profiles along with valve depths and opening/closing pressures for a gas lift well.
 
-See `traverse_topdown`,`pressure_and_temp`, `linear_wellboretemp`, `Shiu_wellboretemp`.
+Requires a valve table in the same format as returned by the `valve_calcs` function.
+
+See `traverse_topdown`,`pressure_and_temp`, `linear_wellboretemp`, `Shiu_wellboretemp`, `valve_calcs`.
 """
 function plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps, valvedata, ctitle = nothing)
 
@@ -164,8 +187,14 @@ end
 
 
 """
+plot_gaslift(m::WellModel, tubing_pressures, casing_pressures, valvedata, ctitle = nothing)
+
+Plot pressure & temperature profiles along with valve depths and opening/closing pressures for a gas lift well.
+
+Requires a valve table in the same format as returned by the `valve_calcs` function. The passed WellModel must also have the `wellbore`, `temperatureprofile`, and `valves` fields defined.
+
+See `traverse_topdown`,`pressure_and_temp`, `linear_wellboretemp`, `Shiu_wellboretemp`, `valve_calcs`.
 """
-#TODO:docs
 function plot_gaslift(m::WellModel, tubing_pressures, casing_pressures, valvedata, ctitle = nothing)
 
         plot_gaslift(m.wellbore, tubing_pressures, casing_pressures, m.temperatureprofile, valvedata, ctitle)

@@ -10,3 +10,5 @@ spare.jl
 travis debug.txt
 tangtemps_temp.jl
 MuEtAl_temp.jl
+docs/build
+extras/

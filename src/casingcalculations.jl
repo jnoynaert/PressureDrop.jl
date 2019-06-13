@@ -109,4 +109,3 @@ function casing_traverse_topdown(m::WellModel)
                                         pseudocrit_temp_correlation = m.pseudocrit_temp_correlation,
                                         Z_correlation = m.Z_correlation)
 end
-# TODO: test

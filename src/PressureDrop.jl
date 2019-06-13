@@ -361,16 +361,16 @@ function gaslift_model!(m::WellModel; find_injectionpoint::Bool = false, dp_min 
     end
 
     tubing_pressures, casing_pressures = pressures_and_temp!(m);
-    valvedata, injection_depth = valve_calcs(m.valves, m.wellbore, m.sg_gas_inj, tubing_pressures, casing_pressures, m.temperatureprofile, m.temperatureprofile .* m.casing_temp_factor,
-                            dp_min)
+    valvedata, injection_depth = valve_calcs(valves = m.valves, well = m.wellbore, sg_gas = m.sg_gas_inj, tubing_pressures = tubing_pressures, casing_pressures = casing_pressures, tubing_temps = m.temperatureprofile, casing_temps = m.temperatureprofile .* m.casing_temp_factor,
+                            dp_min = dp_min)
 
     #currently doesn't account for changing temp profile
     if find_injectionpoint
         m.injection_point = injection_depth
         tubing_pressures = traverse_topdown(m)
         casing_pressures = casing_traverse_topdown(m)
-        valvedata, _ = valve_calcs(m.valves, m.wellbore, m.sg_gas_inj, tubing_pressures, casing_pressures, m.temperatureprofile, m.temperatureprofile .* m.casing_temp_factor,
-                                dp_min)
+        valvedata, _ = valve_calcs(valves = m.valves, well = m.wellbore, sg_gas = m.sg_gas_inj, tubing_pressures = tubing_pressures, casing_pressures = casing_pressures, tubing_temps = m.temperatureprofile, casing_temps = m.temperatureprofile .* m.casing_temp_factor,
+                                dp_min = dp_min)
     end
 
     return tubing_pressures, casing_pressures, valvedata

@@ -119,20 +119,32 @@ function domepressure_downhole(PTRO, R, T_v, error_tolerance = 0.1, delta_est = 
 end
 
 
-#TODO: clean doc
 """
+valve_calcs(<named args>)
 
-**CAUTION**: All inputs and outputs are in **psig** for ease of interpretation.
+Note that all inputs and outputs are in **psig** for ease of interpretation.
 
-All forms are derived from the force balance for opening, P_t * A_p + P_c * (A_d - A_p) ≥ P_d * A_d
+Additionally, all forms are derived from the force balance for opening, P_t * A_p + P_c * (A_d - A_p) ≥ P_d * A_d
     and the force balance for closing, P_c ≤ P_d.
 
-Note that:
+Further note that:
 - the valve closing pressures given are a theoretical minimum (casing pressure is assumed to act on the entire area of the bellows/dome until closing).
 - valve opening and closing pressures are recalculated from PTRO and current conditions, rather than the other way around common during design.
-- casing temperature is adjusted from tubing temperature if only a tubing temperature profile is provided. **To force the use of identical temperature profiles, pass the tubing temperature twice.**
+- casing temperature is assumed to be 85% of tubing temperature if only a tubing temperature profile is provided. **To force the use of identical temperature profiles, pass the wellbore temperature twice.**
+
+# Arguments
+- `valves::GasliftValves`: a GasliftValves object defining the valve string
+- `well::Wellbore`: a Wellbore object defining the survey/segmentation points, deviation survey, and tubing
+- `sg_gas`: injection gas specific gravity
+- `tubing_pressures::Array{T, 1} where T <: Real`: precalculated tubing pressures in **psig**
+- `casing_pressures::Array{T, 1} where T <: Real`: precalculated casing pressures in **psig**
+- `tubing_temps::Array{T, 1} where T <: Real`: precalculated tubing temperature profile in °F
+- `casing_temps::Array{T, 1} where T <: Real = tubing_temps .* 0.85`: precalculated casing temperature profile in °F
+- `dp_min = 100`: minimum differential pressure (CP - TP) in psi for calculating an assumed injection point
+- `one_inch_coefficient = 0.76`: coefficient of discharge for Thornhill-Craver gas passage calculations for 1" valves
+- `one_pt_five_inch_coefficient = 0.6`: coefficient of discharge for Thornhill-Craver gas passage calculations for 1.5" valves
 """
-function valve_calcs(valves::GasliftValves, well::Wellbore, sg_gas, tubing_pressures::Array{T, 1} where T <: Real, casing_pressures::Array{T, 1} where T <: Real,
+function valve_calcs(;valves::GasliftValves, well::Wellbore, sg_gas, tubing_pressures::Array{T, 1} where T <: Real, casing_pressures::Array{T, 1} where T <: Real,
                     tubing_temps::Array{T, 1} where T <: Real, casing_temps::Array{T, 1} where T <: Real = tubing_temps .* 0.85,
                     dp_min = 100, one_inch_coefficient = 0.76, one_pt_five_inch_coefficient = 0.6)
 
@@ -183,8 +195,10 @@ function valve_calcs(valves::GasliftValves, well::Wellbore, sg_gas, tubing_press
 end
 
 
-#TODO: add doc
 """
+valve_table(valvedata, injection_depth = nothing)
+
+Pretty prints the data returned by `valve_calcs` for interpretation.
 """
 function valve_table(valvedata, injection_depth = nothing)
     header = ["GLV" "MD" "TVD" "PSO" "PSC" "Port" "R" "PPEF" "PTRO" "TP" "CP" "PVO" "PVC" "T_td" "T_cd" "Q_o" "Q_1.5" "Q_1";
