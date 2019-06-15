@@ -49,7 +49,7 @@ function plot_pressures(well::Wellbore, tubing_pressures, casing_pressures, ctit
 
         plot(layer(x = tubing_pressures, y = well.md, Geom.path, Theme(default_color = "deepskyblue")),
              layer(x = casing_pressures, y = well.md, Geom.path, Theme(default_color = "springgreen")),
-             layer(yintercept = valvedepths, Geom.hline(color = "black")),
+             layer(yintercept = valvedepths, Geom.hline(color = "black", style = :dash)),
                 Scale.x_continuous(format = :plain),
                 Guide.xlabel("Pressure (psia)"),
                 Scale.y_continuous(format = :plain),

@@ -3,7 +3,7 @@
 #%% Gas
 
 """
-LeeGasViscosity(specificGravity, psiAbs, tempF, Z)
+`LeeGasViscosity(specificGravity, psiAbs, tempF, Z)`
 
 Gas viscosity (μ_g) in centipoise.
 
@@ -26,7 +26,7 @@ end
 
 
 """
-HankinsonWithWichertPseudoCriticalTemp(specificGravity, molFracCO2, molFracH2S)
+`HankinsonWithWichertPseudoCriticalTemp(specificGravity, molFracCO2, molFracH2S)`
 
 Pseudo-critical temperature, adjusted pseudo-critical temperature in °R, and Wichert correction factor
 
@@ -50,7 +50,7 @@ end
 
 
 """
-HankinsonWithWichertPseudoCriticalPressure(specificGravity, molFracCO2, molFracH2S)
+`HankinsonWithWichertPseudoCriticalPressure(specificGravity, molFracCO2, molFracH2S)`
 
 Pseudo-critical pressure in psia.
 
@@ -71,7 +71,7 @@ end
 
 
 """
-PapayZFactor(pressurePseudoCritical, tempPseudoCriticalRankine, psiAbs, tempF)
+`PapayZFactor(pressurePseudoCritical, tempPseudoCriticalRankine, psiAbs, tempF)`
 
 Natural gas compressibility deviation factor (Z).
 
@@ -91,7 +91,7 @@ end
 
 
 """
-KareemEtAlZFactor(pressurePseudoCritical, tempPseudoCriticalRankine, psiAbs, tempF)
+`KareemEtAlZFactor(pressurePseudoCritical, tempPseudoCriticalRankine, psiAbs, tempF)`
 
 Natural gas compressibility deviation factor (Z).
 
@@ -150,7 +150,7 @@ end
 
 
 """
-KareemEtAlZFactor_simplified(pressurePseudoCritical, tempPseudoCriticalRankine, psiAbs, tempF)
+`KareemEtAlZFactor_simplified(pressurePseudoCritical, tempPseudoCriticalRankine, psiAbs, tempF)`
 
 Natural gas compressibility deviation factor (Z).
 
@@ -191,7 +191,7 @@ end
 
 
 """
-gasVolumeFactor(pressureAbs, Z, tempF)
+`gasVolumeFactor(pressureAbs, Z, tempF)`
 
 Corrected gas volume factor (B_g).
 
@@ -204,7 +204,7 @@ end
 
 
 """
-gasDensity_insitu(specificGravityGas, Z_factor, abspressure, tempF)
+`gasDensity_insitu(specificGravityGas, Z_factor, abspressure, tempF)`
 
 In-situ gas density in lb/ft³ (ρ_g).
 
@@ -224,7 +224,7 @@ end
 
 
 """
-StandingSolutionGOR(APIoil, specificGravityGas, psiAbs, tempF)
+`StandingSolutionGOR(APIoil, specificGravityGas, psiAbs, tempF)`
 
 Solution GOR (Rₛ) in scf/bbl.
 
@@ -241,7 +241,7 @@ end
 
 
 """
-StandingOilVolumeFactor(APIoil, specificGravityGas, solutionGOR, psiAbs, tempF)
+`StandingOilVolumeFactor(APIoil, specificGravityGas, solutionGOR, psiAbs, tempF)`
 
 Oil volume factor (Bₒ).
 
@@ -258,7 +258,7 @@ end
 
 
 """
-oilDensity_insitu(APIoil,  specificGravityGas,  solutionGOR,  oilVolumeFactor)
+`oilDensity_insitu(APIoil,  specificGravityGas,  solutionGOR,  oilVolumeFactor)`
 
 Oil density (ρₒ) in mass-lbs per ft³.
 
@@ -271,7 +271,7 @@ end
 
 
 """
-BeggsAndRobinsonDeadOilViscosity(APIoil, tempF)
+`BeggsAndRobinsonDeadOilViscosity(APIoil, tempF)`
 
 Dead oil viscosity (μ_oD) in centipoise.
 
@@ -295,7 +295,7 @@ end
 
 
 """
-GlasoDeadOilViscosity(APIoil, tempF)
+`GlasoDeadOilViscosity(APIoil, tempF)`
 
 Dead oil viscosity (μ_oD) in centipoise.
 
@@ -310,7 +310,7 @@ end
 
 
 """
-ChewAndConnallySaturatedOilViscosity(deadOilViscosity,  solutionGOR)
+`ChewAndConnallySaturatedOilViscosity(deadOilViscosity,  solutionGOR)`
 
 Saturated oil viscosity (μₒ) in centipoise.
 
@@ -330,7 +330,7 @@ end
 #%% Water
 
 """
-waterDensity_stb(waterGravity)
+`waterDensity_stb(waterGravity)`
 
 Water density in lb per ft³.
 
@@ -342,7 +342,7 @@ end
 
 
 """
-waterDensity_insitu(waterGravity, B_w)
+`waterDensity_insitu(waterGravity, B_w)`
 
 Water density in lb per ft³.
 
@@ -354,7 +354,7 @@ end
 
 
 """
-GouldWaterVolumeFactor(pressureAbs,  tempF)
+`GouldWaterVolumeFactor(pressureAbs,  tempF)`
 
 Water volume factor (B_w).
 
@@ -373,7 +373,7 @@ const assumedWaterViscosity = 1.0 #centipoise
 #%% Interfacial tension
 
 """
-gas_oil_interfacialtension(APIoil, pressureAbsolute, tempF)
+`gas_oil_interfacialtension(APIoil, pressureAbsolute, tempF)`
 
 Gas-oil interfactial tension in dynes/cm.
 
@@ -399,7 +399,7 @@ end
 
 
 """
-function gas_water_interfacialtension(pressureAbsolute, tempF)
+`gas_water_interfacialtension(pressureAbsolute, tempF)`
 
 Gas-water interfactial tension in dynes/cm.
 

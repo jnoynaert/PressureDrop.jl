@@ -4,7 +4,7 @@
 #%% Helper functions
 
 """
-liquidvelocity_superficial(q_o, q_w, id, B_o, B_w)
+`liquidvelocity_superficial(q_o, q_w, id, B_o, B_w)`
 
 Returns superficial liquid velocity, v_sg.
 
@@ -25,7 +25,7 @@ end
 
 
 """
-gasvelocity_superficial(q_o, q_w, GLR, R_s, id, B_g)
+`gasvelocity_superficial(q_o, q_w, GLR, R_s, id, B_g)`
 
 Returns superficial liquid velocity, v_sg.
 
@@ -49,7 +49,7 @@ end
 
 
 """
-mixture_properties_simple(q_o, q_w, property_o, property_w)
+`mixture_properties_simple(q_o, q_w, property_o, property_w)`
 
 Weighted average for mixture properties.
 
@@ -64,11 +64,11 @@ end
 
 
 """
-ChenFrictionFactor(N_Re, id, roughness = 0.01)
+`ChenFrictionFactor(N_Re, id, roughness = 0.01)`
 
 Uses the direct Chen 1979 correlation to determine friction factor, in place of the Colebrook implicit solution.
 
-Takes the dimensionless Reynolds number, pipe inner diameter in *inches*, and roughness in *inches*.
+Takes the dimensionless Reynolds number, pipe inner diameter in **inches**, and roughness in **inches**.
 
 Not intended for Reynolds numbers between 2000-4000.
 """
@@ -88,7 +88,7 @@ end
 
 
 """
-SerghideFrictionFactor(N_Re, id, roughness = 0.01)
+`SerghideFrictionFactor(N_Re, id, roughness = 0.01)`
 
 Uses the direct Serghide 1984 correlation to determine friction factor, in place of the Colebrook implicit solution.
 
@@ -116,7 +116,7 @@ end
 #%% Beggs and Brill
 
 """
-BeggsAndBrillFlowMap(λ_l, N_Fr)
+`BeggsAndBrillFlowMap(λ_l, N_Fr)`
 
 Beggs and Brill flow pattern as a string ∈ {"segregated", "transition", "distributed", "intermittent"}.
 
@@ -143,7 +143,7 @@ const BB_coefficients =     (segregated = (a = 0.980, b= 0.4846, c = 0.0868, e =
 
 
 """
-BeggsAndBrillAdjustedLiquidHoldup(flowpattern, λ_l, N_Fr, N_lv, α, inclination, uphill_flow, PayneCorrection = true)
+`BeggsAndBrillAdjustedLiquidHoldup(flowpattern, λ_l, N_Fr, N_lv, α, inclination, uphill_flow, PayneCorrection = true)`
 
 Helper function for Beggs and Brill. Returns adjusted liquid holdup, ε_l(α), with optional Payne et al correction applied to output.
 
@@ -211,7 +211,7 @@ end
 
 
 """
-BeggsAndBrill(<arguments>)
+`BeggsAndBrill(<arguments>)`
 
 Calculates pressure drop for a single pipe segment using Beggs and Brill 1973 method, with optional Payne corrections.
 
@@ -307,7 +307,7 @@ end #Beggs and Brill
 
 #%% Hagedorn & Brown
 """
-HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, ρ_l, μ_l, σ_l)
+`HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, ρ_l, μ_l, σ_l)`
 
 Helper function to determine liquid holdup using the Hagedorn & Brown method.
 
@@ -333,7 +333,7 @@ end
 
 
 """
-HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, frictionfactor::Function, uphill_flow, roughness)
+`HagedornAndBrownPressureDrop(pressure_est, id, v_sl, v_sg, ρ_l, ρ_g, μ_l, μ_g, σ_l, id_ft, λ_l, md, tvd, frictionfactor::Function, uphill_flow, roughness)`
 
 Helper function for H&B -- compute H&B pressure drop when bubble flow criteria are not met.
 """
@@ -368,7 +368,7 @@ end
 
 
 """
-GriffithWallisPressureDrop(v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, md, tvd, frictionfactor::Function, uphill_flow, roughness)
+`GriffithWallisPressureDrop(v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, md, tvd, frictionfactor::Function, uphill_flow, roughness)`
 
 Helper function for H&B correlation -- compute Griffith pressure drop for bubble flow regime.
 """
@@ -396,9 +396,8 @@ end
 
 
 
-
 """
-HagedornAndBrown(<arguments>)
+`HagedornAndBrown(<arguments>)`
 
 Calculates pressure drop for a single pipe segment using the Hagedorn & Brown 1965 method (with recent modifications), with optional Griffith and Wallis bubble flow corrections.
 

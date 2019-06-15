@@ -65,7 +65,7 @@ end
 
 #%% core functions
 """
-calculate_pressuresegment_topdown(<arguments>)
+`calculate_pressuresegment_topdown(<arguments>)`
 
 Pressure inputs are in **psia**.
 
@@ -139,7 +139,7 @@ end
 
 
 """
-traverse_topdown(;<named arguments>)
+`traverse_topdown(;<named arguments>)`
 
 Develop pressure traverse from wellhead down to datum in psia, returning a pressure profile as an Array{Float64,1}.
 
@@ -242,7 +242,7 @@ end
 
 
 """
-traverse_topdown(;model::WellModel)
+`traverse_topdown(;model::WellModel)`
 
 calculate top-down traverse from a WellModel object. Requires the following fields to be defined in the model:
 
@@ -267,7 +267,7 @@ end
 
 #TODO: update this documentation to reflect using a WellModel and mutating temps
 """
-pressure_and_temp(;model::WellModel)
+`pressure_and_temp(;model::WellModel)`
 
 Develop pressure traverse in psia and temperature profile in °F from wellhead down to datum for a WellModel object. Requires the following fields to be defined in the model:
 
@@ -340,6 +340,7 @@ end
 
 
 """
+`pressures_and_temp!(m::WellModel)`
 """
 function pressures_and_temp!(m::WellModel)
 
@@ -353,6 +354,7 @@ end
 
 #TODO: docs
 """
+`gaslift_model!(m::WellModel; find_injectionpoint::Bool = false, dp_min = 100)`
 """
 function gaslift_model!(m::WellModel; find_injectionpoint::Bool = false, dp_min = 100)
 
