@@ -3,7 +3,7 @@ using Compose: compose, context
 
 
 """
-plot_pressure(well::Wellbore, pressures, ctitle = nothing)
+`plot_pressure(well::Wellbore, pressures, ctitle = nothing)`
 
 Plot pressure profile for a given wellbore using the pressure outputs from one of the pressure traverse functions.
 
@@ -22,7 +22,7 @@ end
 
 
 """
-plot_pressure(m::WellModel, pressures, ctitle = nothing)
+`plot_pressure(m::WellModel, pressures, ctitle = nothing)`
 
 Plot pressure profile for a given wellbore using the pressure outputs from one of the pressure traverse functions.
 
@@ -39,7 +39,7 @@ end
 
 
 """
-function plot_pressures(well::Wellbore, tubing_pressures, casing_pressures, ctitle = nothing, valvedepths = [])
+`function plot_pressures(well::Wellbore, tubing_pressures, casing_pressures, ctitle = nothing, valvedepths = [])`
 
 Plot relevant gas lift pressures for a given wellbore and set of calculated pressures.
 
@@ -60,7 +60,7 @@ end
 
 
 """
-plot_pressures(m::WellModel, tubing_pressures, casing_pressures, ctitle = nothing)
+`plot_pressures(m::WellModel, tubing_pressures, casing_pressures, ctitle = nothing)`
 
 Plot relevant gas lift pressures for a given wellbore and set of calculated pressures.
 
@@ -77,7 +77,7 @@ end
 
 
 """
-plot_temperature(well::Wellbore, temps, ctitle = nothing)
+`plot_temperature(well::Wellbore, temps, ctitle = nothing)`
 
 Plot temperature profile for a given wellbore using the pressure outputs from one of the pressure traverse functions.
 
@@ -96,7 +96,7 @@ end
 
 
 """
-plot_pressureandtemp(well::Wellbore, tubing_pressures, casing_pressures, temps, ctitle = nothing, valvedepths = [])
+`plot_pressureandtemp(well::Wellbore, tubing_pressures, casing_pressures, temps, ctitle = nothing, valvedepths = [])`
 
 Plot pressure & temperature profiles for a given wellbore using the pressure & temperature outputs from the pressure traverse & temperature functions.
 
@@ -130,7 +130,7 @@ end
 
 
 """
-plot_pressureandtemp(m::WellModel, tubing_pressures, casing_pressures, ctitle = nothing)
+`plot_pressureandtemp(m::WellModel, tubing_pressures, casing_pressures, ctitle = nothing)`
 
 Plot pressure & temperature profiles for a given wellbore using the pressure & temperature outputs from the pressure traverse & temperature functions.
 
@@ -147,7 +147,7 @@ end
 
 
 """
-plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps, valvedata, ctitle = nothing)
+`plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps, valvedata, ctitle = nothing)`
 
 Plot pressure & temperature profiles along with valve depths and opening/closing pressures for a gas lift well.
 
@@ -187,7 +187,7 @@ end
 
 
 """
-plot_gaslift(m::WellModel, tubing_pressures, casing_pressures, valvedata, ctitle = nothing)
+`plot_gaslift(m::WellModel, tubing_pressures, casing_pressures, valvedata, ctitle = nothing)`
 
 Plot pressure & temperature profiles along with valve depths and opening/closing pressures for a gas lift well.
 

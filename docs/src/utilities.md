@@ -2,8 +2,7 @@
 
 !!! note
 
-  default units and format about csvs
-
+    The functions to read files all expect CSVs with headers, defined in field units.
 
 ```@index
 Modules = [PressureDrop]

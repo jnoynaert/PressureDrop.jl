@@ -13,4 +13,6 @@ Depth = 2
 
 # Pressure & temperature calculations
 
+Include casing pressure.
+
 # Gas lift analysis

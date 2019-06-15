@@ -1,10 +1,5 @@
 # Plotting
 
-```@contents
-Pages = ["plotting.md"]
-Depth = 3
-```
-
 All plotting functions wrap Gadfly plot definitions.
 
 !!! note
