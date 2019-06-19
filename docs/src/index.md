@@ -4,9 +4,13 @@
 CurrentModule = PressureDrop
 ```
 
-<Description here>
-<note about only outlet-referenced>
-<can literally copy-paste from readme>
+PressureDrop.jl is a Julia package for computing multiphase pressure profiles for gas lift optimization of oil & gas wells.
+
+It currently calculates outlet-referenced models for producing wells using non-coupled temperature gradients.
+
+!! Note
+
+      Note that all inputs and calculations are in U.S. field units.
 
 # Contents
 

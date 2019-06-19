@@ -105,6 +105,16 @@ valve_table(valvedata)
 
 The data for a valve table can be calculated directly using [`valve_calcs`](@ref), which will interpolate pressures and temperatures at depth from known producing P/T profiles.
 
+## Bulk calculations
+
+decline over time:
+
+define model
+
+generate decline data from a hyperbolic function and add some noise
+
+define a curried function for traverse that only takes rate data
+
 ## Types
 
 ```@docs

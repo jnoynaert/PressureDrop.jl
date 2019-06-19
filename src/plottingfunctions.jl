@@ -115,12 +115,14 @@ function plot_pressureandtemp(well::Wellbore, tubing_pressures, casing_pressures
                 Coord.cartesian(yflip = true),
                 Theme(plot_padding=[5mm, 0mm, 5mm, 5mm]))
 
+        placeholdertitle = ctitle === nothing ? nothing : " "
         temp = plot(x = temps, y = well.md, Geom.path, Theme(default_color = "red"),
                 Scale.x_continuous(format = :plain),
                 Guide.xlabel("°F"),
                 Scale.y_continuous(labels = nothing),
                 Guide.yticks(label = false),
                 Guide.ylabel(nothing),
+                Guide.title(placeholdertitle),
                 Coord.cartesian(yflip = true),
                 Theme(default_color = "red", plot_padding=[5mm, 5mm, 5mm, 5mm]))
 
@@ -172,12 +174,14 @@ function plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps,
                 Coord.cartesian(yflip = true),
                 Theme(plot_padding=[5mm, 0mm, 5mm, 5mm]))
 
+        placeholdertitle = ctitle === nothing ? nothing : " "
         temp = plot(x = temps, y = well.md, Geom.path, Theme(default_color = "red"),
                 Scale.x_continuous(format = :plain),
                 Guide.xlabel("°F"),
                 Scale.y_continuous(labels = nothing),
                 Guide.yticks(label = false),
                 Guide.ylabel(nothing),
+                Guide.title(placeholdertitle),
                 Coord.cartesian(yflip = true),
                 Theme(default_color = "red", plot_padding=[5mm, 5mm, 5mm, 5mm]))
 

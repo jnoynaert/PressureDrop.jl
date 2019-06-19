@@ -17,6 +17,10 @@ Alternatively, in Jupyter: execute a cell containing `using Pkg; Pkg.add("Pressu
 
 # Usage
 
+
+
+just re-use the core functionality example (except maybe abbreviate the calls)
+
 ```
 julia> using PressureDrop
 
@@ -37,12 +41,9 @@ julia> using Gadfly #necessary to make integrated plotting functions available
 
 julia> plot_pressureandtemp(example_well, pressures, temps) #expect a long time to first plot due to precompilation; subsequent calls will be faster
 ```
-![example plot](examples/exampleplot.png)
+![example plot](examples/exampleplot.png) to update just snip out of docs
 
-
-## Core functions
-
-TODO: list the key output functions with comments on their usage
+See the [documentation](https://jnoynaert.github.io/PressureDrop.jl/stable) for usage details.
 
 # Supported pressure correlations
 
