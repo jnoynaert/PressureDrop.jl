@@ -107,13 +107,61 @@ The data for a valve table can be calculated directly using [`valve_calcs`](@ref
 
 ## Bulk calculations
 
-decline over time:
+Pressure drops can be calculated in bulk, either by passing model arguments to functions directly, or by mutating or copying model objects.
 
-define model
+```@example core
+nominal_rate(D_sei, b) = ((1-D_sei)^(-b) - 1)/b #secant decline rates to nominal rates, b ≠ 0
+hyperbolic_rate(q_i, b, D_sei, t) = q_i / (1 + b * nominal_rate(D_sei, b) * t)^(1/b) #spot rate from a hyperbolic decline for t in years
 
-generate decline data from a hyperbolic function and add some noise
+# generate test data
+q_i = 3000
+b = 1.2
+decline = 0.85
+timesteps = range(0,2, step = 1/365)
+declinedata = [hyperbolic_rate(q_i, b, decline, time) for time in timesteps]
+noise = [randn() .* 15 for sample in timesteps]
+testdata = max.(declinedata .+ noise, 0)
 
-define a curried function for traverse that only takes rate data
+# check results
+days = timesteps .* 365
+plot(x = days, y = testdata, Geom.path,
+     Guide.xlabel("Time (days)"),
+     Guide.ylabel("Production"),
+     Scale.y_continuous(format = :plain, minvalue = 0))
+draw(SVG("test-data.svg", 6inch, 4inch), ans); nothing # hide
+```
+
+![](test-data.svg)
+
+```@example core
+# set up and calculate pressure data
+examplewell = read_survey(path = surveyfilepath, id = 2.441, maxdepth = 6500)
+
+function timestep_pressure(rate, temp, watercut, GLR)
+    temps = linear_wellboretemp(WHT = temp, BHT = 165, wellbore = examplewell)
+
+    return traverse_topdown(wellbore = examplewell, roughness = 0.0065, temperatureprofile = temps,
+                     pressurecorrelation = BeggsAndBrill, dp_est = 25, error_tolerance = 0.1,
+                     q_o = rate * (1 - watercut), q_w = rate * watercut, GLR = GLR,
+                     APIoil = 36, sg_water = 1.05, sg_gas = 0.65,
+                     WHP = 120)[end]
+end
+
+wellhead_temps = range(125, 85, length = 731)
+watercuts = range(1, 0.5, length = 731)
+GLR = range(0, 5000, length = 731)
+
+pressures = timestep_pressure.(testdata, wellhead_temps, watercuts, GLR)
+
+# examine outputs
+plot(x = days, y = pressures, Geom.path,
+     Guide.xlabel("Time (days)"),
+     Guide.ylabel("Production"),
+     Scale.y_continuous(format = :plain, minvalue = 0))
+draw(SVG("pressure-data.svg", 6inch, 4inch), ans); nothing # hide
+```
+
+![](pressure-data.svg)
 
 ## Types
 
