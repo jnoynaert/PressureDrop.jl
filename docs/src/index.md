@@ -4,6 +4,10 @@
 CurrentModule = PressureDrop
 ```
 
+<Description here>
+<note about only outlet-referenced>
+<can literally copy-paste from readme>
+
 # Contents
 
 ```@contents

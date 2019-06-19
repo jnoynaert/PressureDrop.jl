@@ -6,12 +6,12 @@ makedocs(
     clean = true,
     pages = [
                     "Overview" => "index.md",
-                    "Core functions" => "core.md", #includes types, casing
-                    "Utilities" => "utilities.md",
+                    "Core functions" => "core.md", #includes types
                     "Plotting" => "plotting.md",
                     "Pressure & temperature correlations" => "correlations.md",
                     "PVT properties" => "pvt.md",
-                    "Valve calculations" => "valves.md"],
+                    "Valve calculations" => "valves.md",
+                    "Utilities" => "utilities.md"],
     sitename="PressureDrop.jl",
     format = Documenter.HTML(prettyurls = isCI)
 )

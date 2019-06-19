@@ -79,7 +79,7 @@ struct Wellbore
             end
 
             #add the origin/outlet reference point if missing
-            if !(md[1] == tvd[1] == 0)
+            if !(md[1] == tvd[1] <= 0)
                 md = vcat(0, md)
                 inc = vcat(0, inc)
                 tvd = vcat(0, tvd)

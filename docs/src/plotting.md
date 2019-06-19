@@ -58,7 +58,7 @@ draw(SVG("plot-pressure.svg", 6inch, 4inch), ans); nothing # hide
 
 ```@example plots
 
-plot_pressures(model, tubing_pressures, casing_pressures, "Tubing & Casing Pressures")
+plot_pressures(model, tubing_pressures, casing_pressures, "Tubing and Casing Pressures")
 draw(SVG("plot-pressures.svg", 6inch, 4inch), ans); nothing # hide
 ```
 
@@ -70,17 +70,17 @@ draw(SVG("plot-pressures.svg", 6inch, 4inch), ans); nothing # hide
 ```@example plots
 
 plot_temperature(model.wellbore, model.temperatureprofile, "Temperature Profile")
-draw(SVG("plot-temps.svg", 6inch, 4inch), ans); nothing # hide
+draw(SVG("plot-temperature.svg", 6inch, 4inch), ans); nothing # hide
 ```
 
-![](plot-temps.svg)
+![](plot-temperature.svg)
 
 
 ### [`plot_pressureandtemp`](@ref)
 
 ```@example plots
 
-plot_pressureandtemp(model, tubing_pressures, casing_pressures, "Pressures & Temps")
+plot_pressureandtemp(model, tubing_pressures, casing_pressures, "Pressures and Temps")
 draw(SVG("plot-pressureandtemp.svg", 6inch, 4inch), ans); nothing # hide
 ```
 

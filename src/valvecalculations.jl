@@ -124,6 +124,8 @@ end
 """
 `valve_calcs(<named args>)`
 
+Calculates a standard table of pressures and temperatures for anticipated valve operation at current (steady-state) conditions.
+
 Note that all inputs and outputs are in **psig** for ease of interpretation.
 
 Additionally, all forms are derived from the force balance for opening, P_t * A_p + P_c * (A_d - A_p) ≥ P_d * A_d
@@ -176,7 +178,6 @@ function valve_calcs(;valves::GasliftValves, well::Wellbore, sg_gas, tubing_pres
 
     PPEF = valves.R ./ (1 .- valves.R) .* 100 #production pressure effect factor
 
-    # returns PSOs in psig to avoid confusion
     # NOTE: plot_valves in plottingfunctions.jl depends on the column order of this table for PVO/PVC
     valvedata = hcat(GLV_numbers, valves.md, interp_values[:,5], PSO, PSC, valves.port, valves.R, PPEF, valves.PTRO,
                 P_td, P_cd, PVO, PVC, T_td, T_cd, T_C, T_C * one_inch_coefficient, T_C * one_pt_five_inch_coefficient)

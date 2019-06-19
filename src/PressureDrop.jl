@@ -341,6 +341,8 @@ end
 
 """
 `pressures_and_temp!(m::WellModel)`
+
+see `WellModel` docs and `pressure_traverse_topdown` docs
 """
 function pressures_and_temp!(m::WellModel)
 
