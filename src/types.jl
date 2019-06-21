@@ -1,5 +1,5 @@
 """
-struct GasliftValves: a type to define a string of gas lift valves for valve & pressure calculations.
+`GasliftValves`: a type to define a string of gas lift valves for valve & pressure calculations.
 
 Constructor: `GasliftValves(md::Array, PTRO::Array, R::Array, port::Array)`
 
@@ -38,7 +38,7 @@ Base.show(io::IO, valves::GasliftValves) = print(io, "Valve design with $(length
 
 
 """
-struct Wellbore: type to define a flow path as an input for pressure drop calculations
+`Wellbore`: type to define a flow path as an input for pressure drop calculations
 
 See `read_survey` for helper method to create a Wellbore object from deviation survey files.
 
@@ -79,7 +79,7 @@ struct Wellbore
             end
 
             #add the origin/outlet reference point if missing
-            if !(md[1] == tvd[1] == 0)
+            if !(md[1] == tvd[1] <= 0)
                 md = vcat(0, md)
                 inc = vcat(0, inc)
                 tvd = vcat(0, tvd)
@@ -134,7 +134,7 @@ Base.show(io::IO, well::Wellbore) = print(io,
 #model struct. ONLY applies to wrapper functions.
 #TODO: docs
 """
-Makes it easier to iterate well models
+`WellModel`: Makes it easier to iterate well models
 """
 mutable struct WellModel
 

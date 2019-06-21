@@ -1,7 +1,7 @@
 using PrettyTables
 
 """
-ThornhillCraver_gaspassage_simplified(P_td, P_cd, T_cd, portsize_64ths)
+`ThornhillCraver_gaspassage_simplified(P_td, P_cd, T_cd, portsize_64ths)`
 
 Thornhill-Craver gas throughput for square-edged orifice (optimistic since it assumes a fully open valve where the stem does not interfere with flow).
 
@@ -31,7 +31,7 @@ end
 
 
 """
-ThornhillCraver_gaspassage(<args>)
+`ThornhillCraver_gaspassage(<args>)`
 
 Thornhill-Craver gas throughput for square-edged orifice.
 
@@ -77,6 +77,8 @@ end
 
 
 """
+`SageAndLacy_nitrogen_Zfactor(p, T)`
+
 Sage and Lacy experimental Z-factor correlation.
 
 Takes pressure in psia and temperature in °F.
@@ -90,7 +92,7 @@ end
 
 
 """
-domepressure_downhole(p_d_set, T_v, error_tolerance = 0.1, p_d_est = p_d_set/0.9, T_set = 60, Zfactor::Function = SageAndLacy_nitrogen_Zfactor)
+`domepressure_downhole(p_d_set, T_v, error_tolerance = 0.1, p_d_est = p_d_set/0.9, T_set = 60, Zfactor::Function = SageAndLacy_nitrogen_Zfactor)`
 
 Iteratively calculates the dome pressure **in psia** of the valve downhole using gas equation of state, assuming that the change in dome volume is negligible.
 
@@ -120,7 +122,9 @@ end
 
 
 """
-valve_calcs(<named args>)
+`valve_calcs(<named args>)`
+
+Calculates a standard table of pressures and temperatures for anticipated valve operation at current (steady-state) conditions.
 
 Note that all inputs and outputs are in **psig** for ease of interpretation.
 
@@ -174,7 +178,6 @@ function valve_calcs(;valves::GasliftValves, well::Wellbore, sg_gas, tubing_pres
 
     PPEF = valves.R ./ (1 .- valves.R) .* 100 #production pressure effect factor
 
-    # returns PSOs in psig to avoid confusion
     # NOTE: plot_valves in plottingfunctions.jl depends on the column order of this table for PVO/PVC
     valvedata = hcat(GLV_numbers, valves.md, interp_values[:,5], PSO, PSC, valves.port, valves.R, PPEF, valves.PTRO,
                 P_td, P_cd, PVO, PVC, T_td, T_cd, T_C, T_C * one_inch_coefficient, T_C * one_pt_five_inch_coefficient)
@@ -196,7 +199,7 @@ end
 
 
 """
-valve_table(valvedata, injection_depth = nothing)
+`valve_table(valvedata, injection_depth = nothing)`
 
 Pretty prints the data returned by `valve_calcs` for interpretation.
 """
@@ -212,7 +215,7 @@ end
 
 
 """
-estimate_valve_Rvalue(port_size, valve_size, lapped_seat = true)
+`estimate_valve_Rvalue(port_size, valve_size, lapped_seat = true)`
 
 Estimates an R-value for your valve (not recommended) using sensible defaults, if you do not have a manufacturer-provided value specific to the valve (recommended).
 

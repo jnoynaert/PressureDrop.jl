@@ -3,7 +3,7 @@ using Compose: compose, context
 
 
 """
-plot_pressure(well::Wellbore, pressures, ctitle = nothing)
+`plot_pressure(well::Wellbore, pressures, ctitle = nothing)`
 
 Plot pressure profile for a given wellbore using the pressure outputs from one of the pressure traverse functions.
 
@@ -22,7 +22,7 @@ end
 
 
 """
-plot_pressure(m::WellModel, pressures, ctitle = nothing)
+`plot_pressure(m::WellModel, pressures, ctitle = nothing)`
 
 Plot pressure profile for a given wellbore using the pressure outputs from one of the pressure traverse functions.
 
@@ -39,7 +39,7 @@ end
 
 
 """
-function plot_pressures(well::Wellbore, tubing_pressures, casing_pressures, ctitle = nothing, valvedepths = [])
+`function plot_pressures(well::Wellbore, tubing_pressures, casing_pressures, ctitle = nothing, valvedepths = [])`
 
 Plot relevant gas lift pressures for a given wellbore and set of calculated pressures.
 
@@ -49,7 +49,7 @@ function plot_pressures(well::Wellbore, tubing_pressures, casing_pressures, ctit
 
         plot(layer(x = tubing_pressures, y = well.md, Geom.path, Theme(default_color = "deepskyblue")),
              layer(x = casing_pressures, y = well.md, Geom.path, Theme(default_color = "springgreen")),
-             layer(yintercept = valvedepths, Geom.hline(color = "black")),
+             layer(yintercept = valvedepths, Geom.hline(color = "black", style = :dash)),
                 Scale.x_continuous(format = :plain),
                 Guide.xlabel("Pressure (psia)"),
                 Scale.y_continuous(format = :plain),
@@ -60,7 +60,7 @@ end
 
 
 """
-plot_pressures(m::WellModel, tubing_pressures, casing_pressures, ctitle = nothing)
+`plot_pressures(m::WellModel, tubing_pressures, casing_pressures, ctitle = nothing)`
 
 Plot relevant gas lift pressures for a given wellbore and set of calculated pressures.
 
@@ -77,7 +77,7 @@ end
 
 
 """
-plot_temperature(well::Wellbore, temps, ctitle = nothing)
+`plot_temperature(well::Wellbore, temps, ctitle = nothing)`
 
 Plot temperature profile for a given wellbore using the pressure outputs from one of the pressure traverse functions.
 
@@ -96,7 +96,7 @@ end
 
 
 """
-plot_pressureandtemp(well::Wellbore, tubing_pressures, casing_pressures, temps, ctitle = nothing, valvedepths = [])
+`plot_pressureandtemp(well::Wellbore, tubing_pressures, casing_pressures, temps, ctitle = nothing, valvedepths = [])`
 
 Plot pressure & temperature profiles for a given wellbore using the pressure & temperature outputs from the pressure traverse & temperature functions.
 
@@ -115,12 +115,14 @@ function plot_pressureandtemp(well::Wellbore, tubing_pressures, casing_pressures
                 Coord.cartesian(yflip = true),
                 Theme(plot_padding=[5mm, 0mm, 5mm, 5mm]))
 
+        placeholdertitle = ctitle === nothing ? nothing : " "
         temp = plot(x = temps, y = well.md, Geom.path, Theme(default_color = "red"),
                 Scale.x_continuous(format = :plain),
                 Guide.xlabel("°F"),
                 Scale.y_continuous(labels = nothing),
                 Guide.yticks(label = false),
                 Guide.ylabel(nothing),
+                Guide.title(placeholdertitle),
                 Coord.cartesian(yflip = true),
                 Theme(default_color = "red", plot_padding=[5mm, 5mm, 5mm, 5mm]))
 
@@ -130,7 +132,7 @@ end
 
 
 """
-plot_pressureandtemp(m::WellModel, tubing_pressures, casing_pressures, ctitle = nothing)
+`plot_pressureandtemp(m::WellModel, tubing_pressures, casing_pressures, ctitle = nothing)`
 
 Plot pressure & temperature profiles for a given wellbore using the pressure & temperature outputs from the pressure traverse & temperature functions.
 
@@ -147,7 +149,7 @@ end
 
 
 """
-plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps, valvedata, ctitle = nothing)
+`plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps, valvedata, ctitle = nothing)`
 
 Plot pressure & temperature profiles along with valve depths and opening/closing pressures for a gas lift well.
 
@@ -172,12 +174,14 @@ function plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps,
                 Coord.cartesian(yflip = true),
                 Theme(plot_padding=[5mm, 0mm, 5mm, 5mm]))
 
+        placeholdertitle = ctitle === nothing ? nothing : " "
         temp = plot(x = temps, y = well.md, Geom.path, Theme(default_color = "red"),
                 Scale.x_continuous(format = :plain),
                 Guide.xlabel("°F"),
                 Scale.y_continuous(labels = nothing),
                 Guide.yticks(label = false),
                 Guide.ylabel(nothing),
+                Guide.title(placeholdertitle),
                 Coord.cartesian(yflip = true),
                 Theme(default_color = "red", plot_padding=[5mm, 5mm, 5mm, 5mm]))
 
@@ -187,7 +191,7 @@ end
 
 
 """
-plot_gaslift(m::WellModel, tubing_pressures, casing_pressures, valvedata, ctitle = nothing)
+`plot_gaslift(m::WellModel, tubing_pressures, casing_pressures, valvedata, ctitle = nothing)`
 
 Plot pressure & temperature profiles along with valve depths and opening/closing pressures for a gas lift well.
 

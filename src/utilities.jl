@@ -1,7 +1,7 @@
 # utility functions for PressureDrop package
 
 """
-read_survey(<named arguments>)
+`read_survey(<named arguments>)`
 
 Reads in a wellbore deviation survey from a delimited file and returns a Wellbore object for use with pressure drop calculations.
 
@@ -50,7 +50,7 @@ end
 
 
 """
-read_valves(;path::String, delim::Char = ',', skiplines::Int64 = 1)
+`read_valves(;path::String, delim::Char = ',', skiplines::Int64 = 1)`
 
 Expects a CSV with columns for [measured depth (ft)], [test rack opening pressure (psig)], [R-value (dimensionless)], [port size (diameter in 64ths inch)].
 
@@ -85,7 +85,7 @@ end
 
 
 """
-interpolate(ref_array, property::Array{Real,1}, point)
+`interpolate(ref_array, property::Array{Real,1}, point)`
 
 Interpolate between points without any bounds checking.
 """
@@ -108,7 +108,7 @@ end
 
 
 """
-interpolate_all(well::Wellbore, properties::Array{Array{Real,1},1}, points::Array{Real,1})
+`interpolate_all(well::Wellbore, properties::Array{Array{Real,1},1}, points::Array{Real,1})`
 
 Interpolate multiple points for multiple properties with bounds checking.
 """

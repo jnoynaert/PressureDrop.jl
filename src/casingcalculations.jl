@@ -1,5 +1,5 @@
 """
-calculate_casing_pressuresegment_topdown(<arguments>)
+`calculate_casing_pressuresegment_topdown(<arguments>)`
 
 Helper function to calculate the pressure drop for a single casing segment containing only injection gas, using a inlet-referenced (casing head referenced) approach.
 
@@ -40,7 +40,7 @@ end
 
 
 """
-casing_traverse_topdown(;<named arguments>)
+`casing_traverse_topdown(;<named arguments>)`
 
 Develops pressure traverse from casing head down to datum in psia, returning a pressure profile as an Array{Float64,1}.
 
@@ -98,6 +98,8 @@ end
 
 
 """
+`casing_traverse_topdown(m::WellModel)`
+
 Remaps casing traverse to work with WellModels
 """
 function casing_traverse_topdown(m::WellModel)

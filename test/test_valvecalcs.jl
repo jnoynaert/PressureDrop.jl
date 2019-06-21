@@ -36,9 +36,9 @@ tubing_pressures = [150,837,850,840,831]
 casing_pressures = 1070 .+ [0,53,70,85,100]
 temps = [135,145,148,151,153]
 
-vdata, active_valve_row = valve_calcs(valves = valves, well = well, sg_gas = 0.72, tubing_pressures = tubing_pressures, casing_pressures = casing_pressures, tubing_temps = temps, casing_temps = temps)
+vdata, inj_depth = valve_calcs(valves = valves, well = well, sg_gas = 0.72, tubing_pressures = tubing_pressures, casing_pressures = casing_pressures, tubing_temps = temps, casing_temps = temps)
 
-valve_table(vdata, active_valve_row) #implicit test
+valve_table(vdata, inj_depth) #implicit test
 
 results = vdata[1:4, [5,13,12,4]] #PSC, PVC, PVO, PSO
 

@@ -1,7 +1,7 @@
 # temperature correlation functions for PressureDrop package.
 
 """
-Shiu_Beggs_relaxationfactor(<arguments>)
+`Shiu_Beggs_relaxationfactor(<arguments>)`
 
 Generates the relaxation factor, A, needed for the Ramey method, for underspecified conditions.
 
@@ -40,7 +40,7 @@ end
 
 
 """
-Ramey_wellboretemp(z, inclination, T_bh, A, G_g = 1.0)
+`Ramey_wellboretemp(z, inclination, T_bh, A, G_g = 1.0)`
 
 Estimates wellbore temp using Ramey 1962 method.
 
@@ -59,7 +59,7 @@ end
 
 
 """
-linear_wellboretemp(;WHT, BHT, wellbore::Wellbore)
+`linear_wellboretemp(;WHT, BHT, wellbore::Wellbore)`
 
 Linear temperature profile from a wellhead temperature and bottomhole temperature in °F for a Wellbore object.
 
@@ -75,7 +75,7 @@ end
 
 
 """
-Shiu_wellboretemp(<named arguments>)
+`Shiu_wellboretemp(<named arguments>)`
 
 Wrapper to compute temperature profile for a Wellbore object using Ramey correlation with Shiu relaxation factor correlation.
 

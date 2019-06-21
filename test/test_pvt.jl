@@ -34,10 +34,3 @@ end
     @test GouldWaterVolumeFactor(50.0, 120.0) ≈ 1.01 atol = 0.05
 
 end
-
-@testset "interfacial tension" begin
-
-    #@test gas_oil_interfacialtension
-    #@test gas_water_interfacialtension
-
-end

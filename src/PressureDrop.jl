@@ -10,7 +10,7 @@ export  Wellbore, GasliftValves, WellModel, read_survey, read_valves,
         pressure_atmospheric,
         traverse_topdown, casing_traverse_topdown, pressure_and_temp!, pressures_and_temp!, gaslift_model!,
         plot_pressure, plot_pressures, plot_temperature, plot_pressureandtemp, plot_gaslift,
-        valve_table, estimate_valve_Rvalue,
+        valve_calcs, valve_table, estimate_valve_Rvalue,
         BeggsAndBrill,
         HagedornAndBrown,
         Shiu_wellboretemp, Ramey_temp, Shiu_Beggs_relaxationfactor, linear_wellboretemp,
@@ -65,7 +65,7 @@ end
 
 #%% core functions
 """
-calculate_pressuresegment_topdown(<arguments>)
+`calculate_pressuresegment_topdown(<arguments>)`
 
 Pressure inputs are in **psia**.
 
@@ -139,7 +139,7 @@ end
 
 
 """
-traverse_topdown(;<named arguments>)
+`traverse_topdown(;<named arguments>)`
 
 Develop pressure traverse from wellhead down to datum in psia, returning a pressure profile as an Array{Float64,1}.
 
@@ -155,7 +155,7 @@ All arguments are named keyword arguments.
 - `wellbore::Wellbore`: Wellbore object that defines segmentation/mesh, with md, tvd, inclination, and hydraulic diameter
 - `roughness`: pipe wall roughness in inches
 - `temperatureprofile::Array{Float64, 1}`: temperature profile (in °F) as an array with **matching entries for each pipe segment defined in the Wellbore input**
-- `WHP`: absolute outlet pressure (wellhead pressure) in **psig**
+- `WHP`: outlet pressure (wellhead pressure) in **psig**
 - `dp_est`: estimated starting pressure differential (in psi) to use for all segments--impacts convergence time
 - `q_o`: oil rate in stocktank barrels/day
 - `q_w`: water rate in stb/d
@@ -242,7 +242,7 @@ end
 
 
 """
-traverse_topdown(;model::WellModel)
+`traverse_topdown(;model::WellModel)`
 
 calculate top-down traverse from a WellModel object. Requires the following fields to be defined in the model:
 
@@ -267,7 +267,7 @@ end
 
 #TODO: update this documentation to reflect using a WellModel and mutating temps
 """
-pressure_and_temp(;model::WellModel)
+`pressure_and_temp(;model::WellModel)`
 
 Develop pressure traverse in psia and temperature profile in °F from wellhead down to datum for a WellModel object. Requires the following fields to be defined in the model:
 
@@ -340,6 +340,9 @@ end
 
 
 """
+`pressures_and_temp!(m::WellModel)`
+
+see `WellModel` docs and `pressure_traverse_topdown` docs
 """
 function pressures_and_temp!(m::WellModel)
 
@@ -353,6 +356,7 @@ end
 
 #TODO: docs
 """
+`gaslift_model!(m::WellModel; find_injectionpoint::Bool = false, dp_min = 100)`
 """
 function gaslift_model!(m::WellModel; find_injectionpoint::Bool = false, dp_min = 100)
 

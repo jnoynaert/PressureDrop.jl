@@ -40,17 +40,17 @@ valves = read_valves(path = valvepath, delim = ',', skiplines = 1) #implicit rea
 model = WellModel(wellbore = well, roughness = 0.0, valves = valves,
                     temperature_method = "Shiu", geothermal_gradient = 1.0, BHT = 200,
                     pressurecorrelation = HagedornAndBrown, WHP = 350 - pressure_atmospheric, dp_est = 25,
-                    q_o = 100, q_w = 500, GLR = 1200, APIoil = 35, sg_water = 1.0, sg_gas = 0.8, CHP = 1000, naturalGLR = 0)
+                    q_o = 0, q_w = 500, GLR = 4500, APIoil = 35, sg_water = 1.0, sg_gas = 0.8, CHP = 1000, naturalGLR = 0)
 
 tubing_pressures, casing_pressures, valvedata = gaslift_model!(model, find_injectionpoint = true, dp_min = 100)
-
 
 Δmds = [MDs[i] - MDs[i-1] for i in 81:length(MDs)]
 ΔPs = [tubing_pressures[i] - tubing_pressures[i-1] for i in 81:length(MDs)]
 gradients = ΔPs ./ Δmds
 mean(x) = sum(x) / length(x)
 
-@test mean(gradients) ≈ 0.433 atol = 0.015 #water gradient plus friction
+expected_gradient = 0.433 / GouldWaterVolumeFactor(mean(tubing_pressures[81:end]), mean(model.temperatureprofile[81:end]))
+@test mean(gradients) ≈ expected_gradient atol = 0.005
 
 #%% implicit plot test
 if test_plots

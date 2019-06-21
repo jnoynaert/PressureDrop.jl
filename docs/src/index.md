@@ -1,11 +1,27 @@
 # PressureDrop.jl Documentation
 
-```@docs
-function SerghideFrictionFactor(N_Re, id, roughness = 0.01)
+```@meta
+CurrentModule = PressureDrop
 ```
 
--link to [PressureDrop.jl Documentation](@ref)
+PressureDrop.jl is a Julia package for computing multiphase pressure profiles for gas lift optimization of oil & gas wells.
 
-autogen TOC https://github.com/JuliaDocs/Documenter.jl/blob/master/docs/src/man/guide.md
+It currently calculates outlet-referenced models for producing wells using non-coupled temperature gradients.
 
-use jldoctests for exmaples https://github.com/JuliaDocs/Documenter.jl/blob/master/docs/src/man/doctests.md (note the part on sharing scope across docs)
+!!! Note
+
+      Note that all inputs and calculations are in U.S. field units.
+
+# Contents
+
+```@contents
+Pages = [
+  "core.md",
+  "utilities.md",
+  "plotting.md",
+  "correlations.md",
+  "pvt.md",
+  "valves.md"
+]
+Depth = 2
+```

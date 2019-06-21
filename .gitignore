@@ -12,3 +12,5 @@ tangtemps_temp.jl
 MuEtAl_temp.jl
 docs/build
 extras/
+buildnotes.txt
+bulkcalcs.jl
