@@ -32,20 +32,18 @@ Returns superficial liquid velocity, v_sg.
 Takes oil rate, (q_o, stb/d), water rate (q_w, stb/d), gas:liquid ratio (scf/stb), solution gas:oil ratio (scf/stb), pipe inner diameter (inches), and gas volume factor (B_g).
 
 Note that this does not account for slip between liquid phases.
-
 """
 function gasvelocity_superficial(q_o, q_w, GLR, R_s, id, B_g)
     A = π * (id/24.0)^2 #convert id in inches to ft
 
     if q_o > 0
         WOR = q_w / q_o
-        return 1.16e-5 * (q_o + q_w) / A * (GLR - R_s /(1 + WOR)) * B_g
+        return 1.16e-5 * (q_o + q_w) / A * max(GLR - R_s /(1 + WOR), 0) * B_g # max is to prevent edge case where calculated free gas is negative
     else #100% WC
-        return 1.16e-5 * q_w * (GLR - R_s) * B_g / A
+        return 1.16e-5 * q_w * GLR * B_g / A
     end
-end
 
-# mixture velocity: just v_sg + v_sl
+end
 
 
 """

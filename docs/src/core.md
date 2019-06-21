@@ -67,7 +67,7 @@ An import aspect of model definitions is that they include the temperature profi
 Pressure and temperature profiles can be generated from a `WellModel` using [`pressure_and_temp!`](@ref) (for tubing calculations only) or [`pressures_and_temp!`](@ref) (to include casing calculations).
 
 ```@example core
-tubing_pressures = pressure_and_temp!(model) #note that this updates temperature in the .temperatureprofile field of the WellModel
+tubing_pressures = pressure_and_temp!(model); #note that this updates temperature in the .temperatureprofile field of the WellModel
 ```
 
 Several [plotting functions](@ref Plotting) are available to visualize the outputs.
@@ -139,7 +139,7 @@ examplewell = read_survey(path = surveyfilepath, id = 2.441, maxdepth = 6500)
 
 function timestep_pressure(rate, temp, watercut, GLR)
     temps = linear_wellboretemp(WHT = temp, BHT = 165, wellbore = examplewell)
-
+    
     return traverse_topdown(wellbore = examplewell, roughness = 0.0065, temperatureprofile = temps,
                      pressurecorrelation = BeggsAndBrill, dp_est = 25, error_tolerance = 0.1,
                      q_o = rate * (1 - watercut), q_w = rate * watercut, GLR = GLR,
@@ -154,16 +154,29 @@ GLR = range(0, 5000, length = 731)
 pressures = timestep_pressure.(testdata, wellhead_temps, watercuts, GLR)
 
 # examine outputs
-plot(x = days, y = pressures, Geom.path,
-     Guide.xlabel("Time (days)"),
-     Guide.ylabel("Production"),
-     Scale.y_continuous(format = :plain, minvalue = 0))
-draw(SVG("pressure-data.svg", 6inch, 4inch), ans); nothing # hide
+#plot(x = days, y = pressures, Geom.path,
+#     Guide.xlabel("Time (days)"),
+#     Guide.ylabel("Production"),
+#     Scale.y_continuous(format = :plain, minvalue = 0))
+#draw(SVG("pressure-data.svg", 6inch, 4inch), ans); nothing # hide
 ```
 
 ![](pressure-data.svg)
 
-## Types
+## Types and Functions
+
+- Types
+    - [`Wellbore`](@ref)
+    - [`GasliftValves`](@ref)
+    - [`WellModel`](@ref)
+- Functions
+    [`traverse_topdown`](@ref)
+    [`casing_traverse_topdown`](@ref)
+    [`pressure_and_temp!`](@ref)
+    [`pressures_and_temp!`](@ref)
+    [`gaslift_model!`](@ref)
+
+### Types
 
 ```@docs
 Wellbore
@@ -171,7 +184,7 @@ GasliftValves
 WellModel
 ```
 
-## Functions
+### Functions
 
 ```@docs
 traverse_topdown
