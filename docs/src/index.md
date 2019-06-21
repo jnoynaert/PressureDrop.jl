@@ -8,7 +8,7 @@ PressureDrop.jl is a Julia package for computing multiphase pressure profiles fo
 
 It currently calculates outlet-referenced models for producing wells using non-coupled temperature gradients.
 
-!! Note
+!!! Note
 
       Note that all inputs and calculations are in U.S. field units.
 

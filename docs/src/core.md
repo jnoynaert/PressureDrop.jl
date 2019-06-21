@@ -126,7 +126,7 @@ testdata = max.(declinedata .+ noise, 0)
 days = timesteps .* 365
 plot(x = days, y = testdata, Geom.path,
      Guide.xlabel("Time (days)"),
-     Guide.ylabel("Production"),
+     Guide.ylabel("Total Fluid (bpd)"),
      Scale.y_continuous(format = :plain, minvalue = 0))
 draw(SVG("test-data.svg", 6inch, 4inch), ans); nothing # hide
 ```
@@ -139,7 +139,7 @@ examplewell = read_survey(path = surveyfilepath, id = 2.441, maxdepth = 6500)
 
 function timestep_pressure(rate, temp, watercut, GLR)
     temps = linear_wellboretemp(WHT = temp, BHT = 165, wellbore = examplewell)
-    
+
     return traverse_topdown(wellbore = examplewell, roughness = 0.0065, temperatureprofile = temps,
                      pressurecorrelation = BeggsAndBrill, dp_est = 25, error_tolerance = 0.1,
                      q_o = rate * (1 - watercut), q_w = rate * watercut, GLR = GLR,
@@ -154,11 +154,11 @@ GLR = range(0, 5000, length = 731)
 pressures = timestep_pressure.(testdata, wellhead_temps, watercuts, GLR)
 
 # examine outputs
-#plot(x = days, y = pressures, Geom.path,
-#     Guide.xlabel("Time (days)"),
-#     Guide.ylabel("Production"),
-#     Scale.y_continuous(format = :plain, minvalue = 0))
-#draw(SVG("pressure-data.svg", 6inch, 4inch), ans); nothing # hide
+plot(x = days, y = pressures, Geom.path, Theme(default_color = "purple"),
+     Guide.xlabel("Time (days)"),
+     Guide.ylabel("Flowing Pressure (psig)"),
+     Scale.y_continuous(format = :plain, minvalue = 0))
+draw(SVG("pressure-data.svg", 6inch, 4inch), ans); nothing # hide
 ```
 
 ![](pressure-data.svg)
