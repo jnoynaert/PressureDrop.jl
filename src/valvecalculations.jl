@@ -190,6 +190,7 @@ function valve_calcs(;valves::GasliftValves, well::Wellbore, sg_gas, tubing_pres
             active_valve_row = length(valves.md)
         else
             active_valve_row = 1 #nominal lockout, but assume you are injecting on top valve
+            @info "Locked out valve condition calculated. Assuming injection at top valve."
         end
     end
     injection_depth = valves.md[active_valve_row]

@@ -265,13 +265,16 @@ function BHP_summary(pressures, well)
 end
 
 
-#TODO: update this documentation to reflect using a WellModel and mutating temps
 """
 `pressure_and_temp(;model::WellModel)`
 
 Develop pressure traverse in psia and temperature profile in °F from wellhead down to datum for a WellModel object. Requires the following fields to be defined in the model:
 
 Returns a pressure profile as an Array{Float64,1} and a temperature profile as an Array{Float64,1}, referenced to the measured depths in the original Wellbore object.
+
+# Arguments
+
+All arguments are defined in the model object; see the `WellModel` documentation for reference.
 
 Pressure correlation functions available:
 - `BeggsAndBrill` with Payne correction factors
@@ -281,11 +284,7 @@ Temperature methods available:
 - "Shiu" to utilize the Ramey 1962 method with the Shiu 1980 relaxation factor correlation
 - "linear" for a linear interpolation between wellhead and bottomhole temperature based on TVD
 
-# Arguments
-
-All arguments are named keyword arguments.
-
-## Required
+## Required `WellModel` fields
 - `well::Wellbore`: Wellbore object that defines segmentation/mesh, with md, tvd, inclination, and hydraulic diameter
 - `roughness`: pipe wall roughness in inches
 - `temperature_method = "linear"`: temperature method to use; "Shiu" for Ramey method with Shiu relaxation factor, "linear" for linear interpolation
@@ -301,7 +300,7 @@ All arguments are named keyword arguments.
 - `sg_water`: specific gravity of produced water
 - `sg_gas`: specific gravity of produced gas
 
-## Optional
+## Optional `WellModel` fields
 - `injection_point = missing`: injection point in MD for gas lift, above which total GLR is used, and below which natural GLR is used
 - `naturalGLR = missing`: GLR to use below point of injection, in scf/bbl
 - `pressurecorrelation::Function = BeggsAndBrill: pressure correlation to use
@@ -317,7 +316,7 @@ All arguments are named keyword arguments.
 - `dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity`: dead oil viscosity correlation to use
 - `live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity`: saturated oil viscosity correction function to use
 - `frictionfactor::Function = SerghideFrictionFactor`: correlation function for Darcy-Weisbach friction factor
-- `outlet_referenced = true`: whether to use outlet pressure (WHP) or inlet pressure (BHP) for
+- `outlet_referenced = true`: whether to use outlet pressure (WHP) or inlet pressure (BHP) for starting point
 """
 function pressure_and_temp!(m::WellModel)
 
@@ -336,13 +335,14 @@ function pressure_and_temp!(m::WellModel)
 
     return pressures
 end
-#TODO: update test
 
 
 """
 `pressures_and_temp!(m::WellModel)`
 
-see `WellModel` docs and `pressure_traverse_topdown` docs
+# Arguments
+
+See `WellModel` documentation.
 """
 function pressures_and_temp!(m::WellModel)
 
@@ -351,17 +351,24 @@ function pressures_and_temp!(m::WellModel)
 
     return tubing_pressures, casing_pressures
 end
-#TODO: add test
 
 
-#TODO: docs
 """
 `gaslift_model!(m::WellModel; find_injectionpoint::Bool = false, dp_min = 100)`
+
+# Arguments
+
+See `WellModel` documentation.
+
+- `find_injectionpoint::Bool = false`: whether to automatically infer the injection point (taken as the lowest possible point of lift based on differential pressure)
+- `dp_min = 100`: minimum casing-tubing differential pressure at depth to infer an injection point
 """
 function gaslift_model!(m::WellModel; find_injectionpoint::Bool = false, dp_min = 100)
 
     if find_injectionpoint
         m.injection_point = m.wellbore.md[end]
+    elseif m.injection_point === missing || m.naturalGLR === missing
+        @info "Performing gas lift calculations without defined injection information (point of injection, natural GLR) and without falling back to a calculated injection point."
     end
 
     tubing_pressures, casing_pressures = pressures_and_temp!(m);
@@ -379,7 +386,6 @@ function gaslift_model!(m::WellModel; find_injectionpoint::Bool = false, dp_min 
 
     return tubing_pressures, casing_pressures, valvedata
 end
-#TODO: test
 
 
 end #module PressureDrop

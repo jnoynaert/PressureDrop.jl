@@ -95,9 +95,7 @@ end #struct Wellbore
 #convenience constructor for uniform tubulars
 Wellbore(md, inc, tvd, id::Float64, allow_negatives::Bool = false) = Wellbore(md, inc, tvd, repeat([id], inner = length(md)), allow_negatives)
 
-
 #convenience constructors to add reference depths for valves so that they can be used as injection points
-#TODO: add an error message to the injection point logic that makes it clear how to fix the problem if they don't use this constructor and you get an injection point that doesn't match the wellbore
 function Wellbore(md, inc, tvd, id, valves::GasliftValves, allow_negatives::Bool = false)
 
     well = Wellbore(md, inc, tvd, id, allow_negatives)
@@ -132,9 +130,52 @@ Base.show(io::IO, well::Wellbore) = print(io,
 
 
 #model struct. ONLY applies to wrapper functions.
-#TODO: docs
 """
 `WellModel`: Makes it easier to iterate well models
+
+`pressure_and_temp(;model::WellModel)`
+
+Develop pressure traverse in psia and temperature profile in °F from wellhead down to datum for a WellModel object. Requires the following fields to be defined in the model:
+
+Returns a pressure profile as an Array{Float64,1} and a temperature profile as an Array{Float64,1}, referenced to the measured depths in the original Wellbore object.
+
+Pressure correlation functions available:
+- `BeggsAndBrill` with Payne correction factors
+- `HagedornAndBrown` with Griffith and Wallis bubble flow correction
+
+## Required
+- `well::Wellbore`: Wellbore object that defines segmentation/mesh, with md, tvd, inclination, and hydraulic diameter
+- `roughness`: pipe wall roughness in inches
+- `temperature_method = "linear"`: temperature method to use; "Shiu" for Ramey method with Shiu relaxation factor, "linear" for linear interpolation
+- `WHT = missing`: wellhead temperature in °F; required for `temperature_method = "linear"`
+- `geothermal_gradient = missing`: geothermal gradient in °F per 100 ft; required for `temperature_method = "Shiu"`
+- `BHT` = bottomhole temperature in °F
+- `WHP`: absolute outlet pressure (wellhead pressure) in **psig**
+- `dp_est`: estimated starting pressure differential (in psi) to use for all segments--impacts convergence time
+- `q_o`: oil rate in stocktank barrels/day
+- `q_w`: water rate in stb/d
+- `GLR`: **total** wellhead gas:liquid ratio, inclusive of injection gas, in scf/bbl
+- `APIoil`: API gravity of the produced oil
+- `sg_water`: specific gravity of produced water
+- `sg_gas`: specific gravity of produced gas
+
+## Optional
+- `injection_point = missing`: injection point in MD for gas lift, above which total GLR is used, and below which natural GLR is used
+- `naturalGLR = missing`: GLR to use below point of injection, in scf/bbl
+- `pressurecorrelation::Function = BeggsAndBrill: pressure correlation to use
+- `error_tolerance = 0.1`: error tolerance for each segment in psi
+- `molFracCO2 = 0.0`, `molFracH2S = 0.0`: produced gas fractions of hydrogen sulfide and CO2, [0,1]
+- `pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure`: psuedocritical pressure function to use
+- `pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp`: pseudocritical temperature function to use
+- `Z_correlation::Function = KareemEtAlZFactor`: natural gas compressibility/Z-factor correlation to use
+- `gas_viscosity_correlation::Function = LeeGasViscosity`: gas viscosity correlation to use
+- `solutionGORcorrelation::Function = StandingSolutionGOR`: solution GOR correlation to use
+- `oilVolumeFactor_correlation::Function = StandingOilVolumeFactor`: oil volume factor correlation to use
+- `waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor`: water volume factor correlation to use
+- `dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity`: dead oil viscosity correlation to use
+- `live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity`: saturated oil viscosity correction function to use
+- `frictionfactor::Function = SerghideFrictionFactor`: correlation function for Darcy-Weisbach friction factor
+- `outlet_referenced = true`: whether to use outlet pressure (WHP) or inlet pressure (BHP) for
 """
 mutable struct WellModel
 

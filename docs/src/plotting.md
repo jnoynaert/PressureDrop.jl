@@ -38,7 +38,7 @@ tubing_pressures, casing_pressures, valvedata = gaslift_model!(model, find_injec
 using Gadfly
 
 plot_gaslift(model, tubing_pressures, casing_pressures, valvedata, "Gas Lift Analysis Plot")
-draw(SVG("plot-gl.svg", 6inch, 4inch), ans); nothing # hide
+draw(SVG("plot-gl.svg", 5inch, 4inch), ans); nothing # hide
 ```
 
 ![](plot-gl.svg)
@@ -48,7 +48,7 @@ draw(SVG("plot-gl.svg", 6inch, 4inch), ans); nothing # hide
 ```@example plots
 
 plot_pressure(model, tubing_pressures, "Tubing Pressure Drop")
-draw(SVG("plot-pressure.svg", 6inch, 4inch), ans); nothing # hide
+draw(SVG("plot-pressure.svg", 4inch, 4inch), ans); nothing # hide
 ```
 
 ![](plot-pressure.svg)
@@ -59,7 +59,7 @@ draw(SVG("plot-pressure.svg", 6inch, 4inch), ans); nothing # hide
 ```@example plots
 
 plot_pressures(model, tubing_pressures, casing_pressures, "Tubing and Casing Pressures")
-draw(SVG("plot-pressures.svg", 6inch, 4inch), ans); nothing # hide
+draw(SVG("plot-pressures.svg", 4inch, 4inch), ans); nothing # hide
 ```
 
 ![](plot-pressures.svg)
@@ -70,7 +70,7 @@ draw(SVG("plot-pressures.svg", 6inch, 4inch), ans); nothing # hide
 ```@example plots
 
 plot_temperature(model.wellbore, model.temperatureprofile, "Temperature Profile")
-draw(SVG("plot-temperature.svg", 6inch, 4inch), ans); nothing # hide
+draw(SVG("plot-temperature.svg", 4inch, 4inch), ans); nothing # hide
 ```
 
 ![](plot-temperature.svg)
@@ -81,7 +81,7 @@ draw(SVG("plot-temperature.svg", 6inch, 4inch), ans); nothing # hide
 ```@example plots
 
 plot_pressureandtemp(model, tubing_pressures, casing_pressures, "Pressures and Temps")
-draw(SVG("plot-pressureandtemp.svg", 6inch, 4inch), ans); nothing # hide
+draw(SVG("plot-pressureandtemp.svg", 5inch, 4inch), ans); nothing # hide
 ```
 
 ![](plot-pressureandtemp.svg)

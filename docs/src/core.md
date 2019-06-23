@@ -50,8 +50,8 @@ model = WellModel(wellbore = examplewell, roughness = 0.00065,
                   WHP = 200, #wellhead pressure, psig
                   CHP = 1050, #casing pressure, psig
                   dp_est = 25, #estimated ΔP by segment. Not critical
-                  temperature_method = "linear", #temperatures can be calculated or provided directly as a array
-                  WHT = 105, BHT = 160, #°F
+                  temperature_method = "Shiu", #temperatures can be calculated or provided directly as a array
+                  BHT = 160, geothermal_gradient = 0.9,  #°F, °F/100'
                   q_o = 100, q_w = 500, #bpd
                   GLR = 2500, naturalGLR = 400, #scf/bbl
                   APIoil = 35, sg_water = 1.05, sg_gas = 0.65);
@@ -76,7 +76,7 @@ Several [plotting functions](@ref Plotting) are available to visualize the outpu
 using Gadfly #necessary to load plotting functions
 
 plot_pressure(model, tubing_pressures, "Tubing Pressure Drop")
-draw(SVG("plot-pressure-core.svg", 6inch, 4inch), ans); nothing # hide
+draw(SVG("plot-pressure-core.svg", 4inch, 4inch), ans); nothing # hide
 ```
 
 ![](plot-pressure-core.svg)
@@ -92,7 +92,7 @@ tubing_pressures, casing_pressures, valvedata = gaslift_model!(model, find_injec
                dp_min = 100) #required minimum ΔP at depth to consider as an operating valve
 
 plot_gaslift(model, tubing_pressures, casing_pressures, valvedata, "Gas Lift Analysis Plot")
-draw(SVG("plot-gl-core.svg", 6inch, 4inch), ans); nothing # hide
+draw(SVG("plot-gl-core.svg", 5inch, 4inch), ans); nothing # hide
 ```
 
 ![](plot-gl-core.svg)
@@ -157,7 +157,8 @@ pressures = timestep_pressure.(testdata, wellhead_temps, watercuts, GLR)
 plot(x = days, y = pressures, Geom.path, Theme(default_color = "purple"),
      Guide.xlabel("Time (days)"),
      Guide.ylabel("Flowing Pressure (psig)"),
-     Scale.y_continuous(format = :plain, minvalue = 0))
+     Scale.y_continuous(format = :plain, minvalue = 0),
+     Guide.title("FBHP Over Time"))
 draw(SVG("pressure-data.svg", 6inch, 4inch), ans); nothing # hide
 ```
 
