@@ -182,15 +182,17 @@ function valve_calcs(;valves::GasliftValves, well::Wellbore, sg_gas, tubing_pres
     valvedata = hcat(GLV_numbers, valves.md, interp_values[:,5], PSO, PSC, valves.port, valves.R, PPEF, valves.PTRO,
                 P_td, P_cd, PVO, PVC, T_td, T_cd, T_C, T_C * one_inch_coefficient, T_C * one_pt_five_inch_coefficient)
 
-    #lowest valve where PVO <= CP && PVC > CP && R-value != 0
     valve_ids = collect(1:length(valves.md))
-    active_valve_row = findlast(i -> P_cd[i] - P_td[i] >= dp_min && valves.R[i] > 0 && PVO[i] <= P_cd[i] && PVC[i] > P_cd[i], valve_ids) #only check non-orifice valves
+    # find operating valve by "greedy opening" heuristic: select lowest non-orifice valve where CP @ depth is below opening pressure but still above closing pressure and has enough differential pressure
+    active_valve_row = findlast(i -> P_cd[i] - P_td[i] >= dp_min && valves.R[i] > 0 && P_cd[i] <= PVO[i] && P_cd[i] > PVC[i], valve_ids)
     if active_valve_row === nothing
-        if P_cd[end] - P_td[end] >= dp_min #operating on orifice valve
+        if P_cd[end] - P_td[end] >= dp_min #assume operating on last valve
             active_valve_row = length(valves.md)
         else
             active_valve_row = 1 #nominal lockout, but assume you are injecting on top valve
-            @info "Locked out valve condition calculated. Assuming injection at top valve."
+            if P_cd[1] - P_td[1] < dp_min
+                @info "Possible locked out valve condition inferred. Assuming injection at top valve with ΔP = $(round(P_cd[1] - P_td[1], digits = 1)) psi."
+            end
         end
     end
     injection_depth = valves.md[active_valve_row]

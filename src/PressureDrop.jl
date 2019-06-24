@@ -360,8 +360,10 @@ end
 
 See `WellModel` documentation.
 
-- `find_injectionpoint::Bool = false`: whether to automatically infer the injection point (taken as the lowest possible point of lift based on differential pressure)
+- `find_injectionpoint::Bool = false`: whether to automatically infer the injection point (taken as the lowest reasonable point of lift based on differential pressure)*
 - `dp_min = 100`: minimum casing-tubing differential pressure at depth to infer an injection point
+
+*"greedy opening" heuristic: select _lowest_ non-orifice valve where CP @ depth is within operating envelope (below opening pressure but still above closing pressure) and has greater than the indicated differential pressure (`dp_min`)
 """
 function gaslift_model!(m::WellModel; find_injectionpoint::Bool = false, dp_min = 100)
 
@@ -377,6 +379,7 @@ function gaslift_model!(m::WellModel; find_injectionpoint::Bool = false, dp_min 
 
     #currently doesn't account for changing temp profile
     if find_injectionpoint
+        @info "Inferred injection depth @ $injection_depth' MD."
         m.injection_point = injection_depth
         tubing_pressures = traverse_topdown(m)
         casing_pressures = casing_traverse_topdown(m)

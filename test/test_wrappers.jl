@@ -52,6 +52,8 @@ mean(x) = sum(x) / length(x)
 expected_gradient = 0.433 / GouldWaterVolumeFactor(mean(tubing_pressures[81:end]), mean(model.temperatureprofile[81:end]))
 @test mean(gradients) ≈ expected_gradient atol = 0.005
 
+valve_table(valvedata)
+
 #%% implicit plot test
 if test_plots
     plot_gaslift(model.wellbore, tubing_pressures, casing_pressures, model.temperatureprofile, valvedata, nothing)
