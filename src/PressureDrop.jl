@@ -20,7 +20,7 @@ export  Wellbore, GasliftValves, WellModel, read_survey, read_valves,
         PapayZFactor,
         KareemEtAlZFactor,
         KareemEtAlZFactor_simplified,
-        StandingSolutionGOR,
+        StandingSolutionGOR, StandingBubblePoint,
         StandingOilVolumeFactor,
         BeggsAndRobinsonDeadOilViscosity,
         GlasoDeadOilViscosity,
@@ -80,9 +80,9 @@ Method:
 """
 function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_initial, dp_est, t_avg,
                                             md_initial, md_end, tvd_initial, tvd_end, inclination, id, roughness,
-                                            q_o, q_w, GLR, APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
+                                            q_o, q_w, GLR, R_b, APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
                                             pseudocrit_pressure_correlation::Function, pseudocrit_temp_correlation::Function, Z_correlation::Function,
-                                            gas_viscosity_correlation::Function, solutionGORcorrelation::Function, oilVolumeFactor_correlation::Function, waterVolumeFactor_correlation::Function,
+                                            gas_viscosity_correlation::Function, solutionGORcorrelation::Function, bubblepoint, oilVolumeFactor_correlation::Function, waterVolumeFactor_correlation::Function,
                                             dead_oil_viscosity_correlation::Function, live_oil_viscosity_correlation::Function, frictionfactor::Function, error_tolerance = 0.1)
 
     dh_md = md_end - md_initial
@@ -90,13 +90,14 @@ function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_init
     p_avg = p_initial + dp_est/2
     uphill_flow = inclination <= 90.0
 
+
     P_pc = pseudocrit_pressure_correlation(sg_gas, molFracCO2, molFracH2S)
     _, T_pc, _ = pseudocrit_temp_correlation(sg_gas, molFracCO2, molFracH2S)
     Z = Z_correlation(P_pc, T_pc, p_avg, t_avg)
     ρ_g = gasDensity_insitu(sg_gas, Z, p_avg, t_avg)
     B_g = gasVolumeFactor(p_avg, Z, t_avg)
     μ_g = gas_viscosity_correlation(sg_gas, p_avg, t_avg, Z)
-    R_s = solutionGORcorrelation(APIoil, sg_gas, p_avg, t_avg)
+    R_s = solutionGORcorrelation(APIoil, sg_gas, p_avg, t_avg, R_b, bubblepoint)
     v_sg = gasvelocity_superficial(q_o, q_w, GLR, R_s, id, B_g)
     B_o = oilVolumeFactor_correlation(APIoil, sg_gas, R_s, p_avg, t_avg)
     B_w = waterVolumeFactor_correlation(p_avg, t_avg)
@@ -118,7 +119,7 @@ function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_init
         ρ_g = gasDensity_insitu(sg_gas, Z, p_avg, t_avg)
         B_g = gasVolumeFactor(p_avg, Z, t_avg)
         μ_g = gas_viscosity_correlation(sg_gas, p_avg, t_avg, Z)
-        R_s = solutionGORcorrelation(APIoil, sg_gas, p_avg, t_avg)
+        R_s = solutionGORcorrelation(APIoil, sg_gas, p_avg, t_avg, R_b, bubblepoint)
         v_sg = gasvelocity_superficial(q_o, q_w, GLR, R_s, id, B_g)
         B_o = oilVolumeFactor_correlation(APIoil, sg_gas, R_s, p_avg, t_avg)
         B_w = waterVolumeFactor_correlation(p_avg, t_avg)
@@ -175,6 +176,7 @@ All arguments are named keyword arguments.
 - `Z_correlation::Function = KareemEtAlZFactor`: natural gas compressibility/Z-factor correlation to use
 - `gas_viscosity_correlation::Function = LeeGasViscosity`: gas viscosity correlation to use
 - `solutionGORcorrelation::Function = StandingSolutionGOR`: solution GOR correlation to use
+- `bubblepoint::Union{Function, Real} = StandingBubblePoint`: either bubble point correlation or bubble point in **psia**
 - `oilVolumeFactor_correlation::Function = StandingOilVolumeFactor`: oil volume factor correlation to use
 - `waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor`: water volume factor correlation to use
 - `dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity`: dead oil viscosity correlation to use
@@ -187,7 +189,7 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
                             q_o, q_w, GLR, injection_point = missing, naturalGLR = missing,
                             APIoil, sg_water, sg_gas, molFracCO2 = 0.0, molFracH2S = 0.0,
                             pseudocrit_pressure_correlation::Function = HankinsonWithWichertPseudoCriticalPressure, pseudocrit_temp_correlation::Function = HankinsonWithWichertPseudoCriticalTemp,
-                            Z_correlation::Function = KareemEtAlZFactor, gas_viscosity_correlation::Function = LeeGasViscosity, solutionGORcorrelation::Function = StandingSolutionGOR,
+                            Z_correlation::Function = KareemEtAlZFactor, gas_viscosity_correlation::Function = LeeGasViscosity, solutionGORcorrelation::Function = StandingSolutionGOR, bubblepoint = StandingBubblePoint,
                             oilVolumeFactor_correlation::Function = StandingOilVolumeFactor, waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor,
                             dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity, frictionfactor::Function = SerghideFrictionFactor,
                             kwargs...) #catch extra arguments from a WellModel for convenience
@@ -211,11 +213,14 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
         end
 
         GLRs = vcat(repeat([GLR], inner = inj_index), repeat([naturalGLR], inner = nsegments - inj_index))
+        R_b = repeat([naturalGLR], inner = nsegments) #reservoir total solution GOR above bpp
     elseif !ismissing(injection_point) || !ismissing(naturalGLR)
         @info "Both an injection point and natural GLR should be specified--ignoring partial specification."
         GLRs = repeat([GLR], inner = nsegments)
+        R_b = GLRs
     else #no injection point
         GLRs = repeat([GLR], inner = nsegments)
+        R_b = GLRs
     end
 
 
@@ -228,9 +233,9 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
                                                     wellbore.md[i-1], wellbore.md[i], wellbore.tvd[i-1], wellbore.tvd[i],
                                                     (wellbore.inc[i] + wellbore.inc[i-1])/2, #average inclination between survey points
                                                     wellbore.id[i], roughness,
-                                                    q_o, q_w, GLRs[i], APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
+                                                    q_o, q_w, GLRs[i], R_b[i], APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
                                                     pseudocrit_pressure_correlation, pseudocrit_temp_correlation, Z_correlation,
-                                                    gas_viscosity_correlation, solutionGORcorrelation, oilVolumeFactor_correlation, waterVolumeFactor_correlation,
+                                                    gas_viscosity_correlation, solutionGORcorrelation, bubblepoint, oilVolumeFactor_correlation, waterVolumeFactor_correlation,
                                                     dead_oil_viscosity_correlation, live_oil_viscosity_correlation, frictionfactor, error_tolerance)
 
         pressure_initial += dp_calc
@@ -311,6 +316,7 @@ Temperature methods available:
 - `Z_correlation::Function = KareemEtAlZFactor`: natural gas compressibility/Z-factor correlation to use
 - `gas_viscosity_correlation::Function = LeeGasViscosity`: gas viscosity correlation to use
 - `solutionGORcorrelation::Function = StandingSolutionGOR`: solution GOR correlation to use
+- `bubblepoint::Union{Function, Real} = StandingBubblePoint`: either bubble point correlation or bubble point in **psia**
 - `oilVolumeFactor_correlation::Function = StandingOilVolumeFactor`: oil volume factor correlation to use
 - `waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor`: water volume factor correlation to use
 - `dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity`: dead oil viscosity correlation to use

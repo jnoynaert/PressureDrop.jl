@@ -42,7 +42,7 @@ model = WellModel(wellbore = well, roughness = 0.0, valves = valves,
                     pressurecorrelation = HagedornAndBrown, WHP = 350 - pressure_atmospheric, dp_est = 25,
                     q_o = 0, q_w = 500, GLR = 4500, APIoil = 35, sg_water = 1.0, sg_gas = 0.8, CHP = 1000, naturalGLR = 0)
 
-tubing_pressures, casing_pressures, valvedata = gaslift_model!(model, find_injectionpoint = true, dp_min = 100)
+tubing_pressures, casing_pressures, valvedata = gaslift_model!(model, find_injectionpoint = true, dp_min = 100) #also an implied test for 100% water cut
 
 Δmds = [MDs[i] - MDs[i-1] for i in 81:length(MDs)]
 ΔPs = [tubing_pressures[i] - tubing_pressures[i-1] for i in 81:length(MDs)]
