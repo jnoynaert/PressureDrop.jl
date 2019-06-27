@@ -170,6 +170,7 @@ Pressure correlation functions available:
 - `Z_correlation::Function = KareemEtAlZFactor`: natural gas compressibility/Z-factor correlation to use
 - `gas_viscosity_correlation::Function = LeeGasViscosity`: gas viscosity correlation to use
 - `solutionGORcorrelation::Function = StandingSolutionGOR`: solution GOR correlation to use
+- `bubblepoint::Union{Function, Real} = StandingBubblePoint`: either bubble point correlation or bubble point in **psia**
 - `oilVolumeFactor_correlation::Function = StandingOilVolumeFactor`: oil volume factor correlation to use
 - `waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor`: water volume factor correlation to use
 - `dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity`: dead oil viscosity correlation to use
@@ -194,6 +195,7 @@ mutable struct WellModel
     Z_correlation::Function
     gas_viscosity_correlation::Function
     solutionGORcorrelation::Function
+    bubblepoint::Union{Function, Real}
     oilVolumeFactor_correlation::Function
     waterVolumeFactor_correlation::Function
     dead_oil_viscosity_correlation::Function
@@ -210,7 +212,7 @@ mutable struct WellModel
                         pseudocrit_pressure_correlation = HankinsonWithWichertPseudoCriticalPressure,
                         pseudocrit_temp_correlation = HankinsonWithWichertPseudoCriticalTemp,
                         Z_correlation = KareemEtAlZFactor, gas_viscosity_correlation = LeeGasViscosity,
-                        solutionGORcorrelation = StandingSolutionGOR, oilVolumeFactor_correlation = StandingOilVolumeFactor,
+                        solutionGORcorrelation = StandingSolutionGOR, bubblepoint = StandingBubblePoint, oilVolumeFactor_correlation = StandingOilVolumeFactor,
                         waterVolumeFactor_correlation = GouldWaterVolumeFactor,
                         dead_oil_viscosity_correlation = GlasoDeadOilViscosity, live_oil_viscosity_correlation = ChewAndConnallySaturatedOilViscosity,
                         frictionfactor = SerghideFrictionFactor)
@@ -218,7 +220,7 @@ mutable struct WellModel
         new(wellbore, roughness, valves, temperatureprofile, temperature_method, WHT, geothermal_gradient, BHT, casing_temp_factor,
             pressurecorrelation, outlet_referenced, WHP, CHP, dp_est, dp_est_inj, error_tolerance, error_tolerance_inj,
             q_o, q_w, GLR, injection_point, naturalGLR, APIoil, sg_water, sg_gas, sg_gas_inj, molFracCO2, molFracH2S, molFracCO2_inj, molFracH2S_inj,
-            pseudocrit_pressure_correlation, pseudocrit_temp_correlation, Z_correlation, gas_viscosity_correlation, solutionGORcorrelation,
+            pseudocrit_pressure_correlation, pseudocrit_temp_correlation, Z_correlation, gas_viscosity_correlation, solutionGORcorrelation, bubblepoint,
             oilVolumeFactor_correlation, waterVolumeFactor_correlation, dead_oil_viscosity_correlation, live_oil_viscosity_correlation, frictionfactor)
     end
 

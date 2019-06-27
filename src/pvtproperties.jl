@@ -222,21 +222,58 @@ end
 #TODO: add Vasquez-Beggs for solution GOR
 #TODO: add Hanafy et al correlations
 
+"""
+`StandingBubblePoint(APIoil, sg_gas, R_b, tempF)`
+
+Bubble point pressure in psia.
+
+Takes oil gravity (°API), gas specific gravity, total solution GOR at pressures above bubble point (R_b, scf/bbl), temp (°F).
+"""
+function StandingBubblePoint(APIoil, sg_gas, R_b, tempF)
+    y = 0.00091 * tempF - 0.0125 * APIoil
+    return 18.2 * ((R_b/sg_gas)^0.83 * 10^y - 1.4)
+end
+
 
 """
 `StandingSolutionGOR(APIoil, specificGravityGas, psiAbs, tempF)`
 
 Solution GOR (Rₛ) in scf/bbl.
 
-Takes oil gravity (°API), gas specific gravity, pressure (psia), temp (°F).
+Takes oil gravity (°API), gas specific gravity, pressure (psia), temp (°F), total solution GOR (R_b, scf/bbl), and bubblepoint value (psia).
 
 Standing method.
 """
-function StandingSolutionGOR(APIoil, specificGravityGas, psiAbs, tempF)
+function StandingSolutionGOR(APIoil, specificGravityGas, psiAbs, tempF, R_b, bubblepoint::Real)
 
-  y = 0.00091*tempF - 0.0125*APIoil
+    if psiAbs >= bubblepoint
+        return R_b
+    else
+        y = 0.00091*tempF - 0.0125*APIoil
 
-  return specificGravityGas * (psiAbs / (18 * 10^y) )^1.205 #scf/bbl
+        return specificGravityGas * (psiAbs / (18 * 10^y) )^1.205 #scf/bbl
+    end
+end
+
+
+"""
+`StandingSolutionGOR(APIoil, specificGravityGas, psiAbs, tempF)`
+
+Solution GOR (Rₛ) in scf/bbl.
+
+Takes oil gravity (°API), gas specific gravity, pressure (psia), temp (°F), total solution GOR (R_b, scf/bbl), and bubblepoint function.
+
+Standing method.
+"""
+function StandingSolutionGOR(APIoil, specificGravityGas, psiAbs, tempF, R_b, bubblepoint::Function)
+
+    if psiAbs >= bubblepoint(APIoil, specificGravityGas, R_b, tempF)
+        return R_b
+    else
+        y = 0.00091*tempF - 0.0125*APIoil
+
+        return specificGravityGas * (psiAbs / (18 * 10^y) )^1.205 #scf/bbl
+    end
 end
 
 
