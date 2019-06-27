@@ -17,8 +17,9 @@ end
 
 @testset "Oil PVT" begin
 
-    @test StandingSolutionGOR(30.0, 0.6, 800.0, 120.0) ≈ 121.4 atol = 1
-    @test StandingSolutionGOR(41.06, 0.916, 346.6, 80.3) ≈ 109.7 atol = 1
+    @test StandingSolutionGOR(30.0, 0.6, 800.0, 120.0, nothing, 2650) ≈ 121.4 atol = 1
+    @test StandingSolutionGOR(41.06, 0.916, 346.6, 80.3, nothing, 2650) ≈ 109.7 atol = 1
+    @test StandingBubblePoint(30, 0.75, 120, 100) ≈ 614 atol = 1
     @test StandingOilVolumeFactor(30.0, 0.6, 121.4, 800.0, 120.0) ≈ 1.07 atol = 0.05
     @test oilDensity_insitu(41.06,  0.916,  109.7,  1.05) ≈ 49.9 atol = 0.5
     @test BeggsAndRobinsonDeadOilViscosity( 37.9,  120) ≈ 4.05 atol = 0.05
