@@ -9,6 +9,7 @@ User-facing functions used for model construction.
 #### Oil
 
 - [`StandingSolutionGOR`](@ref)
+- [`StandingBubblePoint`](@ref)
 - [`StandingOilVolumeFactor`](@ref)
 - [`BeggsAndRobinsonDeadOilViscosity`](@ref)
 - [`GlasoDeadOilViscosity`](@ref)
