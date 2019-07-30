@@ -30,9 +30,7 @@ The `wellbore` field must be defined in the passed WellModel.
 
 See `traverse_topdown` and `pressure_and_temp`.
 """
-function
-plot_pressure(m::WellModel, pressures, ctitle = nothing)
-
+function plot_pressure(m::WellModel, pressures, ctitle = nothing)
 
         plot_pressure(m.wellbore, pressures, ctitle)
 end

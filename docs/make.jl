@@ -16,6 +16,7 @@ makedocs(
     format = Documenter.HTML(prettyurls = isCI)
 )
 
+#tag versions before pushing
 if isCI
     deploydocs(repo = "github.com/jnoynaert/PressureDrop.jl.git")
 end

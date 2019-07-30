@@ -12,6 +12,8 @@ In addition to being open-source, `PressureDrop.jl` has several advantages over 
 - Extensible PVT or pressure correlation options by adding functions in Julia code (or C, Python, or R)
 - Utilization of Julia's easy interoperability with other languages for adding or importing new functions for model components
 
+Changelog [here](changelog.md).
+
 # Installation
 
 From the Julia prompt: press `]`, then type `add PressureDrop`.
@@ -24,7 +26,7 @@ Models are constructed from well objects, optional valve objects, and parameter 
 
 Note that all inputs and calculations are in U.S. field units:
 
-```
+```julia
 julia> using PressureDrop
 
 julia> examplewell = read_survey(path = surveyfilepath, id = 2.441, maxdepth = 6500)
@@ -51,7 +53,7 @@ julia> model = WellModel(wellbore = examplewell, roughness = 0.00065, valves = e
 
 Once a model is specified, developing pressure/temperature traverses or gas lift analysis is simple:
 
-```
+```julia
 julia> tubing_pressures, casing_pressures, valvedata = gaslift_model!(model, find_injectionpoint = true,
                dp_min = 100) #required minimum ΔP at depth to consider as an operating valve
 
@@ -64,9 +66,9 @@ julia> plot_gaslift(model, tubing_pressures, casing_pressures, valvedata, "Gas L
 ```
 ![example gl plot](examples/gl-plot-example.png)
 
-Valve tables can be generated from the
+Valve tables can be generated from the output of the gas lift model:
 
-```
+```julia
 julia> valve_table(valvedata)
 
 ╭─────┬──────┬──────┬──────┬──────┬───────┬───────┬──────┬──────┬──────┬──────┬──────┬──────┬──────┬──────┬───────┬───────┬───────╮
@@ -82,7 +84,7 @@ julia> valve_table(valvedata)
 
 Bulk calculations can also be performed either time by either iterating a model object, or calling pressure traverse functions directly:
 
-```
+```julia
 function timestep_pressure(rate, temp, watercut, GLR)
     temps = linear_wellboretemp(WHT = temp, BHT = 165, wellbore = examplewell)
 
