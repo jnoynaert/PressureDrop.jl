@@ -1,6 +1,6 @@
 const test_plots = false
 const devmode = false #test only subsets
-const devtests = ("test_wrappers.jl", "test_pvt.jl") #filenames to run for limited-subset tests
+const devtests = ("test_regressions.jl") #filenames to run for limited-subset tests
 
 
 using Test
@@ -24,4 +24,5 @@ else
     include("test_integration_legacy.jl") #tolerance test
     include("test_integration_scenario.jl")
     include("test_wrappers.jl")
+    include("test_regressions.jl")
 end

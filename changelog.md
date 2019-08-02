@@ -1,5 +1,9 @@
 # Changes
 
+## v1.0.1 (RC2)
+- Added JOSS paper draft
+- Added assertions to guardrail pulling in negative production rates
+
 ## v1.0 (RC1)
 
 ### Feature & interface changes
