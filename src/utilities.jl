@@ -19,8 +19,10 @@ Assumes the column order for the file is (MD, INC, TVD, <optional ID>), in U.S. 
 - `maxdepth::Union{Bool, Real} = false`: If set to a real number, drop survey data past a certain measured depth. If false, keep the entire survey.
 - `id_included::Bool = false`: whether the survey segment ID is stored as a fourth column. This is the easiest option to include tapered strings.
 - `id::Real = 2.441`: the diameter to assume for the entire wellbore length, if the ID is not included in the survey file.
+- `valves::Union{GasliftValves, Nothing} = nothing`: set of gas lift valves to add corresponding depths to the final Wellbore object via interpolation
+- `allow_negatives::Bool = false`: allow negative depths on the survey inputs
 """
-function read_survey(;path::String, delim::Char = ',', skiplines::Int64 = 1, maxdepth::Union{Bool, Real} = false, id_included::Bool = false, id::Real = 2.441, allow_negatives::Bool = false)
+function read_survey(;path::String, delim::Char = ',', skiplines::Int64 = 1, maxdepth::Union{Bool, Real} = false, id_included::Bool = false, id::Real = 2.441, valves::Union{GasliftValves, Nothing} = nothing, allow_negatives::Bool = false)
 
     nlines = countlines(path) - skiplines
     ncols = id_included ? 4 : 3
@@ -44,8 +46,11 @@ function read_survey(;path::String, delim::Char = ',', skiplines::Int64 = 1, max
         output = output[output[:,1] .<= maxdepth, :]
     end
 
-    return id_included ? Wellbore(output[:,1], output[:,2], output[:,3], output[:,4], allow_negatives) :
-        Wellbore(output[:,1], output[:,2], output[:,3], id, allow_negatives)
+    if id_included
+        return Wellbore(output[:,1], output[:,2], output[:,3], output[:,4], valves, allow_negatives)
+    else
+        return Wellbore(output[:,1], output[:,2], output[:,3], id, valves, allow_negatives)
+    end
 end
 
 

@@ -3,6 +3,8 @@
 ## v1.0.1 (RC2)
 - Added JOSS paper draft
 - Added assertions to guardrail pulling in negative production rates
+- Added Windows test builds on Travis
+- Modified `read_survey` to allow passing a valve object to automatically add the associated MDs
 
 ## v1.0 (RC1)
 

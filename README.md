@@ -10,7 +10,7 @@ In addition to being open-source, `PressureDrop.jl` has several advantages over 
 - Dynamic recalculation of injection points and temperature profiles through time
 - Easy duplication and modification of models and scenarios
 - Extensible PVT or pressure correlation options by adding functions in Julia code (or C, Python, or R)
-- Utilization of Julia's easy interoperability with other languages for adding or importing new functions for model components
+- Utilization of Julia's interoperability with other languages for adding or importing new functions for model components
 
 Changelog [here](changelog.md).
 

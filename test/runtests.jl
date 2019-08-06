@@ -1,7 +1,7 @@
 const test_plots = false
 const devmode = false #test only subsets
-const devtests = ("test_regressions.jl") #filenames to run for limited-subset tests
-
+const devtests = ("test_wrappers.jl") #filenames to run for limited-subset tests
+#using Pkg; Pkg.test()
 
 using Test
 using PressureDrop

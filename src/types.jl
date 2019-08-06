@@ -12,12 +12,12 @@ struct GasliftValves
     md::Array{Float64,1}
     PTRO::Array{Float64,1}
     R::Array{Float64,1}
-    port::Array{Int8,1}
+    port::Array{Int64,1}
 
     function GasliftValves(md::Array{T} where T <: Real, PTRO::Array{T} where T <: Real, R::Array{T} where T <: AbstractFloat, port::Array{T} where T <: Union{Real, Int})
 
         ports = try
-            convert(Array{Int8,1}, port)
+            convert(Array{Int64,1}, port)
         catch
             throw(ArgumentError("Specify port sizes in integer 64ths inches, e.g. 16 for a quarter-inch port."))
         end
@@ -121,6 +121,10 @@ function Wellbore(md, inc, tvd, id, valves::GasliftValves, allow_negatives::Bool
     return well
 end
 
+#handle argument defaults in read_survey
+function Wellbore(md, inc, tvd, id, valves::Nothing, allow_negatives::Bool = false)
+    Wellbore(md, inc, tvd, id, allow_negatives)
+end
 
 #Printing for Wellbore structs
 Base.show(io::IO, well::Wellbore) = print(io,

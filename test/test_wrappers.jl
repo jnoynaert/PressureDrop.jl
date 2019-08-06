@@ -56,7 +56,7 @@ valve_table(valvedata)
 
 #%% implicit plot test
 if test_plots
-    plot_gaslift(model.wellbore, tubing_pressures, casing_pressures, model.temperatureprofile, valvedata, nothing)
+    plot_gaslift(model.wellbore, tubing_pressures, casing_pressures, model.temperatureprofile, valvedata, nothing) |> x->draw(SVG("plot-gl-core.svg", 5inch, 4inch), x)
 end
 
 end #testset for gas lift wrappers

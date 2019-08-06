@@ -7,6 +7,7 @@ julia:
 os:
   - linux
   - osx
+  - windows
 
 jobs:
   include:
