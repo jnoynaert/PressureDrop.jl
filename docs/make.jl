@@ -10,11 +10,13 @@ makedocs(
                 "Pressure & temperature correlations" => "correlations.md",
                 "PVT properties" => "pvt.md",
                 "Valve calculations" => "valves.md",
-                "Utilities" => "utilities.md"],
+                "Utilities" => "utilities.md",
+                "Extending" => "extending.md"],
     sitename="PressureDrop.jl",
     format = Documenter.HTML(prettyurls = isCI)
 )
 
+#tag versions before pushing
 if isCI
     deploydocs(repo = "github.com/jnoynaert/PressureDrop.jl.git")
 end

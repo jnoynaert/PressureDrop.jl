@@ -312,6 +312,7 @@ Helper function to determine liquid holdup using the Hagedorn & Brown method.
 Does not account for inclination or oil/water slip.
 """
 function HagedornAndBrownLiquidHoldup(pressure_est, id, v_sl, v_sg, ρ_l, μ_l, σ_l)
+    
     N_lv = 1.938 * v_sl * (ρ_l / σ_l)^0.25 #liquid velocity number per Duns & Ros
     N_gv = 1.938 * v_sg * (ρ_l / σ_l)^0.25 #gas velocity number per Duns & Ros; yes, use liquid density & viscosity
     N_d = 120.872 * id/12 * (ρ_l / σ_l)^0.5 #pipe diameter number; uses id in ft
@@ -371,6 +372,7 @@ end
 Helper function for H&B correlation -- compute Griffith pressure drop for bubble flow regime.
 """
 function GriffithWallisPressureDrop(id, v_sl, v_sg, v_m, ρ_l, ρ_g, μ_l, id_ft, λ_l, md, tvd, frictionfactor::Function, uphill_flow,  roughness)
+    
     v_s = 0.8 #assumed slip velocity of 0.8 ft/s -- probably assumes gas in oil bubbles with no water cut or vice versa?
     ε_l = 1 - 0.5 * (1 + v_m / v_s - sqrt((1 + v_m/v_s)^2 - 4*v_sg/v_s))
 

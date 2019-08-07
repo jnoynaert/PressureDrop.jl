@@ -30,6 +30,7 @@ export  Wellbore, GasliftValves, WellModel, read_survey, read_valves,
         ChenFrictionFactor
 
 const pressure_atmospheric = 14.7 #used to adjust calculations between psia & psig
+const safe_calcs = true #utilize a maximum iteration counter for each segment calculation
 
 include("types.jl")
 include("utilities.jl")
@@ -110,8 +111,9 @@ function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_init
     dp_calc = pressurecorrelation(dh_md, dh_tvd, inclination, id,
                                     v_sl, v_sg, ρ_l, ρ_g, σ_l, μ_l, μ_g, roughness, p_avg, frictionfactor,
                                     uphill_flow)
-
+    
     while abs(dp_est - dp_calc) > error_tolerance
+
         dp_est = dp_calc
         p_avg = p_initial + dp_est/2
 
@@ -128,7 +130,6 @@ function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_init
         σ_l = mixture_properties_simple(q_o, q_w, gas_oil_interfacialtension(APIoil, p_avg, t_avg), gas_water_interfacialtension(p_avg, t_avg))
         μ_oD = dead_oil_viscosity_correlation(APIoil, t_avg)
         μ_l = mixture_properties_simple(q_o, q_w, live_oil_viscosity_correlation(μ_oD, R_s), assumedWaterViscosity)
-
         dp_calc = pressurecorrelation(dh_md, dh_tvd, inclination, id,
                                         v_sl, v_sg, ρ_l, ρ_g, σ_l, μ_l, μ_g, roughness, p_avg, frictionfactor,
                                         uphill_flow)
@@ -136,7 +137,6 @@ function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_init
 
     return dp_calc #allows negatives
 end
-
 
 
 """
@@ -193,8 +193,10 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
                             oilVolumeFactor_correlation::Function = StandingOilVolumeFactor, waterVolumeFactor_correlation::Function = GouldWaterVolumeFactor,
                             dead_oil_viscosity_correlation::Function = GlasoDeadOilViscosity, live_oil_viscosity_correlation::Function = ChewAndConnallySaturatedOilViscosity, frictionfactor::Function = SerghideFrictionFactor,
                             kwargs...) #catch extra arguments from a WellModel for convenience
+    
+    @assert q_o >= 0. && q_w >= 0. && GLR >= 0. && (naturalGLR === missing || (GLR >= naturalGLR >= 0.)) "Negative rates or NGLR > GLR not supported."
 
-    WHP += pressure_atmospheric
+    WHP += pressure_atmospheric #convert psig input to psia for internal PVT functions
 
     nsegments = length(wellbore.md)
 
@@ -242,7 +244,7 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
         pressures[i] = pressure_initial
     end
 
-    return pressures .- pressure_atmospheric
+    return pressures .- pressure_atmospheric #convert back to psig for user-facing output
 end
 
 
@@ -275,7 +277,7 @@ end
 
 Develop pressure traverse in psia and temperature profile in °F from wellhead down to datum for a WellModel object. Requires the following fields to be defined in the model:
 
-Returns a pressure profile as an Array{Float64,1} and a temperature profile as an Array{Float64,1}, referenced to the measured depths in the original Wellbore object.
+Returns a pressure profile as an Array{Float64,1} and updates the passed WellModel's temperature profile, referenced to the measured depths in the original Wellbore object.
 
 # Arguments
 
@@ -324,7 +326,7 @@ Temperature methods available:
 - `frictionfactor::Function = SerghideFrictionFactor`: correlation function for Darcy-Weisbach friction factor
 - `outlet_referenced = true`: whether to use outlet pressure (WHP) or inlet pressure (BHP) for starting point
 """
-function pressure_and_temp!(m::WellModel)
+function pressure_and_temp!(m::WellModel, summary = true)
 
     if m.temperature_method == "linear"
         @assert !(any(ismissing.((m.WHT, m.BHT)))) "Must specific a wellhead temperature & BHT to utilize linear temperature method."
@@ -337,7 +339,7 @@ function pressure_and_temp!(m::WellModel)
     end
 
     pressures = traverse_topdown(m)
-    BHP_summary(pressures, m.wellbore)
+    summary ? BHP_summary(pressures, m.wellbore) : nothing
 
     return pressures
 end
@@ -346,13 +348,15 @@ end
 """
 `pressures_and_temp!(m::WellModel)`
 
+Returns a tubing pressure profile as an Array{Float64,1}, casing pressure profile as an Array{Float64,1}, and updates the passed WellModel's temperature profile, referenced to the measured depths in the original Wellbore object.
+
 # Arguments
 
 See `WellModel` documentation.
 """
-function pressures_and_temp!(m::WellModel)
+function pressures_and_temp!(m::WellModel, summary = true)
 
-    tubing_pressures = pressure_and_temp!(m)
+    tubing_pressures = pressure_and_temp!(m, summary)
     casing_pressures = casing_traverse_topdown(m)
 
     return tubing_pressures, casing_pressures
@@ -361,6 +365,8 @@ end
 
 """
 `gaslift_model!(m::WellModel; find_injectionpoint::Bool = false, dp_min = 100)`
+
+Returns a tubing pressure profile as an Array{Float64,1}, casing pressure profile as an Array{Float64,1}, valve data table, and updates the passed WellModel's temperature profile,
 
 # Arguments
 
@@ -371,7 +377,7 @@ See `WellModel` documentation.
 
 *"greedy opening" heuristic: select _lowest_ non-orifice valve where CP @ depth is within operating envelope (below opening pressure but still above closing pressure) and has greater than the indicated differential pressure (`dp_min`)
 """
-function gaslift_model!(m::WellModel; find_injectionpoint::Bool = false, dp_min = 100)
+function gaslift_model!(m::WellModel, summary = false; find_injectionpoint::Bool = false, dp_min = 100)
 
     if find_injectionpoint
         m.injection_point = m.wellbore.md[end]
@@ -379,7 +385,7 @@ function gaslift_model!(m::WellModel; find_injectionpoint::Bool = false, dp_min 
         @info "Performing gas lift calculations without defined injection information (point of injection, natural GLR) and without falling back to a calculated injection point."
     end
 
-    tubing_pressures, casing_pressures = pressures_and_temp!(m);
+    tubing_pressures, casing_pressures = pressures_and_temp!(m, false);
     valvedata, injection_depth = valve_calcs(valves = m.valves, well = m.wellbore, sg_gas = m.sg_gas_inj, tubing_pressures = tubing_pressures, casing_pressures = casing_pressures, tubing_temps = m.temperatureprofile, casing_temps = m.temperatureprofile .* m.casing_temp_factor,
                             dp_min = dp_min)
 
@@ -393,6 +399,7 @@ function gaslift_model!(m::WellModel; find_injectionpoint::Bool = false, dp_min 
                                 dp_min = dp_min)
     end
 
+    summary ? BHP_summary(tubing_pressures, m.wellbore) : nothing
     return tubing_pressures, casing_pressures, valvedata
 end
 

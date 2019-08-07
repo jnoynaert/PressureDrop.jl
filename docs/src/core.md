@@ -58,7 +58,9 @@ model = WellModel(wellbore = examplewell, roughness = 0.00065,
 ```
 Printing a WellModel will display all of its defined and undefined fields.
 
-An import aspect of model definitions is that they include the temperature profile. Passing a model object to a wrapper function that calculates both pressure and temperature will mutate the temperature profile associate with the model.
+!!! note
+
+    An important aspect of model definitions is that they include the temperature profile. Passing a model object to a wrapper function that calculates both pressure and temperature will mutate the temperature profile associate with the model.
 
 ## Pressure & temperature calculations
 

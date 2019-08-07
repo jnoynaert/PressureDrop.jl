@@ -1,11 +1,18 @@
 # PressureDrop.jl
 [![Build Status](https://travis-ci.org/jnoynaert/PressureDrop.jl.svg?branch=master)](https://travis-ci.org/jnoynaert/PressureDrop.jl)  [![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://jnoynaert.github.io/PressureDrop.jl/stable)
 
-Julia package for computing multiphase pressure profiles for gas lift optimization of oil &amp; gas wells.
+Julia package for computing multiphase pressure profiles for gas lifted oil &amp; gas wells, developed as an open-source alternative to feature subsets of commercial nodal analysis or RTA software such as Prosper, Pipesim, or IHS Harmony.
 
 Currently calculates outlet-referenced models for producing wells using non-coupled temperature gradients.
 
-Note that all inputs and calculations are in U.S. field units.
+In addition to being open-source, `PressureDrop.jl` has several advantages over closed-source applications for its intended use cases:
+- Programmatic and scriptable use with native code--no binaries consuming configuration files or awkward keyword specifications
+- Dynamic recalculation of injection points and temperature profiles through time
+- Easy duplication and modification of models and scenarios
+- Extensible PVT or pressure correlation options by adding functions in Julia code (or C, Python, or R)
+- Utilization of Julia's interoperability with other languages for adding or importing new functions for model components
+
+Changelog [here](changelog.md).
 
 # Installation
 
@@ -15,9 +22,11 @@ Alternatively, in Jupyter: execute a cell containing `using Pkg; Pkg.add("Pressu
 
 # Usage
 
-Models are constructed from well objects, optional valve objects, and parameter specifications. Well and valve objects can be constructed manually or from files:
+Models are constructed from well objects, optional valve objects, and parameter specifications. Well and valve objects can be constructed manually or from files.
 
-```
+Note that all inputs and calculations are in U.S. field units:
+
+```julia
 julia> using PressureDrop
 
 julia> examplewell = read_survey(path = surveyfilepath, id = 2.441, maxdepth = 6500)
@@ -44,7 +53,7 @@ julia> model = WellModel(wellbore = examplewell, roughness = 0.00065, valves = e
 
 Once a model is specified, developing pressure/temperature traverses or gas lift analysis is simple:
 
-```
+```julia
 julia> tubing_pressures, casing_pressures, valvedata = gaslift_model!(model, find_injectionpoint = true,
                dp_min = 100) #required minimum ΔP at depth to consider as an operating valve
 
@@ -57,9 +66,9 @@ julia> plot_gaslift(model, tubing_pressures, casing_pressures, valvedata, "Gas L
 ```
 ![example gl plot](examples/gl-plot-example.png)
 
-Valve tables can be generated from the
+Valve tables can be generated from the output of the gas lift model:
 
-```
+```julia
 julia> valve_table(valvedata)
 
 ╭─────┬──────┬──────┬──────┬──────┬───────┬───────┬──────┬──────┬──────┬──────┬──────┬──────┬──────┬──────┬───────┬───────┬───────╮
@@ -75,7 +84,7 @@ julia> valve_table(valvedata)
 
 Bulk calculations can also be performed either time by either iterating a model object, or calling pressure traverse functions directly:
 
-```
+```julia
 function timestep_pressure(rate, temp, watercut, GLR)
     temps = linear_wellboretemp(WHT = temp, BHT = 165, wellbore = examplewell)
 
@@ -114,3 +123,8 @@ The pressure drop calculations converge quickly enough in most cases that specia
 For bulk calculations, note that as always with Julia, the best performance will be achieved by wrapping any calculations in a function, e.g. a `main()` block, to enable proper type inference by the compiler.
 
 Plotting functions are lazily loaded to avoid the overhead of loading the `Gadfly` plotting dependency.
+
+# Pull requests & bug reports
+
+- Pull requests for additional functionality should include unit tests. New correlations or PVT functions should include a reference to the source of your test cases so that the expected outputs can be validated.
+- Add bug reports or feature requests to the [issue tracker](https://github.com/jnoynaert/PressureDrop.jl/issues). Please include a [minimal, reproducible example](https://stackoverflow.com/help/minimal-reproducible-example) with any issue reports. Include any additional necessary data (e.g. CSV definitions of well surveys).

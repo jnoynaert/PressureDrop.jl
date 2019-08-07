@@ -30,9 +30,7 @@ The `wellbore` field must be defined in the passed WellModel.
 
 See `traverse_topdown` and `pressure_and_temp`.
 """
-function
-plot_pressure(m::WellModel, pressures, ctitle = nothing)
-
+function plot_pressure(m::WellModel, pressures, ctitle = nothing)
 
         plot_pressure(m.wellbore, pressures, ctitle)
 end
@@ -172,9 +170,12 @@ function plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps,
                 Guide.ylabel("Measured Depth (ft)"),
                 Guide.title(ctitle),
                 Coord.cartesian(yflip = true),
+                Guide.manual_color_key(nothing,
+                                       ["TP", "CP", "Valves", "PVO/PVC"],
+                                       ["deepskyblue", "mediumspringgreen", "black", "mediumpurple3"]),
                 Theme(plot_padding=[5mm, 0mm, 5mm, 5mm]))
 
-        placeholdertitle = ctitle === nothing ? nothing : " "
+        placeholdertitle = ctitle === nothing ? nothing : " " #generate a blank title to align the top of the plots if needed
         temp = plot(x = temps, y = well.md, Geom.path, Theme(default_color = "red"),
                 Scale.x_continuous(format = :plain),
                 Guide.xlabel("°F"),
@@ -188,7 +189,6 @@ function plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps,
         hstack(compose(context(0, 0, 0.75, 1), render(pressure)),
                 compose(context(0.75, 1, 0.25, 1), render(temp)))
 end
-
 
 """
 `plot_gaslift(m::WellModel, tubing_pressures, casing_pressures, valvedata, ctitle = nothing)`
