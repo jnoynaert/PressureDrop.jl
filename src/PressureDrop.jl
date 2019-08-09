@@ -30,7 +30,6 @@ export  Wellbore, GasliftValves, WellModel, read_survey, read_valves,
         ChenFrictionFactor
 
 const pressure_atmospheric = 14.7 #used to adjust calculations between psia & psig
-const safe_calcs = true #utilize a maximum iteration counter for each segment calculation
 
 include("types.jl")
 include("utilities.jl")

@@ -8,10 +8,10 @@
 
 ## v1.0 (RC1)
 
-### Feature & interface changes
+### Feature & interface
 - Added gravity-based casing pressure calculations & gas lift valve tables
 - Added gas lift plots
-- Added support for bubble point pressure (than assuming oil is always under BPP)
+- Added support for bubble point pressure (rather than assuming oil is always under BPP)
 - Added docs with examples
 - Converted all user-facing meta-functions to use **psig** instead of absolute pressure, to reduce overhead when using field data
 - Added struct-based arguments: all arguments reside in a WellModel struct and can be easily re-used/modified without 20-argument function calls
