@@ -229,7 +229,7 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
     pressure_initial = pressures[1] = WHP
 
     @inbounds for i in 2:nsegments
-        dp_calc = calculate_pressuresegment_topdown(pressurecorrelation, pressure_initial, dp_est,
+        dp_est = calculate_pressuresegment_topdown(pressurecorrelation, pressure_initial, dp_est,
                                                     (temperatureprofile[i] + temperatureprofile[i-1])/2, #average temperature
                                                     wellbore.md[i-1], wellbore.md[i], wellbore.tvd[i-1], wellbore.tvd[i],
                                                     (wellbore.inc[i] + wellbore.inc[i-1])/2, #average inclination between survey points
@@ -239,7 +239,7 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
                                                     gas_viscosity_correlation, solutionGORcorrelation, bubblepoint, oilVolumeFactor_correlation, waterVolumeFactor_correlation,
                                                     dead_oil_viscosity_correlation, live_oil_viscosity_correlation, frictionfactor, error_tolerance)
 
-        pressure_initial += dp_calc
+        pressure_initial += dp_est
         pressures[i] = pressure_initial
     end
 
