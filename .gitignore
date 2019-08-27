@@ -15,3 +15,4 @@ extras/
 buildnotes.txt
 bulkcalcs.jl
 259H.jl
+NLsolve_test.jl
