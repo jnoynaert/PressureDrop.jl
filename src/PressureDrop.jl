@@ -65,56 +65,28 @@ end
 
 #%% core functions
 """
-`calculate_pressuresegment_topdown(<arguments>)`
+`calculate_pressuresegment(<arguments>)`
 
 Pressure inputs are in **psia**.
 
 Helper function to calculate the pressure drop for a single pipe segment, using an outlet-referenced approach.
 
-Method:
+Method (fixed-point iteration to account for pressure dependence of fluid PVT properties) :
 1. Generates PVT properties for the average conditions in the segment for a given estimate for the pressure drop in the second.
 2. Calculates a new estimated pressure drop using the PVT properties.
 3. Compares the original and new pressure drop estimates to validate the stability of the estimate.
 4. Iterate through steps 1-3 until a stable estimate is found (indicated by obtaining a difference between pre- and post-PVT that is within the given error tolerance).
 
 """
-function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_initial, dp_est, t_avg,
-                                            md_initial, md_end, tvd_initial, tvd_end, inclination, id, roughness,
+function calculate_pressuresegment(pressurecorrelation::Function, p_initial, dp_est, t_avg,
+                                            dh_md, dh_tvd, inclination, uphill_flow, id, roughness,
                                             q_o, q_w, GLR, R_b, APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
-                                            pseudocrit_pressure_correlation::Function, pseudocrit_temp_correlation::Function, Z_correlation::Function,
+                                            Z_correlation::Function, P_pc, T_pc,
                                             gas_viscosity_correlation::Function, solutionGORcorrelation::Function, bubblepoint, oilVolumeFactor_correlation::Function, waterVolumeFactor_correlation::Function,
                                             dead_oil_viscosity_correlation::Function, live_oil_viscosity_correlation::Function, frictionfactor::Function, error_tolerance = 0.1)
 
-    dh_md = md_end - md_initial
-    dh_tvd = tvd_end - tvd_initial
-    p_avg = p_initial + dp_est/2
-    uphill_flow = inclination <= 90.0
-
-
-    P_pc = pseudocrit_pressure_correlation(sg_gas, molFracCO2, molFracH2S)
-    _, T_pc, _ = pseudocrit_temp_correlation(sg_gas, molFracCO2, molFracH2S)
-    Z = Z_correlation(P_pc, T_pc, p_avg, t_avg)
-    ρ_g = gasDensity_insitu(sg_gas, Z, p_avg, t_avg)
-    B_g = gasVolumeFactor(p_avg, Z, t_avg)
-    μ_g = gas_viscosity_correlation(sg_gas, p_avg, t_avg, Z)
-    R_s = solutionGORcorrelation(APIoil, sg_gas, p_avg, t_avg, R_b, bubblepoint)
-    v_sg = gasvelocity_superficial(q_o, q_w, GLR, R_s, id, B_g)
-    B_o = oilVolumeFactor_correlation(APIoil, sg_gas, R_s, p_avg, t_avg)
-    B_w = waterVolumeFactor_correlation(p_avg, t_avg)
-    v_sl = liquidvelocity_superficial(q_o, q_w, id, B_o, B_w)
-    ρ_l = mixture_properties_simple(q_o, q_w, oilDensity_insitu(APIoil,  sg_gas,  R_s,  B_o), waterDensity_insitu(sg_water, B_w))
-    σ_l = mixture_properties_simple(q_o, q_w, gas_oil_interfacialtension(APIoil, p_avg, t_avg), gas_water_interfacialtension(p_avg, t_avg))
-    μ_oD = dead_oil_viscosity_correlation(APIoil, t_avg)
-    μ_l = mixture_properties_simple(q_o, q_w, live_oil_viscosity_correlation(μ_oD, R_s), assumedWaterViscosity)
-
-    dp_calc = pressurecorrelation(dh_md, dh_tvd, inclination, id,
-                                    v_sl, v_sg, ρ_l, ρ_g, σ_l, μ_l, μ_g, roughness, p_avg, frictionfactor,
-                                    uphill_flow)
-    
-    while abs(dp_est - dp_calc) > error_tolerance
-
-        dp_est = dp_calc
-        p_avg = p_initial + dp_est/2
+    function dP(dp) #calculate delta pressure dP as a function of input pressure estimate dp
+        p_avg = p_initial + dp/2
 
         Z = Z_correlation(P_pc, T_pc, p_avg, t_avg)
         ρ_g = gasDensity_insitu(sg_gas, Z, p_avg, t_avg)
@@ -129,9 +101,17 @@ function calculate_pressuresegment_topdown(pressurecorrelation::Function, p_init
         σ_l = mixture_properties_simple(q_o, q_w, gas_oil_interfacialtension(APIoil, p_avg, t_avg), gas_water_interfacialtension(p_avg, t_avg))
         μ_oD = dead_oil_viscosity_correlation(APIoil, t_avg)
         μ_l = mixture_properties_simple(q_o, q_w, live_oil_viscosity_correlation(μ_oD, R_s), assumedWaterViscosity)
-        dp_calc = pressurecorrelation(dh_md, dh_tvd, inclination, id,
+
+        return pressurecorrelation(dh_md, dh_tvd, inclination, id,
                                         v_sl, v_sg, ρ_l, ρ_g, σ_l, μ_l, μ_g, roughness, p_avg, frictionfactor,
                                         uphill_flow)
+    end
+    
+    dp_calc = dP(dp_est)
+    while abs(dp_est - dp_calc) > error_tolerance
+
+        dp_est = dp_calc
+        dp_calc = dP(dp_est)
     end
 
     return dp_calc #allows negatives
@@ -228,14 +208,21 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
     pressures = Array{Float64, 1}(undef, nsegments)
     pressure_initial = pressures[1] = WHP
 
+    P_pc = pseudocrit_pressure_correlation(sg_gas, molFracCO2, molFracH2S)
+    _, T_pc, _ = pseudocrit_temp_correlation(sg_gas, molFracCO2, molFracH2S)
+
     @inbounds for i in 2:nsegments
-        dp_est = calculate_pressuresegment_topdown(pressurecorrelation, pressure_initial, dp_est,
+        inclination = (wellbore.inc[i] + wellbore.inc[i-1])/2
+
+        dp_est = calculate_pressuresegment(pressurecorrelation, pressure_initial, dp_est,
                                                     (temperatureprofile[i] + temperatureprofile[i-1])/2, #average temperature
-                                                    wellbore.md[i-1], wellbore.md[i], wellbore.tvd[i-1], wellbore.tvd[i],
-                                                    (wellbore.inc[i] + wellbore.inc[i-1])/2, #average inclination between survey points
+                                                    wellbore.md[i] - wellbore.md[i-1], #dh_md
+                                                    wellbore.tvd[i] - wellbore.tvd[i-1], #dh_tvd
+                                                    inclination, #average inclination between survey points
+                                                    inclination <= 90.0, #uphill_flow
                                                     wellbore.id[i], roughness,
                                                     q_o, q_w, GLRs[i], R_b[i], APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
-                                                    pseudocrit_pressure_correlation, pseudocrit_temp_correlation, Z_correlation,
+                                                    Z_correlation, P_pc, T_pc,
                                                     gas_viscosity_correlation, solutionGORcorrelation, bubblepoint, oilVolumeFactor_correlation, waterVolumeFactor_correlation,
                                                     dead_oil_viscosity_correlation, live_oil_viscosity_correlation, frictionfactor, error_tolerance)
 
