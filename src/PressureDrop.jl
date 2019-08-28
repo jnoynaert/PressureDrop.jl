@@ -80,7 +80,7 @@ Method (fixed-point iteration to account for pressure dependence of fluid PVT pr
 """
 function calculate_pressuresegment(pressurecorrelation::Function, p_initial, dp_est, t_avg,
                                             dh_md, dh_tvd, inclination, uphill_flow, id, roughness,
-                                            q_o, q_w, GLR, R_b, APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
+                                            q_o, q_w, GLR, R_b, APIoil, sg_water, sg_gas,
                                             Z_correlation::Function, P_pc, T_pc,
                                             gas_viscosity_correlation::Function, solutionGORcorrelation::Function, bubblepoint, oilVolumeFactor_correlation::Function, waterVolumeFactor_correlation::Function,
                                             dead_oil_viscosity_correlation::Function, live_oil_viscosity_correlation::Function, frictionfactor::Function, error_tolerance = 0.1)
@@ -221,7 +221,7 @@ function traverse_topdown(;wellbore::Wellbore, roughness, temperatureprofile::Ar
                                                     inclination, #average inclination between survey points
                                                     inclination <= 90.0, #uphill_flow
                                                     wellbore.id[i], roughness,
-                                                    q_o, q_w, GLRs[i], R_b[i], APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
+                                                    q_o, q_w, GLRs[i], R_b[i], APIoil, sg_water, sg_gas,
                                                     Z_correlation, P_pc, T_pc,
                                                     gas_viscosity_correlation, solutionGORcorrelation, bubblepoint, oilVolumeFactor_correlation, waterVolumeFactor_correlation,
                                                     dead_oil_viscosity_correlation, live_oil_viscosity_correlation, frictionfactor, error_tolerance)

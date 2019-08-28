@@ -32,10 +32,13 @@ live_oil_viscosity_correlation = ChewAndConnallySaturatedOilViscosity
 frictionfactor = SerghideFrictionFactor
 error_tolerance = 1.0 #psi
 
-ΔP_est = PressureDrop.calculate_pressuresegment_topdown(pressurecorrelation, p_initial, dp_est, t_avg,
-                                md_initial, md_end, tvd_initial, tvd_end, inclination, id, roughness,
-                                q_o, q_w, GLR, GLR, APIoil, sg_water, sg_gas, molFracCO2, molFracH2S,
-                                pseudocrit_pressure_correlation, pseudocrit_temp_correlation, Z_correlation,
+P_pc = pseudocrit_pressure_correlation(sg_gas, molFracCO2, molFracH2S)
+    _, T_pc, _ = pseudocrit_temp_correlation(sg_gas, molFracCO2, molFracH2S)
+
+ΔP_est = PressureDrop.calculate_pressuresegment(pressurecorrelation, p_initial, dp_est, t_avg,
+                                md_end - md_initial, tvd_end - tvd_initial, inclination, true, id, roughness,
+                                q_o, q_w, GLR, GLR, APIoil, sg_water, sg_gas,
+                                Z_correlation, P_pc, T_pc,
                                 gas_viscosity_correlation, solutionGORcorrelation, bubblepoint, oilVolumeFactor_correlation, waterVolumeFactor_correlation,
                                 dead_oil_viscosity_correlation, live_oil_viscosity_correlation, frictionfactor, error_tolerance)
 

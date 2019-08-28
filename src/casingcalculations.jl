@@ -1,5 +1,5 @@
 """
-`calculate_casing_pressuresegment_topdown(<arguments>)`
+`calculate_casing_pressuresegment(<arguments>)`
 
 Helper function to calculate the pressure drop for a single casing segment containing only injection gas, using a inlet-referenced (casing head referenced) approach.
 
@@ -9,30 +9,25 @@ Pressure inputs are in **psia**.
 
 See `casing_traverse_topdown`.
 """
-function casing_pressuresegment_topdown(p_initial, dp_est, t_avg,
-                                            tvd_initial, tvd_end,
-                                            sg_gas, molFracCO2, molFracH2S,
-                                            pseudocrit_pressure_correlation::Function, pseudocrit_temp_correlation::Function, Z_correlation::Function,
-                                            error_tolerance = 0.1)
+function casing_pressuresegment(p_initial, dp_est, t_avg,
+                                dh_tvd, 
+                                sg_gas, Z_correlation::Function, P_pc, T_pc,
+                                error_tolerance = 0.1)
 
-    dh_tvd = tvd_end - tvd_initial
-    p_avg = p_initial + dp_est/2
-
-    P_pc = pseudocrit_pressure_correlation(sg_gas, molFracCO2, molFracH2S)
-    _, T_pc, _ = pseudocrit_temp_correlation(sg_gas, molFracCO2, molFracH2S)
-    Z = Z_correlation(P_pc, T_pc, p_avg, t_avg)
-    ρ_g = gasDensity_insitu(sg_gas, Z, p_avg, t_avg)
-
-    dp_calc = (1/144.0) * ρ_g * dh_tvd
-
-    while abs(dp_est - dp_calc) > error_tolerance
-        dp_est = dp_calc
-        p_avg = p_initial + dp_est/2
+    function dP(dp)
+        p_avg = p_initial + dp/2
 
         Z = Z_correlation(P_pc, T_pc, p_avg, t_avg)
         ρ_g = gasDensity_insitu(sg_gas, Z, p_avg, t_avg)
 
-        dp_calc = (1/144.0) * ρ_g * dh_tvd
+        return (1/144.0) * ρ_g * dh_tvd
+    end
+
+    dp_calc = dP(dp_est)
+    while abs(dp_est - dp_calc) > error_tolerance
+
+        dp_est = dp_calc
+        dp_calc = dP(dp_est)
     end
 
     return dp_calc
@@ -81,12 +76,14 @@ function casing_traverse_topdown(;wellbore::Wellbore, temperatureprofile::Array{
     pressures = Array{Float64, 1}(undef, nsegments)
     pressure_initial = pressures[1] = CHP
 
+    P_pc = pseudocrit_pressure_correlation(sg_gas, molFracCO2, molFracH2S)
+    _, T_pc, _ = pseudocrit_temp_correlation(sg_gas, molFracCO2, molFracH2S)
+
     @inbounds for i in 2:nsegments
-        dp_calc = casing_pressuresegment_topdown(pressure_initial, dp_est,
+        dp_calc = casing_pressuresegment(pressure_initial, dp_est,
                                                     (temperatureprofile[i] + temperatureprofile[i-1])/2, #average temperature
-                                                    wellbore.tvd[i-1], wellbore.tvd[i],
-                                                    sg_gas, molFracCO2, molFracH2S,
-                                                    pseudocrit_pressure_correlation, pseudocrit_temp_correlation, Z_correlation,
+                                                    wellbore.tvd[i] - wellbore.tvd[i-1],
+                                                    sg_gas, Z_correlation, P_pc, T_pc,
                                                     error_tolerance)
 
         pressure_initial += dp_calc

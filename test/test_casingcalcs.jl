@@ -1,8 +1,10 @@
 include("../src/casingcalculations.jl")
 
 @testset "Casing pressure segment drop" begin
-    ΔP = casing_pressuresegment_topdown(300, 10, (100+180)/2, 0, 4500, 0.7, 0, 0,
-                                        HankinsonWithWichertPseudoCriticalPressure, HankinsonWithWichertPseudoCriticalTemp, KareemEtAlZFactor)
+    sg_gas = 0.7
+    P_pc = HankinsonWithWichertPseudoCriticalPressure(sg_gas, 0, 0)
+    _, T_pc, _ = HankinsonWithWichertPseudoCriticalTemp(sg_gas, 0, 0)
+    ΔP = casing_pressuresegment(300, 10, (100+180)/2, 4500, sg_gas, KareemEtAlZFactor, P_pc, T_pc)
     @test ΔP ≈ 332.7-300 atol = 1
 end
 

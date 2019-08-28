@@ -1,10 +1,10 @@
 #test flags:
 
-const devmode = true #test only subsets
-const devtests = ("test_integration_scenario.jl") #tuple of filenames to run for limited-subset tests
+const devmode = false #test only subsets
+const devtests = ("test_pvt.jl") #tuple of filenames to run for limited-subset tests
 const test_plots = false
 
-const run_benchmarks = true; timelimit = 5 #time limit in seconds for each benchmarking process
+const run_benchmarks = false; timelimit = 5 #time limit in seconds for each benchmarking process
 
 using Test
 using PressureDrop
