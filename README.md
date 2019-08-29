@@ -22,7 +22,7 @@ Alternatively, in Jupyter: execute a cell containing `using Pkg; Pkg.add("Pressu
 
 # Usage
 
-Models are constructed from well objects, optional valve objects, and parameter specifications. Well and valve objects can be constructed manually or [from files](https://jnoynaert.github.io/PressureDrop.jl/stable/core/#Wellbores-1) (see [here](test/testdata/valvedata_wrappers_1.csv) for example well input file and [here](test/testdata/Sawgrass_9_32/Test_survey_Sawgrass_9.csv) for example valve file).
+Models are constructed from well objects, optional valve objects, and parameter specifications. Well and valve objects can be constructed manually or [from files](https://jnoynaert.github.io/PressureDrop.jl/stable/core/#Wellbores-1) (see [here](test/testdata/Sawgrass_9_32/Test_survey_Sawgrass_9.csv) for example well input file and [here](test/testdata/valvedata_wrappers_1.csv) for example valve file).
 
 Note that all inputs and calculations are in U.S. field units:
 
