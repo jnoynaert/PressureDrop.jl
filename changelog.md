@@ -1,12 +1,16 @@
 # Changes
 
-## v1.0.1 (RC2)
+## v1.0.2
+- Added benchmarks to test suite
+- Improved performance of core calculations by 15-20%
+
+## v1.0.1
 - Added JOSS paper draft
 - Added assertions to guardrail pulling in negative production rates
 - Added Windows test builds on Travis
 - Modified `read_survey` to allow passing a valve object to automatically add the associated MDs
 
-## v1.0 (RC1)
+## v1.0
 
 ### Feature & interface
 - Added gravity-based casing pressure calculations & gas lift valve tables

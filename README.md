@@ -22,7 +22,7 @@ Alternatively, in Jupyter: execute a cell containing `using Pkg; Pkg.add("Pressu
 
 # Usage
 
-Models are constructed from well objects, optional valve objects, and parameter specifications. Well and valve objects can be constructed manually or from files.
+Models are constructed from well objects, optional valve objects, and parameter specifications. Well and valve objects can be constructed manually or [from files](https://jnoynaert.github.io/PressureDrop.jl/stable/core/#Wellbores-1) (see [here](test/testdata/valvedata_wrappers_1.csv) for example well input file and [here](test/testdata/Sawgrass_9_32/Test_survey_Sawgrass_9.csv) for example valve file).
 
 Note that all inputs and calculations are in U.S. field units:
 
@@ -95,7 +95,7 @@ function timestep_pressure(rate, temp, watercut, GLR)
                      WHP = 120)[end]
 end
 
-pressures = timestep_pressure.(testdata, wellhead_temps, watercuts, GLR)
+pressures = timestep_pressure.(testdata, wellhead_temps, watercuts, GLRs)
 
 plot(x = days, y = pressures, Geom.path, Theme(default_color = "purple"),
      Guide.xlabel("Time (days)"),
@@ -126,5 +126,5 @@ Plotting functions are lazily loaded to avoid the overhead of loading the `Gadfl
 
 # Pull requests & bug reports
 
-- Pull requests for additional functionality should include unit tests. New correlations or PVT functions should include a reference to the source of your test cases so that the expected outputs can be validated.
-- Add bug reports or feature requests to the [issue tracker](https://github.com/jnoynaert/PressureDrop.jl/issues). Please include a [minimal, reproducible example](https://stackoverflow.com/help/minimal-reproducible-example) with any issue reports. Include any additional necessary data (e.g. CSV definitions of well surveys).
+- Pull requests are welcome! For additional functionality, especially pressure correlations or PVT functions, please include unit tests.
+- Please add any bug reports or feature requests to the [issue tracker](https://github.com/jnoynaert/PressureDrop.jl/issues). Ideally, include a [minimal, reproducible example](https://stackoverflow.com/help/minimal-reproducible-example) with any issue reports, along with additional necessary data (e.g. CSV definitions of well surveys).

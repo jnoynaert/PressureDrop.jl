@@ -7,9 +7,11 @@ Assumes no friction or entrained liquid -- uses density only.
 
 Pressure inputs are in **psia**.
 
+Solutions are obtained using fixed-point iteration.
+
 See `casing_traverse_topdown`.
 """
-function casing_pressuresegment(p_initial, dp_est, t_avg,
+function calculate_casing_pressuresegment(p_initial, dp_est, t_avg,
                                 dh_tvd, 
                                 sg_gas, Z_correlation::Function, P_pc, T_pc,
                                 error_tolerance = 0.1)
@@ -80,7 +82,7 @@ function casing_traverse_topdown(;wellbore::Wellbore, temperatureprofile::Array{
     _, T_pc, _ = pseudocrit_temp_correlation(sg_gas, molFracCO2, molFracH2S)
 
     @inbounds for i in 2:nsegments
-        dp_calc = casing_pressuresegment(pressure_initial, dp_est,
+        dp_calc = calculate_casing_pressuresegment(pressure_initial, dp_est,
                                                     (temperatureprofile[i] + temperatureprofile[i-1])/2, #average temperature
                                                     wellbore.tvd[i] - wellbore.tvd[i-1],
                                                     sg_gas, Z_correlation, P_pc, T_pc,

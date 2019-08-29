@@ -27,15 +27,62 @@ The key component required for the pressure drop calculations is a [`Wellbore`](
 examplewell = read_survey(path = surveyfilepath, id = 2.441, maxdepth = 6500) #an outlet point at 0 MD is added if not present
 ```
 
+The expected format for a survey file is a comma separated file with measured depth, inclination from vertical, true vertical depth, and optionally, flowpath inner diameter:
+
+```@setup surveyfile
+using PrettyTables
+
+surveyheader = ["MD" "Inc" "TVD" "ID";
+                "ft" "°" "ft" "in"]
+
+surveyexample = string.(
+    [0 0 0 2.441;
+     460 0 460 2.441;
+     552 1.5 551.94 2.441;
+     644 1.5 643.91 1.995]) |> 
+    s -> vcat(s, ["⋮" "⋮" "⋮" "⋮"])
+```
+
+```@example surveyfile
+pretty_table(surveyexample, surveyheader, unicode_rounded) # hide
+```
+
+See an example survey input file [here](https://github.com/jnoynaert/PressureDrop.jl/blob/master/test/testdata/Sawgrass_9_32/Test_survey_Sawgrass_9.csv).
+
+By default, `read_survey` will skip a single header line and take a single ID for the entire flowpath.
+
 ### Valve designs
 
 `GasliftValves` objects define the valve strings in terms of measured run depth, test rack opening pressure, R value (ratio of the area of the port to the area of the bellows), and port size.
 
-These can also be constructed directly or from CSV files.
-
 ```@example core
 examplevalves = read_valves(path = valvefilepath)
 ```
+
+These can also be constructed directly or from CSV files. The expect format is valves by measured depth, test rack opening pressure @ 60° F in psig, the R ratio of the valve (effective area of the port to the area of the bellows), and the port size in 64ths inches:
+
+```@setup valvefile
+using PrettyTables
+
+valveheader = ["MD" "PTRO" "R" "Port";
+               "ft" "psig" "Ap/Ab" "64ths in"]
+
+valveexample = string.(
+    [1813 1005 0.073 16;
+     2375 990 0.073 16;
+     2885 975 0.073 16;
+     3395 0 0 14]) |> 
+     s -> vcat(s, ["⋮" "⋮" "⋮" "⋮"])
+```
+
+```@example valvefile
+pretty_table(valveexample, valveheader, unicode_rounded) # hide
+```
+
+See an example valve input file [here](https://github.com/jnoynaert/PressureDrop.jl/blob/master/test/testdata/valvedata_wrappers_1.csv).
+
+
+By default, `read_valves` will skip a single header line, and orifice valves are indicated by an R-value of 0.
 
 ### Models & parameter sets
 
