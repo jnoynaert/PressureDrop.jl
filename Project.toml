@@ -1,7 +1,7 @@
 name = "PressureDrop"
 uuid = "b7afff70-4bfb-11e9-240b-a35f420ae9bd"
 author = ["jmnoynaert@gmail.com"]
-version = "1.0.1"
+version = "1.0.2"
 
 [deps]
 Compose = "a81c6b42-2e10-5240-aca2-a61377ecd94b"

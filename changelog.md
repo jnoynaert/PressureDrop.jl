@@ -3,6 +3,7 @@
 ## v1.0.2
 - Added benchmarks to test suite
 - Improved performance of core calculations by 15-20%
+- Minor documentation updates
 
 ## v1.0.1
 - Added JOSS paper draft
