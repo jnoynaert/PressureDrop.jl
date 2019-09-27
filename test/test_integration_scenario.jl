@@ -151,7 +151,7 @@ end
 # compare test data
 # NOTE: points after the first survey point at > 90° inclination are discarded
 hz_index = findnext(x -> x >= 90, testwell.inc, 1)
-compare_tolerance = 85 #lloser tolerance to H&B due to wide range of methods to calculate correlating groups & reynolds numbers
+compare_tolerance = 85 #lposer tolerance to H&B due to wide range of methods to calculate correlating groups & reynolds numbers
 for index in 2:length(scenarios)+1
     println("Comparing scenario ", index-1, " on index ", index)
     @test all( abs.(test_results[1:hz_index,index] .- matched_example[1:hz_index,index])  .<= compare_tolerance )

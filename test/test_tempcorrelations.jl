@@ -23,7 +23,7 @@ z = 5985 - 0
 @test Ramey_temp(1, bht, A, g_g) ≈ 173 atol = 0.1
 
 #= visual test
-depths = range(1, z, length = 100) ;
+depths = range(1, stop = z, length = 100) ;
 
 test_temps = Ramey_wellboretemp.(depths, 0, bht, A, g_g)
 depths_plot = z .- depths |> collect

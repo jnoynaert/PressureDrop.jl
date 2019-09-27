@@ -1,7 +1,7 @@
 # PressureDrop.jl
 [![Build Status](https://travis-ci.org/jnoynaert/PressureDrop.jl.svg?branch=master)](https://travis-ci.org/jnoynaert/PressureDrop.jl)  [![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://jnoynaert.github.io/PressureDrop.jl/stable)
 
-Julia package for computing multiphase pressure profiles for gas lifted oil &amp; gas wells, developed as an open-source alternative to feature subsets of commercial nodal analysis or RTA software such as Prosper, Pipesim, or IHS Harmony.
+Julia package for computing multiphase pressure profiles for gas lifted oil &amp; gas wells, developed as an open-source alternative to feature subsets of commercial nodal analysis or RTA software such as Prosper, Pipesim, or IHS Harmony (some comparisons [here](https://jnoynaert.github.io/PressureDrop.jl/stable/similartools/)).
 
 Currently calculates outlet-referenced models for producing wells using non-coupled temperature gradients.
 
@@ -22,18 +22,22 @@ Alternatively, in Jupyter: execute a cell containing `using Pkg; Pkg.add("Pressu
 
 # Usage
 
-Models are constructed from well objects, optional valve objects, and parameter specifications. Well and valve objects can be constructed manually or [from files](https://jnoynaert.github.io/PressureDrop.jl/stable/core/#Wellbores-1) (see [here](test/testdata/Sawgrass_9_32/Test_survey_Sawgrass_9.csv) for example well input file and [here](test/testdata/valvedata_wrappers_1.csv) for example valve file).
+Models are constructed from well objects, optional valve objects, and parameter specifications. Well and valve objects can be constructed manually or [from files](https://jnoynaert.github.io/PressureDrop.jl/stable/core/#Wellbores-1) (see [here](test/testdata/Sawgrass_9_32/Test_survey_Sawgrass_9.csv) for an example well input file and [here](test/testdata/valvedata_wrappers_1.csv) for an example valve file).
 
 Note that all inputs and calculations are in U.S. field units:
 
 ```julia
 julia> using PressureDrop
 
+julia> surveyfilepath = joinpath(dirname(dirname(pathof(PressureDrop))), "test/testdata/Sawgrass_9_32/Test_survey_Sawgrass_9.csv")
+
 julia> examplewell = read_survey(path = surveyfilepath, id = 2.441, maxdepth = 6500)
 
 Wellbore with 67 points.
 Ends at 6459.0' MD / 6405.05' TVD.
 Max inclination 13.4°. Average ID 2.441 in.
+
+julia> valvefilepath = joinpath(dirname(dirname(pathof(PressureDrop))), "test/testdata/valvedata_wrappers_1.csv")
 
 julia> examplevalves = read_valves(path = valvefilepath)
 

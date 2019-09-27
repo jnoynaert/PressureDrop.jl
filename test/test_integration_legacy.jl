@@ -55,7 +55,7 @@ end #testset Takacs B&B vertical
 testpath = joinpath(dirname(dirname(pathof(PressureDrop))), "test/testdata/Cleveland_6/Test_survey_Cleveland_6.csv")
 
 testwell = read_survey(path = testpath, id_included = false, maxdepth = 10000, id = 2.441)
-test_temp = collect(range(85, 160, length = length(testwell.md)))
+test_temp = collect(range(85, stop = 160, length = length(testwell.md)))
 
 pressure_values = traverse_topdown(wellbore = testwell, roughness = 0.0006, temperatureprofile = test_temp,
                                     pressurecorrelation = BeggsAndBrill, dp_est = 10, error_tolerance = 0.1,

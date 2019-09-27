@@ -11,7 +11,8 @@ makedocs(
                 "PVT properties" => "pvt.md",
                 "Valve calculations" => "valves.md",
                 "Utilities" => "utilities.md",
-                "Extending" => "extending.md"],
+                "Extending" => "extending.md",
+                "Similar tools" => "similartools.md"],
     sitename="PressureDrop.jl",
     format = Documenter.HTML(prettyurls = isCI)
 )

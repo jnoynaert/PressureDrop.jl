@@ -166,7 +166,7 @@ hyperbolic_rate(q_i, b, D_sei, t) = q_i / (1 + b * nominal_rate(D_sei, b) * t)^(
 q_i = 3000
 b = 1.2
 decline = 0.85
-timesteps = range(0,2, step = 1/365)
+timesteps = range(0, stop = 2, step = 1/365)
 declinedata = [hyperbolic_rate(q_i, b, decline, time) for time in timesteps]
 noise = [randn() .* 15 for sample in timesteps]
 testdata = max.(declinedata .+ noise, 0)
@@ -196,9 +196,9 @@ function timestep_pressure(rate, temp, watercut, GLR)
                      WHP = 120)[end]
 end
 
-wellhead_temps = range(125, 85, length = 731)
-watercuts = range(1, 0.5, length = 731)
-GLR = range(0, 5000, length = 731)
+wellhead_temps = range(125, stop = 85, length = 731)
+watercuts = range(1, stop = 0.5, length = 731)
+GLR = range(0, stop = 5000, length = 731)
 
 pressures = timestep_pressure.(testdata, wellhead_temps, watercuts, GLR)
 

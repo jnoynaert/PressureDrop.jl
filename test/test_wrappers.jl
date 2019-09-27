@@ -1,9 +1,9 @@
 @testset "Pressure and temp wrapper" begin
 
 segments = 100
-MDs = range(0, 5000, length = segments) |> collect
+MDs = range(0, stop = 5000, length = segments) |> collect
 incs = repeat([0], inner = segments)
-TVDs = range(0, 5000, length = segments) |> collect
+TVDs = range(0, stop = 5000, length = segments) |> collect
 
 well = Wellbore(MDs, incs, TVDs, 2.441)
 
@@ -27,9 +27,9 @@ end #testset for pressure & temp wrapper
 @testset "Gas lift wrappers" begin
 
 segments = 100
-MDs = range(0, 5000, length = segments) |> collect
+MDs = range(0, stop = 5000, length = segments) |> collect
 incs = repeat([0], inner = segments)
-TVDs = range(0, 5000, length = segments) |> collect
+TVDs = range(0, stop = 5000, length = segments) |> collect
 
 well = Wellbore(MDs, incs, TVDs, 2.441)
 

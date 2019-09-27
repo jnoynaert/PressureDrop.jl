@@ -20,7 +20,7 @@ In most wells, the fluid flow contains three distinct phases (oil, water, and ga
 
 ``\frac{∂p}{∂h} = f(p,T)``
 
-Since the temperature profile varies according to depth, when assuming steady-state flow, consistent composition of each fluid, and a steady-state temperature profile uncoupled from pressure, the above can be re-expressed in terms of distance and pressure only:
+When assuming a steady-state temperature profile, temperature varies only with depth. Further assuming steady-state flow and consistent composition of each fluid, the above can be re-expressed in terms of distance and pressure only:
 
 ``\frac{dp}{dh} = f(p,h)``
 
@@ -28,7 +28,7 @@ Note that ``f`` is composited from many empirical functions¹ and in most cases 
 
 Currently, no mechanistic or empirical correlations fully capture the variability in these three-phase fluid flows (or the direct properties of the fluids themselves), so the most performant methods are typically matched to the conditions and fluids they were developed to describe².
 
-Most techniques for applying these correlations to calculate pressure profiles involve dividing the wellbore into a 1-dimensional series of discrete segments and calculating an average pressure change for the entire segment. Increasing segmentation will generally improve accuracy at the cost of additional computation. The most feasible and stable method for resolving the pressure change in each segment is typically some form of fixed-point iteration by specifying an error tolerance ε and iterating until ``f(p) - p < ε``, where p is the average pressure in the segment.
+Most techniques for applying these correlations to calculate pressure profiles involve dividing the wellbore into a 1-dimensional series of discrete segments and calculating an average pressure change for the entire segment. Increasing segmentation will generally improve accuracy at the cost of additional computation. The most feasible and stable method for resolving the pressure change in each segment is typically some form of fixed-point iteration by specifying an error tolerance ε and iterating until ``f(p) - p < ε``, where ``p`` is the average pressure in the segment.
 
 ---
 
@@ -47,7 +47,8 @@ Pages = [
   "pvt.md",
   "valves.md",
   "utilities.md",
-  "extending.md"
+  "extending.md",
+  "similartools.md"
 ]
 Depth = 2
 ```
