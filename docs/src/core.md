@@ -154,7 +154,7 @@ valve_table(valvedata)
 
 The data for a valve table can be calculated directly using [`valve_calcs`](@ref), which will interpolate pressures and temperatures at depth from known producing P/T profiles.
 
-## Bulk calculations
+## [Bulk calculations](@id bulkcalcs)
 
 Pressure drops can be calculated in bulk, either by passing model arguments to functions directly, or by mutating or copying model objects.
 
