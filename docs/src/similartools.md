@@ -9,10 +9,12 @@ Due to its limited scope, PressureDrop.jl has a much lower memory & size footpri
 | Software          | Scriptable         | Bulk calculation (multi-time) | Dynamic injection points |    Dynamic temperature profiles    | User extensible        | Multi-core        | Notes |
 | -----------       | -----------         |--------     | -----------              | -----------                       | -----------       |-----------        | -----------   |
 | IHS Harmony (Fekete RTA) | ❌         | ✔️ | ⚠️ through manual profiles | ⚠️ through manual profiles | ❌ | ❌ | |
-| Schlumberger PipeSim | ⚠️ Python SDK to interact with executable | ✔️ | ? | ? | ❌ | ❌ | |
+| IHS Perform | ❌ | ❌ only as limited number of sensitivity cases | ❌ | ❌ | ❌ | ❌ | |
+| Schlumberger PipeSim | ⚠️ Python SDK to interact with executable | ✔️ | ? | ? | ❌ | ❌ | Slow. |
+| SNAP | ⚠️ via DLL interface exposed in VBA | ⚠️ no longer obviously maintained | ✔️ | ✔️ | ❌ | ❌ | Difficult to run advanced functionality on modern systems |
 | Weatherford WellFlo | ❌ | ❌ | ✔️ | ❌ | ❌ | ❌ | |
 | Weatherford ValCal | ❌ | ❌ | ✔️ | ❌ | ❌ |  | |
-| PetEx Prosper | ✔️ | ✔️ | ? | ✔️ | ✔️ | ❌ | Allows significant scripting & extension via user DLLs.|
+| PetEx Prosper | ⚠️ through secondary interface | ✔️ | ? | ✔️ | ✔️ | ❌ | Allows significant scripting & extension via user DLLs.|
 | PressureDrop.jl | ✔️ | ✔️ | ✔️ | ✔️ |✔️ | ⚠️ Using Julia coroutines or composable threads in 1.3 ||
 
 ## Example
