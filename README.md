@@ -1,5 +1,6 @@
 # PressureDrop.jl
-[![Build Status](https://travis-ci.org/jnoynaert/PressureDrop.jl.svg?branch=master)](https://travis-ci.org/jnoynaert/PressureDrop.jl)  [![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://jnoynaert.github.io/PressureDrop.jl/stable)
+[![Build Status](https://travis-ci.org/jnoynaert/PressureDrop.jl.svg?branch=master)](https://travis-ci.org/jnoynaert/PressureDrop.jl)  [![Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://jnoynaert.github.io/PressureDrop.jl/stable)  [![DOI](https://zenodo.org/badge/173832706.svg)](https://zenodo.org/badge/latestdoi/173832706)
+
 
 Julia package for computing multiphase pressure profiles for gas lifted oil &amp; gas wells, developed as an open-source alternative to feature subsets of commercial nodal analysis or RTA software such as Prosper, Pipesim, or IHS Harmony (some comparisons [here](https://jnoynaert.github.io/PressureDrop.jl/stable/similartools/)).
 
