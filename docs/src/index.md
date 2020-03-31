@@ -10,7 +10,7 @@ Outlet-referenced models for producing wells using non-coupled temperature gradi
 
 !!! note
 
-    Note that all inputs and calculations are in U.S. field units.
+    All inputs and calculations are in U.S. field units.
 
 # Overview
 

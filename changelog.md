@@ -1,5 +1,8 @@
 # Changes
 
+## v1.0.3 - v1.0.5
+- Documentation & compatibility updates
+
 ## v1.0.2
 - Added benchmarks to test suite
 - Improved performance of core calculations by 15-20%
