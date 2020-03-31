@@ -44,7 +44,7 @@ surveyexample = string.(
 ```
 
 ```@example surveyfile
-pretty_table(surveyexample, surveyheader, unicode_rounded) # hide
+pretty_table(surveyexample, surveyheader; tf = unicode_rounded) # hide
 ```
 
 See an example survey input file [here](https://github.com/jnoynaert/PressureDrop.jl/blob/master/test/testdata/Sawgrass_9_32/Test_survey_Sawgrass_9.csv).
@@ -76,7 +76,7 @@ valveexample = string.(
 ```
 
 ```@example valvefile
-pretty_table(valveexample, valveheader, unicode_rounded) # hide
+pretty_table(valveexample, valveheader; tf = unicode_rounded) # hide
 ```
 
 See an example valve input file [here](https://github.com/jnoynaert/PressureDrop.jl/blob/master/test/testdata/valvedata_wrappers_1.csv).
