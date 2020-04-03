@@ -15,7 +15,7 @@ valvefilepath = joinpath(dirname(dirname(pathof(PressureDrop))), "test/testdata/
 
 ## Creating and updating models
 
-Model definitions are created and stored as [`WellModel`](@ref) objects. Although all of the functionality of this package is exposed as pure functions, mutating and copying `WellModel`s is a much easier way to track and iterate on parameter sets.
+Model definitions are created and stored as [`WellModel`](@ref) objects. Although the functionality of this package is exposed as pure functions, mutating and copying `WellModel`s is a much easier way to track and iterate on parameter sets.
 
 ### Wellbores
 
@@ -53,7 +53,7 @@ By default, `read_survey` will skip a single header line and take a single ID fo
 
 ### Valve designs
 
-`GasliftValves` objects define the valve strings in terms of measured run depth, test rack opening pressure, R value (ratio of the area of the port to the area of the bellows), and port size.
+[`GasliftValves`](@ref) objects define the valve strings in terms of measured run depth, test rack opening pressure, R value (ratio of the area of the port to the area of the bellows), and port size.
 
 ```@example core
 examplevalves = read_valves(path = valvefilepath)
@@ -86,7 +86,7 @@ By default, `read_valves` will skip a single header line, and orifice valves are
 
 ### Models & parameter sets
 
-`WellModel`s do not have to be completely specified, but require defining the minimum fields for a simple pressure drop. In general, sensible defaults are selected for PVT functions. See the [documentation](@ref WellModel) for a list of optional fields.
+[`WellModel`](@ref)s do not have to be completely specified, but require defining the minimum fields for a simple pressure drop. In general, sensible defaults are selected for PVT functions. See the [documentation](#PressureDrop.WellModel) for a list of optional fields.
 
 Note that defining a valve string is optional if all that is desired is a normal pressure drop or temperature calculation.
 
