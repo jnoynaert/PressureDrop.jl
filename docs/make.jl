@@ -4,6 +4,7 @@ isCI = get(ENV, "CI", nothing) == "true" #Travis populates this env variable by 
 
 makedocs(
     clean = true,
+    strict = true,
     pages = [   "Overview" => "index.md",
                 "Core functions" => "core.md", #includes types
                 "Plotting" => "plotting.md",
@@ -17,7 +18,6 @@ makedocs(
     format = Documenter.HTML(prettyurls = isCI)
 )
 
-#tag versions before pushing
 if isCI
     deploydocs(repo = "github.com/jnoynaert/PressureDrop.jl.git")
 end
