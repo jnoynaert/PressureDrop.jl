@@ -1,10 +1,11 @@
 #test flags:
 
-const devmode = false #test only subsets
-const devtests = ("test_pvt.jl") #tuple of filenames to run for limited-subset tests
-const test_plots = false
+devmode = false #test only subsets
+isCI = get(ENV, "CI", nothing) == "true" #check if running in Travis
+devtests = ("test_pvt.jl") #tuple of filenames to run for limited-subset tests
+test_plots = false #falls through to test_wrappers.jl
 
-const run_benchmarks = false; timelimit = 5 #time limit in seconds for each benchmarking process
+run_benchmarks = false; timelimit = 5 #time limit in seconds for each benchmarking process
 
 using Test
 using PressureDrop
@@ -13,9 +14,7 @@ if test_plots #note that doc generation on deployment implicitly tests all plott
     using Gadfly
 end
 
-if devmode
-    include.(devtests);
-else
+if isCI || !devmode
     include("test_types.jl")
     include("test_utilities.jl")
     include("test_pvt.jl")
@@ -27,6 +26,8 @@ else
     include("test_integration_scenario.jl")
     include("test_wrappers.jl")
     include("test_regressions.jl")
+ else #devmode
+    include.(devtests);
 end
 
 if run_benchmarks
