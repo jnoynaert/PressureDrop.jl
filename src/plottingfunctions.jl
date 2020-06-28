@@ -170,7 +170,7 @@ function plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps,
                 Guide.ylabel("Measured Depth (ft)"),
                 Guide.title(ctitle),
                 Coord.cartesian(yflip = true),
-                Guide.manual_color_key(nothing,
+                Guide.manual_color_key("",
                                        ["TP", "CP", "Valves", "PVO/PVC"],
                                        ["deepskyblue", "mediumspringgreen", "black", "mediumpurple3"]),
                 Theme(plot_padding=[5mm, 0mm, 5mm, 5mm]))
