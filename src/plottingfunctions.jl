@@ -170,9 +170,6 @@ function plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps,
                 Guide.ylabel("Measured Depth (ft)"),
                 Guide.title(ctitle),
                 Coord.cartesian(yflip = true),
-                Guide.manual_color_key("",
-                                       ["TP", "CP", "Valves", "PVO/PVC"],
-                                       ["deepskyblue", "mediumspringgreen", "black", "mediumpurple3"]),
                 Theme(plot_padding=[5mm, 0mm, 5mm, 5mm]))
 
         placeholdertitle = ctitle === nothing ? nothing : " " #generate a blank title to align the top of the plots if needed
@@ -184,6 +181,9 @@ function plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps,
                 Guide.ylabel(nothing),
                 Guide.title(placeholdertitle),
                 Coord.cartesian(yflip = true),
+                Guide.manual_color_key("",
+                                       ["TP", "CP", "Valves", "PVO/PVC"],
+                                       ["deepskyblue", "mediumspringgreen", "black", "mediumpurple3"]),
                 Theme(default_color = "red", plot_padding=[5mm, 5mm, 5mm, 5mm]))
 
         hstack(compose(context(0, 0, 0.75, 1), render(pressure)),
