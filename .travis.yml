@@ -1,14 +1,17 @@
 language: julia
 
 julia:
-  - 1.0
   - 1.1
-  - 1.4
+  - 1
 
 os:
   - linux
   - osx
   - windows
+  
+branches:
+  only:
+  - master
 
 jobs:
   include:
