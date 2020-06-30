@@ -8,6 +8,10 @@ os:
   - linux
   - osx
   - windows
+  
+branches:
+  only:
+  - master
 
 jobs:
   include:
