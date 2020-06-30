@@ -125,7 +125,7 @@ function plot_pressureandtemp(well::Wellbore, tubing_pressures, casing_pressures
                 Theme(default_color = "red", plot_padding=[5mm, 5mm, 5mm, 5mm]))
 
         hstack(compose(context(0, 0, 0.75, 1), render(pressure)),
-                compose(context(0.75, 1, 0.25, 1), render(temp)))
+                compose(context(0.75, 1, 0.5, 1), render(temp)))
 end
 
 
