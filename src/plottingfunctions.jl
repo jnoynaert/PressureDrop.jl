@@ -186,8 +186,8 @@ function plot_gaslift(well::Wellbore, tubing_pressures, casing_pressures, temps,
                                        ["deepskyblue", "mediumspringgreen", "black", "mediumpurple3"]),
                 Theme(default_color = "red", plot_padding=[5mm, 5mm, 5mm, 5mm]))
 
-        hstack(compose(context(0, 0, 0.75, 1), render(pressure)),
-                compose(context(0.75, 1, 0.25, 1), render(temp)))
+        hstack(compose(context(0, 0, 0.65, 1), render(pressure)),
+                compose(context(0.65, 0, 0.35, 1), render(temp)))
 end
 
 """
