@@ -30,17 +30,13 @@ Note that all inputs and calculations are in U.S. field units:
 ```julia
 julia> using PressureDrop
 
-julia> surveyfilepath = joinpath(dirname(dirname(pathof(PressureDrop))), "test/testdata/Sawgrass_9_32/Test_survey_Sawgrass_9.csv")
-
-julia> examplewell = read_survey(path = surveyfilepath, id = 2.441, maxdepth = 6500)
+julia> examplewell = read_survey(path = PressureDrop.example_surveyfile, id = 2.441, maxdepth = 6500)
 
 Wellbore with 67 points.
 Ends at 6459.0' MD / 6405.05' TVD.
 Max inclination 13.4°. Average ID 2.441 in.
 
-julia> valvefilepath = joinpath(dirname(dirname(pathof(PressureDrop))), "test/testdata/valvedata_wrappers_1.csv")
-
-julia> examplevalves = read_valves(path = valvefilepath)
+julia> examplevalves = read_valves(path = PressureDrop.example_valvefile)
 
 Valve design with 4 valves and bottom valve at 3395.0' MD.
 

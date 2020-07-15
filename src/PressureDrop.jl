@@ -39,6 +39,10 @@ include("pressurecorrelations.jl")
 include("tempcorrelations.jl")
 include("casingcalculations.jl")
 
+#file references for examples:
+const example_surveyfile = joinpath(dirname(dirname(pathof(PressureDrop))), "test/testdata/Sawgrass_9_32/Test_survey_Sawgrass_9.csv")
+const example_valvefile = joinpath(dirname(dirname(pathof(PressureDrop))), "test/testdata/valvedata_wrappers_1.csv")
+
 #lazy loading for Gadfly:
 function __init__()
     @require Gadfly = "c91e804a-d5a3-530f-b6f0-dfbca275c004" include("plottingfunctions.jl")
