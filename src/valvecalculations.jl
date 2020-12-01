@@ -212,7 +212,7 @@ function valve_table(valvedata, injection_depth = nothing)
 
     operating_valve = Highlighter((data, i, j) -> (data[i,2] == injection_depth), crayon"bg:dark_gray white bold")
 
-    pretty_table(valvedata, header; tf = unicode_rounded, header_crayon = crayon"yellow bold",
+    pretty_table(valvedata, header; tf = tf_unicode_rounded, header_crayon = crayon"yellow bold",
                  formatters = ft_printf("%.0f", [1:6;8:18]), highlighters = (operating_valve,))
 end
 
