@@ -427,7 +427,7 @@ function gas_oil_interfacialtension(APIoil, pressureAbsolute, tempF)
   else
     σ_68 = 39 - 0.2571 * APIoil
     σ_100 = 37.5 - 0.2571 * APIoil
-    σ_dead = σ_68 + (tempF - 68.0) * (σ_100 - σ_68) / (100.0 - 68.0) # interpolate
+    σ_dead = σ_68 - (tempF - 68.0) * (σ_100 - σ_68) / (100.0 - 68.0) # interpolate
   end
 
   C = 1.0 - 0.024 * pressureAbsolute^0.45
