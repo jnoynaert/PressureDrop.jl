@@ -11,6 +11,7 @@ os:
 branches:
   only:
   - master
+  - /v\d+\.\d+[a-z]/
 
 jobs:
   include:
